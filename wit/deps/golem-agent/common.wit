@@ -49,8 +49,8 @@ interface common {
 
   variant element-schema {
     component-model(wit-type),
-    unstructured-text(tuple<string, text-descriptor>),
-    unstructured-binary(tuple<string, binary-descriptor>),
+    unstructured-text(text-descriptor),
+    unstructured-binary(binary-descriptor),
   }
 
   variant element-value {
