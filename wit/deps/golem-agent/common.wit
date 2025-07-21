@@ -1,7 +1,7 @@
 package golem:agent;
 
 interface common {
-  use golem:rpc/types@0.2.1.{wit-type, wit-value};
+  use golem:rpc/types@0.2.2.{wit-type, wit-value};
 
   type url = string;
 
@@ -48,7 +48,7 @@ interface common {
   }
 
   variant element-schema {
-    component-model(tuple<string, wit-type>),
+    component-model(wit-type),
     unstructured-text(tuple<string, text-descriptor>),
     unstructured-binary(tuple<string, binary-descriptor>),
   }
