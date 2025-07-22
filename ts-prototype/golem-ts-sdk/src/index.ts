@@ -9,11 +9,10 @@ export function getRegisteredAgents(): AgentType[] {
     return Array.from(agentRegistry.values());
 }
 
-
 export class Agent {
     private resolvedAgent: ResolvedAgent;
 
-    constructor(name: string, params: any[]) {
+    constructor(name: string, params: bindings.guest.WitValue[]) {
         console.log("Agent constructor called", name, params);
 
 
@@ -33,8 +32,17 @@ export class Agent {
         return this.resolvedAgent.getId()
     }
 
-    async invoke(methodName: string, args: any[]): Promise<any> {
-        await this.resolvedAgent.invoke(methodName, args);
+    async invoke(methodName: string, args: bindings.guest.WitValue[]): Promise<bindings.guest.StatusUpdate> {
+        return this.resolvedAgent.invoke(methodName, args).then(result => {
+            if (result.nodes[0].tag == "prim-string") {
+                return {
+                    tag: "emit",
+                    val: result.nodes[0].val as string // only for testing
+                }
+            } else {
+                throw new Error("Unrecognized method");
+            }
+        });
     }
 
     async getDefinition(): Promise<any> {

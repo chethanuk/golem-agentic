@@ -4,6 +4,7 @@ import {AgentInitiator} from "./agent_initiator";
 import {WitValue} from "golem:rpc/types@0.2.1";
 import {TSAgent} from "./ts_agent";
 import {ResolvedAgent} from "./resolved_agent";
+import {convertJsToWitValueUsingSchema} from "./conversions";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
 
@@ -81,7 +82,7 @@ export function AgentDefinition<T extends abstract new (...args: any[]) => any>(
                 });
 
                 const agentType: AgentType = {
-                    typeName: concreteName,
+                    typeName: baseName,
                     description: concreteName,
                     agentConstructor: {
                         name: concreteName,
@@ -93,7 +94,7 @@ export function AgentDefinition<T extends abstract new (...args: any[]) => any>(
                     requires: [],
                 };
 
-                agentRegistry.set(concreteName, agentType);
+                agentRegistry.set(baseName, agentType);
             }
         } as any as T;
     };
@@ -159,7 +160,7 @@ export function AgentImplementation() {
                         if (!def) throw new Error(`AgentType not found for ${baseName}`);
                         return def;
                     },
-                    invoke: async (method, args) => {
+                    invoke:  async (method, args) => {
                         const fn = instance[method];
                         if (!fn) throw new Error(`Method ${method} not found on agent ${baseName}`);
 
@@ -171,12 +172,24 @@ export function AgentImplementation() {
                             method
                         ) ?? [];
 
+
                         const convertedArgs = args.map((witVal, idx) =>
                             convertWitValueToJs(witVal, paramTypes[idx])
                         );
 
-                        if (!fn) throw new Error(`Method ${method} not found on agent ${baseName}`);
-                        return await fn.apply(instance, args);
+                        const result = await fn.apply(instance, convertedArgs);
+
+                        const methodDef = def?.methods.find(m => m.name === method);
+
+                        const entriesAsStrings = Array.from(agentRegistry.entries()).map(
+                            ([key, value]) => `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`
+                        );
+
+                        if (!methodDef) {
+                            throw new Error(`Method ${method} not found in agent definition for ${baseName} ${def} ${def?.methods}. Available: ${ entriesAsStrings.join(", ")}`);
+                        }
+
+                        return convertJsToWitValueUsingSchema(result, methodDef.outputSchema);
                     }
                 };
 
@@ -185,6 +198,7 @@ export function AgentImplementation() {
         });
     };
 }
+
 
 function convertWitValueToJs(value: WitValue, expectedType: Function): any {
     switch (expectedType) {

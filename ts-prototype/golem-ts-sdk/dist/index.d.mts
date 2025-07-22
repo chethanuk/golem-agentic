@@ -501,9 +501,9 @@ declare function AgentImplementation(): <T extends new (...args: any[]) => any>(
 declare function getRegisteredAgents(): AgentType[];
 declare class Agent {
     private resolvedAgent;
-    constructor(name: string, params: any[]);
+    constructor(name: string, params: bindings.guest.WitValue[]);
     getId(): Promise<string>;
-    invoke(methodName: string, args: any[]): Promise<any>;
+    invoke(methodName: string, args: bindings.guest.WitValue[]): Promise<bindings.guest.StatusUpdate>;
     getDefinition(): Promise<any>;
 }
 declare const guest: typeof bindings.guest;

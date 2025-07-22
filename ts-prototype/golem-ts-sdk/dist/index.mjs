@@ -804,13 +804,108 @@ var ResolvedAgent = class {
     return `${this.name}--0`;
   }
   // Convert WitValue to TS
-  async invoke(methodName, args) {
-    await this.tsAgent.invoke(methodName, args);
+  invoke(methodName, args) {
+    return this.tsAgent.invoke(methodName, args);
   }
   getDefinition() {
     return agentRegistry.get(this.name);
   }
 };
+
+// src/conversions.ts
+function convertJsToWitValueUsingSchema(value, schema) {
+  if (schema.tag !== "structured") {
+    throw new Error(`Only 'structured' schema is supported`);
+  }
+  const param = schema.val.parameters[0];
+  if (param.tag !== "wit") {
+    throw new Error(`Only 'wit' parameters are supported`);
+  }
+  const nodes = [];
+  convertToWitNodes(value, param.val.nodes, param.val.nodes.length - 1, nodes);
+  return { nodes };
+}
+function convertToWitNodes(value, typeNodes, idx, nodes) {
+  const type = typeNodes[idx];
+  const push = (node) => {
+    nodes.push(node);
+    return nodes.length - 1;
+  };
+  switch (type.tag) {
+    case "prim-string-type":
+      return push({ tag: "prim-string", val: String(value) });
+    case "prim-bool-type":
+      return push({ tag: "prim-bool", val: Boolean(value) });
+    case "prim-u32-type":
+      return push({ tag: "prim-u32", val: Number(value) });
+    case "prim-u64-type":
+      return push({ tag: "prim-u64", val: Number(value) });
+    case "prim-s32-type":
+      return push({ tag: "prim-s32", val: Number(value) });
+    case "prim-s64-type":
+      return push({ tag: "prim-s64", val: Number(value) });
+    case "prim-f32-type":
+      return push({ tag: "prim-float32", val: Number(value) });
+    case "prim-f64-type":
+      return push({ tag: "prim-float64", val: Number(value) });
+    case "record-type": {
+      const fieldIndices = type.val.map(([key, fieldIdx]) => {
+        return convertToWitNodes(value[key], typeNodes, fieldIdx, nodes);
+      });
+      return push({ tag: "record-value", val: fieldIndices });
+    }
+    case "tuple-type": {
+      const itemIndices = type.val.map(
+        (tIdx, i) => convertToWitNodes(value[i], typeNodes, tIdx, nodes)
+      );
+      return push({ tag: "tuple-value", val: itemIndices });
+    }
+    case "list-type": {
+      const itemIdxs = value.map(
+        (item) => convertToWitNodes(item, typeNodes, type.val, nodes)
+      );
+      return push({ tag: "list-value", val: itemIdxs });
+    }
+    case "option-type": {
+      if (value == null) {
+        return push({ tag: "option-value", val: void 0 });
+      } else {
+        const inner = convertToWitNodes(value, typeNodes, type.val, nodes);
+        return push({ tag: "option-value", val: inner });
+      }
+    }
+    case "result-type": {
+      if (value instanceof Error || value && value.isErr) {
+        const errVal = convertToWitNodes(value.error ?? value, typeNodes, type.val[1], nodes);
+        return push({ tag: "result-value", val: { tag: "err", val: errVal } });
+      } else {
+        const okVal = convertToWitNodes(value, typeNodes, type.val[0], nodes);
+        return push({ tag: "result-value", val: { tag: "ok", val: okVal } });
+      }
+    }
+    case "variant-type": {
+      const [variantName] = Object.entries(value)[0];
+      const index = type.val.findIndex(([name]) => name === variantName);
+      const [, maybeNode] = type.val[index];
+      const variantIdx = maybeNode !== void 0 ? convertToWitNodes(value[variantName], typeNodes, maybeNode, nodes) : void 0;
+      return push({ tag: "variant-value", val: [index, variantIdx] });
+    }
+    case "enum-type": {
+      const index = type.val.indexOf(value);
+      if (index === -1) throw new Error(`Invalid enum value: ${value}`);
+      return push({ tag: "enum-value", val: index });
+    }
+    case "flags-type": {
+      const bools = type.val.map((flag) => Boolean(value[flag]));
+      return push({ tag: "flags-value", val: bools });
+    }
+    case "handle-type": {
+      return push({ tag: "handle", val: [value.uri, value.id] });
+    }
+    default:
+      throw new Error(`Unhandled type tag: ${type.tag}`);
+  }
+}
 
 // src/registry.ts
 var agentInitiators = /* @__PURE__ */ new Map();
@@ -871,7 +966,7 @@ function AgentDefinition(name) {
           };
         });
         const agentType = {
-          typeName: concreteName,
+          typeName: baseName,
           description: concreteName,
           agentConstructor: {
             name: concreteName,
@@ -882,7 +977,7 @@ function AgentDefinition(name) {
           methods,
           requires: []
         };
-        agentRegistry.set(concreteName, agentType);
+        agentRegistry.set(baseName, agentType);
       }
     };
   };
@@ -950,8 +1045,15 @@ function AgentImplementation() {
             const convertedArgs = args.map(
               (witVal, idx) => convertWitValueToJs(witVal, paramTypes[idx])
             );
-            if (!fn) throw new Error(`Method ${method} not found on agent ${baseName}`);
-            return await fn.apply(instance, args);
+            const result = await fn.apply(instance, convertedArgs);
+            const methodDef = def?.methods.find((m) => m.name === method);
+            const entriesAsStrings = Array.from(agentRegistry.entries()).map(
+              ([key, value]) => `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`
+            );
+            if (!methodDef) {
+              throw new Error(`Method ${method} not found in agent definition for ${baseName} ${def} ${def?.methods}. Available: ${entriesAsStrings.join(", ")}`);
+            }
+            return convertJsToWitValueUsingSchema(result, methodDef.outputSchema);
           }
         };
         return new ResolvedAgent(baseName, tsAgent);
@@ -997,7 +1099,17 @@ var Agent = class {
     return this.resolvedAgent.getId();
   }
   async invoke(methodName, args) {
-    await this.resolvedAgent.invoke(methodName, args);
+    return this.resolvedAgent.invoke(methodName, args).then((result) => {
+      if (result.nodes[0].tag == "prim-string") {
+        return {
+          tag: "emit",
+          val: result.nodes[0].val
+          // only for testing
+        };
+      } else {
+        throw new Error("Unrecognized method");
+      }
+    });
   }
   async getDefinition() {
     this.resolvedAgent.getDefinition();

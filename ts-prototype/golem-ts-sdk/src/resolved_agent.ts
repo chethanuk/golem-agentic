@@ -17,8 +17,8 @@ export class ResolvedAgent {
     }
 
     // Convert WitValue to TS
-    async invoke(methodName: string, args: WitValue[]): Promise<any> {
-        await this.tsAgent.invoke(methodName, args);
+    invoke(methodName: string, args: WitValue[]): Promise<WitValue> {
+        return this.tsAgent.invoke(methodName, args);
     }
 
     getDefinition(): AgentType {
