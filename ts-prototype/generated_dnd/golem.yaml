@@ -1,0 +1,42 @@
+# $schema: https://schema.golem.cloud/app/golem/1.2.4/golem.schema.json
+
+components:
+  golem:agentic-guest:
+    profiles:
+      debug:
+        build:
+          - command: cargo component build
+            sources:
+              - src
+              - wit-generated
+              - Cargo.toml
+            targets:
+              - target/wasm32-wasip1/debug/agentic_guest.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: target/wasm32-wasip1/debug/agentic_guest.wasm
+        linkedWasm: target/golem-temp/components/agentic_guest_debug.wasm
+        clean:
+          - src/bindings.rs
+      release:
+        build:
+          - command: cargo component build --release
+            sources:
+              - src
+              - wit-generated
+              - Cargo.toml
+            targets:
+              - target/wasm32-wasip1/release/agentic_guest.wasm
+        sourceWit: wit
+        generatedWit: wit-generated
+        componentWasm: target/wasm32-wasip1/release/agentic_guest.wasm
+        linkedWasm: target/golem-temp/components/agentic_guest_release.wasm
+        clean:
+          - src/bindings.rs
+    defaultProfile: debug
+
+customCommands:
+  cargo-clean:
+    - command: cargo clean
+witDeps:
+  - wit/deps
