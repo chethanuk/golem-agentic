@@ -12,12 +12,5 @@ export default defineConfig({
   target: 'esnext',
   external: ['agentic-guest'],
   outExtension: () => ({ js: '.mjs' }),
-  tsconfigRaw: {
-    compilerOptions: {
-      experimentalDecorators: true,
-      emitDecoratorMetadata: true,
-      useDefineForClassFields: false
-    }
-  }
 });
 
