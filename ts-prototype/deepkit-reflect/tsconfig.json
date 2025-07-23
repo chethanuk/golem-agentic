@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "es6",
+    "outDir": "./dist",
+    "emitDecoratorMetadata": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "paths": {
+      "agentic-guest": [
+        "../golem-ts-sdk/types/agentic-guest.d.ts"
+      ],
+      "golem:agent/common": [
+        "../golem-ts-sdk/types/golem-agent-common.d.ts"
+      ]
+    }
+  },
+  "reflection": true
+}

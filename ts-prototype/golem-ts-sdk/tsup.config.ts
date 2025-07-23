@@ -5,9 +5,7 @@ export default defineConfig({
   format: ['esm'],
   splitting: false,
   clean: true,
-  dts: {
-    resolve: true
-  },
+  dts: false,
   shims: false,
   target: 'esnext',
   external: ['agentic-guest'],

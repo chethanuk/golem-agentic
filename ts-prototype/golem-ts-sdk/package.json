@@ -1,7 +1,20 @@
 {
   "name": "golem-ts-sdk",
   "version": "1.0.0",
-  "main": "index.js",
+  "files": ["types", "dist"],
+  "main": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "agentic-guest": ["types/exports.d.ts"],
+      "golem:agent/common": ["types/golem_agent_common.d.ts"]
+    }
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch"
