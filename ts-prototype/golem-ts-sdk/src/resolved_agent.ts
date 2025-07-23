@@ -5,7 +5,7 @@ import {TSAgent} from "./ts_agent";
 
 export class ResolvedAgent {
     private tsAgent: TSAgent;
-    private name: string;
+    private readonly name: string;
 
     constructor(name: string, instance: TSAgent) {
         this.name = name;
