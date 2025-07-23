@@ -4,6 +4,16 @@ in the runtime.
 When the rust-component generator is specialised to support dynamic loading of user's JS, it should be following this change
 in `internal.rs`
 
+### Golem CLI template for SDK
+
+The SDK above is pretty much inspired from the template of the golem SDK, but it is not a blund output of template SDK.
+So to debug things and have better control, I build .dts files using wasm-quickjs wrapper toolings, and wrote the agent implementation in the SDK,
+and generated the rust component using wasm-quickjs rust component generator, with necessary changes in the emitted wrapper
+to support.
+
+Once the experimentation is done, we will move the SDK logic to the output of `golem app new ts` 
+for easier maintainence, such as updating host wit files etc  
+
 ### Quick testing
 
 ```shell
