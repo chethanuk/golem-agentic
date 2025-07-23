@@ -12,8 +12,23 @@ abstract class AssistantAgent {
 @AgentImplementation()
 class AssistantAgentImpl extends AssistantAgent {
     ask(name: string): Promise<string> {
-        return Promise.resolve(`Hi ${name}`);
+        const weather = new WeatherAgentImpl();
+        return weather.getWeather(name);
     }
 }
 
-new AssistantAgentImpl()
+
+@AgentDefinition()
+abstract class WeatherAgent {
+    // @ts-ignore
+    @Prompt("Get weather")
+    @Description("Weather forecast weather for you")
+    abstract getWeather(name: string): Promise<string>;
+}
+
+@AgentImplementation()
+class WeatherAgentImpl extends WeatherAgent {
+    getWeather(name: string): Promise<string> {
+        return Promise.resolve(`Weather in ${name} is sunny`);
+    }
+}
