@@ -10,5 +10,6 @@ export default defineConfig({
   shims: false,
   target: 'esnext',
   external: [],
+  noExternal: ['rttist'],
   outExtension: () => ({ js: '.mjs' }),
 })
