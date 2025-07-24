@@ -36,6 +36,7 @@ npn run build
 # this step is not needed in real implementation, 
 # as it will be automatically done when pre-compiling with specialised rust generator with wasm-rquickjs
 # with the changes as mentioned above
+
 cp dist/index.mjs  ../generated_dnd/src/module.js
 ```
 
@@ -46,7 +47,11 @@ npn run build
 
 # this step is not exactly needed in real implementation, 
 # as it will be done through wrapping users-js in another component which exports get-script method
-cp dist/index.mjs  ../generated_dnd/src/index.mjs
+
+# The component should take not just user's js but bootstrap or a sorted order of modules that are initialisers
+# In our case, we will have bundler.js as well as index.js
+cp dist/.metadata/bundler.mjs  ../generated_dnd/src/bundler.mjs
+cp dist/src/index.mjs  ../generated_dnd/src/index.mjs
 
 ```
 

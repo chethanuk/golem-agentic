@@ -19,6 +19,8 @@ static SDK_JS_MODULE: &str = include_str!("module.js");
 
 static USER_MODULE: &str = include_str!("index.mjs");
 
+static BOOTSTRAP_MODULE: &str = include_str!("bundler.mjs");
+
 pub const RESOURCE_TABLE_NAME: &str = "__wasm_rquickjs_resources";
 pub const RESOURCE_ID_KEY: &str = "__wasm_rquickjs_resource_id";
 pub const DISPOSE_SYMBOL: &str = "__wasm_rquickjs_symbol_dispose";
@@ -65,12 +67,12 @@ impl JsState {
             }).await;
             rt.idle().await;
 
-            let resolver = BuiltinResolver::default().with_module("golem-ts-sdk").with_module("bundle/user_script");
+            let resolver = BuiltinResolver::default().with_module("golem-ts-sdk").with_module("bundle/bootstrap").with_module("bundle/user_script");
             let resolver = crate::modules::add_native_module_resolvers(resolver);
             let resolver = crate::builtin::add_module_resolvers(resolver);
 
             let loader = (
-                BuiltinLoader::default().with_module("golem-ts-sdk", SDK_JS_MODULE).with_module("bundle/user_script", USER_MODULE),
+                BuiltinLoader::default().with_module("golem-ts-sdk", SDK_JS_MODULE).with_module("bundle/bootstrap", BOOTSTRAP_MODULE).with_module("bundle/user_script", USER_MODULE),
                 crate::modules::module_loader(),
                 crate::builtin::module_loader(),
                 ScriptLoader::default(),
@@ -97,6 +99,13 @@ impl JsState {
                 .catch(&ctx).expect("Failed to evaluate module initialization")
                 .finish::<()>()
                 .catch(&ctx).expect("Failed to finish module initialization");
+
+                Module::import(&ctx, "bundle/bootstrap")
+                 .catch(&ctx)
+                 .expect("Failed to import user module")
+                 .finish::<()>()
+                 .catch(&ctx)
+                 .expect("Failed to finish user module");
 
                 Module::import(&ctx, "bundle/user_script")
                  .catch(&ctx)

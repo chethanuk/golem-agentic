@@ -1,6 +1,5 @@
 // @ts-ignore (Needn't worry about this, only to remove warning)
 import { AgentDefinition, AgentImplementation, Prompt, Description } from 'golem-ts-sdk'
-import '../.metadata/initialiser';
 
 @AgentDefinition()
 abstract class AssistantAgent {
