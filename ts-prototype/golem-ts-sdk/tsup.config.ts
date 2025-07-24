@@ -9,6 +9,7 @@ export default defineConfig({
   shims: false,
   target: 'esnext',
   external: ['agentic-guest'],
+  noExternal: ['rttist'],
   outExtension: () => ({ js: '.mjs' }),
 });
 

@@ -1,6 +1,10 @@
 // @ts-ignore (Needn't worry about this, only to remove warning)
-import { AgentDefinition, AgentImplementation, Prompt, Description } from 'golem-ts-sdk'
-import {Metadata} from "../.metadata/metadata.typelib";
+import { AgentDefinition, AgentImplementation, Prompt, Description, Metadata } from 'golem-ts-sdk'
+import {metadataCollection} from "../.metadata/metadata.index";
+
+// Now this is a copy of some code from the generated files from rttist
+// and will not be part of the user code
+metadataCollection.forEach((mod) => mod.add(Metadata, false));
 
 @AgentDefinition()
 abstract class AssistantAgent {
@@ -31,7 +35,6 @@ abstract class WeatherAgent {
 @AgentImplementation()
 class WeatherAgentImpl extends WeatherAgent {
     getWeather(name: string): Promise<string> {
-        let names = Metadata.getTypes().map((type) => type.name).join(', ');
-        return Promise.resolve(`Weather in ${name} is sunny. Result ${names}` );
+        return Promise.resolve(`Weather in ${name} is sunny. Result ${name}` );
     }
 }

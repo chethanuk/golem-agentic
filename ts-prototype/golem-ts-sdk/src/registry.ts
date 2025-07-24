@@ -5,6 +5,7 @@ import {WitValue} from "golem:rpc/types@0.2.1";
 import {TSAgent} from "./ts_agent";
 import {ResolvedAgent} from "./resolved_agent";
 import {convertJsToWitValueUsingSchema} from "./conversions";
+import {Metadata} from "./type_metadata";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
 
@@ -70,12 +71,17 @@ export function AgentDefinition<T extends abstract new (...args: any[]) => any>(
                         methodName
                     );
 
+                    const classType =
+                        Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
+
                     const baseMeta = methodMetadata.get(BaseClass.name)?.get(methodName) ?? {};
+
+                    const finalPromptHint = `${baseMeta.prompt ?? ''}  -- more metadata --- ${classType}`;
 
                     return {
                         name: methodName,
                         description: baseMeta.description ?? '',
-                        promptHint: baseMeta.prompt ?? undefined,
+                        promptHint: finalPromptHint,
                         inputSchema: buildInputSchema(paramTypes),
                         outputSchema: buildOutputSchema(returnType),
                     };
