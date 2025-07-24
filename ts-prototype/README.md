@@ -14,6 +14,20 @@ to support.
 Once the experimentation is done, we will move the SDK logic to the output of `golem app new ts` 
 for easier maintainence, such as updating host wit files etc  
 
+### RTTIST installation
+
+User has to install RTTIST, and i think we can help it with the help of golem-cli, and I don't know how exactly,
+but many times user has to install things and given these are within the typescript ecosystem, it shouldn't hurt them
+
+The metadata generation pathway is much more convincing to me than deepkit's magic of transformers (or even rttists transformers)
+that we are able to avoid these transformer plugins which can hurt the user with deadly errors
+
+Also, always use RC versions
+
+```
+npm install -g @rttist/typegen@rc
+```
+
 ### Quick testing
 
 ```shell

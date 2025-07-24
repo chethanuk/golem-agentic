@@ -1,7 +1,7 @@
 {
   "name": "ts-user",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsup"
   },
@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "golem-ts-sdk": "file:../golem-ts-sdk",
-    "sample": "file:../golem-ts-sdk"
+    "rttist": "^1.0.0-rc.4"
   }
 }

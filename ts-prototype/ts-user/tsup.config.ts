@@ -11,11 +11,4 @@ export default defineConfig({
   target: 'esnext',
   external: [],
   outExtension: () => ({ js: '.mjs' }),
-  tsconfigRaw: {
-    compilerOptions: {
-      experimentalDecorators: true,
-      emitDecoratorMetadata: true,
-      useDefineForClassFields: false
-    }
-  }
 })
