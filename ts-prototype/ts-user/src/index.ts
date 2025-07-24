@@ -1,6 +1,6 @@
 // @ts-ignore (Needn't worry about this, only to remove warning)
 import { AgentDefinition, AgentImplementation, Prompt, Description } from 'golem-ts-sdk'
-import {GlobalMetadata} from "rttist";
+import {Metadata} from "../.metadata/metadata.typelib";
 
 @AgentDefinition()
 abstract class AssistantAgent {
@@ -31,7 +31,7 @@ abstract class WeatherAgent {
 @AgentImplementation()
 class WeatherAgentImpl extends WeatherAgent {
     getWeather(name: string): Promise<string> {
-        GlobalMetadata.getTypes().forEach((type) => {console.log(type.name)})
-        return Promise.resolve(`Weather in ${name} is sunny`);
+        let names = Metadata.getTypes().map((type) => type.name).join(', ');
+        return Promise.resolve(`Weather in ${name} is sunny. Result ${names}` );
     }
 }
