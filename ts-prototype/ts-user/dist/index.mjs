@@ -6,7 +6,10 @@ var __export = (target, all) => {
 };
 
 // src/index.ts
-import { AgentDefinition, AgentImplementation, Prompt, Description, Metadata } from "golem-ts-sdk";
+import { AgentDefinition, AgentImplementation, Prompt, Description } from "golem-ts-sdk";
+
+// .metadata/initialiser.ts
+import { Metadata } from "golem-ts-sdk";
 
 // .metadata/index.ts
 var index_exports = {};
@@ -188,6 +191,9 @@ var metadataCollection = [
   index_exports
 ];
 
+// .metadata/initialiser.ts
+metadataCollection.forEach((mod) => mod.add(Metadata, false));
+
 // src/index.ts
 function _ts_decorate(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -200,7 +206,6 @@ function _ts_metadata(k, v) {
   if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 }
 __name(_ts_metadata, "_ts_metadata");
-metadataCollection.forEach((mod) => mod.add(Metadata, false));
 var AssistantAgent = class AssistantAgent2 {
   static {
     __name(this, "AssistantAgent");
