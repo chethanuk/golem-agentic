@@ -6,6 +6,7 @@ import {TSAgent} from "./ts_agent";
 import {ResolvedAgent} from "./resolved_agent";
 import {convertJsToWitValueUsingSchema} from "./conversions";
 import {Metadata} from "./type_metadata";
+import {ClassType} from "rttist";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
 
@@ -71,12 +72,16 @@ export function AgentDefinition<T extends abstract new (...args: any[]) => any>(
                         methodName
                     );
 
-                    const classType =
+                    let classType =
                         Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
+
+                    let filteredType = (classType as ClassType);
+                    let methodInfo = filteredType.getMethod(methodName)!;
+                    let askSignature = methodInfo.getSignatures()[0];
 
                     const baseMeta = methodMetadata.get(BaseClass.name)?.get(methodName) ?? {};
 
-                    const finalPromptHint = `${baseMeta.prompt ?? ''}  -- more metadata --- ${classType}`;
+                    const finalPromptHint = `${baseMeta.prompt ?? ''}  -- more metadata --- ${askSignature}`;
 
                     return {
                         name: methodName,
