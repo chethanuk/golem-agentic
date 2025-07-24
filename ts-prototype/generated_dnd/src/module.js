@@ -2143,7 +2143,7 @@ B.addModule(c.Native, c.Invalid, c.Dynamic);
 // src/type_metadata.ts
 var Metadata = new _e({
   nullability: false
-}, "@ts-user", B);
+}, "@user-code", B);
 
 // src/registry.ts
 var agentInitiators = /* @__PURE__ */ new Map();
@@ -2194,9 +2194,12 @@ function AgentDefinition(name) {
             concreteClass.prototype,
             methodName
           );
-          const classType = Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
+          let classType = Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
+          let filteredType = classType;
+          let methodInfo = filteredType.getMethod(methodName);
+          let askSignature = methodInfo.getSignatures()[0];
           const baseMeta = methodMetadata.get(BaseClass.name)?.get(methodName) ?? {};
-          const finalPromptHint = `${baseMeta.prompt ?? ""}  -- more metadata --- ${classType}`;
+          const finalPromptHint = `${baseMeta.prompt ?? ""}  -- more metadata --- ${askSignature}`;
           return {
             name: methodName,
             description: baseMeta.description ?? "",
