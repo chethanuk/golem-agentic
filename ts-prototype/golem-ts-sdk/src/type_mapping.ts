@@ -215,17 +215,14 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
                 throw new Error("Promise must have a type argument");
             }
 
-            throw new Error(`Promise ${promiseType}`);
-
             return mapTypeToAnalysedType(promiseType);
 
         case TypeKind.PromiseDefinition:
             const promiseDefType = type.getTypeArguments?.()[0];
-            if (!promiseDefType) {
-                throw new Error("Promise must have a type argument");
-            }
 
-            throw new Error(`PromiseDefType ${promiseDefType}`);
+            if (!promiseDefType) {
+                throw new Error("PromiseDefinition must have a type argument");
+            }
 
             return analysedType.option(mapTypeToAnalysedType(promiseDefType));
 

@@ -18,7 +18,12 @@ for easier maintainence, such as updating host wit files etc
 
 ### RTTIST installation
 
-User should never ever install RTTIST/typegen, and i think we can help it with the help of golem-cli by directly using typegen API.
+```
+npm install -g @rttist/typegen@0.2.0
+
+```
+
+**User should never ever install RTTIST/typegen**, and i think we can help it with the help of golem-cli by directly using typegen API.
 golem-cli should re-do what typegen does inspired from code like https://github.com/rttist/rttist/blob/main/packages/plugins/vite6-plugin-rttist/src/index.ts.
 
 ### RTTIST vs deepkit
@@ -55,6 +60,7 @@ cp dist/index.mjs  ../generated_dnd/src/module.js
 
 ```shell
 cd ../ts-user
+rttist generate # to be done by golem cli
 npn install ../golem-ts-sdk
 npn run build
 

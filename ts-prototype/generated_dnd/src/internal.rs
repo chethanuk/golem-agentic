@@ -102,10 +102,10 @@ impl JsState {
 
                 Module::import(&ctx, "bundle/bootstrap")
                  .catch(&ctx)
-                 .expect("Failed to import user module")
+                 .expect("Failed to import boostrap module")
                  .finish::<()>()
                  .catch(&ctx)
-                 .expect("Failed to finish user module");
+                 .expect("Failed to finish bootstrap module");
 
                 Module::import(&ctx, "bundle/user_script")
                  .catch(&ctx)

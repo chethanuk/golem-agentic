@@ -17,56 +17,12 @@ function add(library, stripInternals) {
     children: [
       "@golem-ts-sdk",
       "@golem-ts-sdk",
-      "@golem-ts-sdk",
-      "@golem-ts-sdk",
-      "@golem-ts-sdk",
-      "@ts-user/Users/afsalthaj/projects/ribbb/golem-agentic/ts-prototype/ts-user/.metadata/metadata.index",
-      "@rttist",
-      "@rttist",
-      "@rttist",
-      "@ts-user/Users/afsalthaj/projects/ribbb/golem-agentic/ts-prototype/ts-user/.metadata/metadata.typelib"
+      "@golem-ts-sdk"
     ],
     types: [
       {
         kind: 64,
         name: "AssistantAgent",
-        methods: [
-          {
-            name: "ask",
-            signatures: [
-              {
-                parameters: [
-                  {
-                    name: "input",
-                    type: "#String",
-                    flags: 0
-                  }
-                ],
-                returnType: "#Promise{#String}"
-              }
-            ],
-            flags: 0
-          }
-        ],
-        indexes: [],
-        constructors: [
-          {
-            returnType: "#void"
-          }
-        ],
-        decorators: [
-          {
-            id: "@golem-ts-sdk:AgentDefinition",
-            name: "AgentDefinition",
-            args: []
-          }
-        ],
-        abstract: true,
-        id: "@ts-user/index:AssistantAgent"
-      },
-      {
-        kind: 64,
-        name: "AssistantAgentImpl",
         methods: [
           {
             name: "ask",
@@ -82,6 +38,22 @@ function add(library, stripInternals) {
                 returnType: "#Promise{#String}"
               }
             ],
+            decorators: [
+              {
+                id: "@golem-ts-sdk:Prompt",
+                name: "Prompt",
+                args: [
+                  "Ask your question"
+                ]
+              },
+              {
+                id: "@golem-ts-sdk:Description",
+                name: "Description",
+                args: [
+                  "This method allows the agent to answer your question"
+                ]
+              }
+            ],
             flags: 0
           }
         ],
@@ -91,15 +63,14 @@ function add(library, stripInternals) {
             returnType: "#void"
           }
         ],
-        extends: "@ts-user/index:AssistantAgent",
         decorators: [
           {
-            id: "@golem-ts-sdk:AgentImplementation",
-            name: "AgentImplementation",
+            id: "@golem-ts-sdk:AgentImpl",
+            name: "AgentImpl",
             args: []
           }
         ],
-        id: "@ts-user/index:AssistantAgentImpl"
+        id: "@ts-user/index:AssistantAgent"
       },
       {
         kind: 64,
@@ -119,41 +90,20 @@ function add(library, stripInternals) {
                 returnType: "#Promise{#String}"
               }
             ],
-            flags: 0
-          }
-        ],
-        indexes: [],
-        constructors: [
-          {
-            returnType: "#void"
-          }
-        ],
-        decorators: [
-          {
-            id: "@golem-ts-sdk:AgentDefinition",
-            name: "AgentDefinition",
-            args: []
-          }
-        ],
-        abstract: true,
-        id: "@ts-user/index:WeatherAgent"
-      },
-      {
-        kind: 64,
-        name: "WeatherAgentImpl",
-        methods: [
-          {
-            name: "getWeather",
-            signatures: [
+            decorators: [
               {
-                parameters: [
-                  {
-                    name: "name",
-                    type: "#String",
-                    flags: 0
-                  }
-                ],
-                returnType: "#Promise{#String}"
+                id: "@golem-ts-sdk:Prompt",
+                name: "Prompt",
+                args: [
+                  "Get weather"
+                ]
+              },
+              {
+                id: "@golem-ts-sdk:Description",
+                name: "Description",
+                args: [
+                  "Weather forecast weather for you"
+                ]
               }
             ],
             flags: 0
@@ -165,15 +115,14 @@ function add(library, stripInternals) {
             returnType: "#void"
           }
         ],
-        extends: "@ts-user/index:WeatherAgent",
         decorators: [
           {
-            id: "@golem-ts-sdk:AgentImplementation",
-            name: "AgentImplementation",
+            id: "@golem-ts-sdk:AgentImpl",
+            name: "AgentImpl",
             args: []
           }
         ],
-        id: "@ts-user/index:WeatherAgentImpl"
+        id: "@ts-user/index:WeatherAgent"
       }
     ]
   }, stripInternals);
@@ -185,6 +134,6 @@ var metadataCollection = [
   index_exports
 ];
 
-// .metadata/initialiser.ts
+// .metadata/bootstrap.ts
 import { Metadata } from "golem-ts-sdk";
 metadataCollection.forEach((mod) => mod.add(Metadata, false));

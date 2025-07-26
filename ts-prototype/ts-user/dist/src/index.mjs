@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // src/index.ts
-import { AgentDefinition, AgentImplementation, Prompt, Description } from "golem-ts-sdk";
+import { AgentImpl, Prompt, Description } from "golem-ts-sdk";
 function _ts_decorate(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -18,6 +18,10 @@ var AssistantAgent = class AssistantAgent2 {
   static {
     __name(this, "AssistantAgent");
   }
+  ask(name) {
+    const weather = new WeatherAgent();
+    return weather.getWeather(name);
+  }
 };
 _ts_decorate([
   Prompt("Ask your question"),
@@ -29,23 +33,14 @@ _ts_decorate([
   _ts_metadata("design:returntype", typeof Promise === "undefined" ? Object : Promise)
 ], AssistantAgent.prototype, "ask", null);
 AssistantAgent = _ts_decorate([
-  AgentDefinition()
+  AgentImpl()
 ], AssistantAgent);
-var AssistantAgentImpl = class AssistantAgentImpl2 extends AssistantAgent {
-  static {
-    __name(this, "AssistantAgentImpl");
-  }
-  ask(name) {
-    const weather = new WeatherAgentImpl();
-    return weather.getWeather(name);
-  }
-};
-AssistantAgentImpl = _ts_decorate([
-  AgentImplementation()
-], AssistantAgentImpl);
 var WeatherAgent = class WeatherAgent2 {
   static {
     __name(this, "WeatherAgent");
+  }
+  getWeather(name) {
+    return Promise.resolve(`Weather in ${name} is sunny. Result ${name}`);
   }
 };
 _ts_decorate([
@@ -58,16 +53,5 @@ _ts_decorate([
   _ts_metadata("design:returntype", typeof Promise === "undefined" ? Object : Promise)
 ], WeatherAgent.prototype, "getWeather", null);
 WeatherAgent = _ts_decorate([
-  AgentDefinition()
+  AgentImpl()
 ], WeatherAgent);
-var WeatherAgentImpl = class WeatherAgentImpl2 extends WeatherAgent {
-  static {
-    __name(this, "WeatherAgentImpl");
-  }
-  getWeather(name) {
-    return Promise.resolve(`Weather in ${name} is sunny. Result ${name}`);
-  }
-};
-WeatherAgentImpl = _ts_decorate([
-  AgentImplementation()
-], WeatherAgentImpl);

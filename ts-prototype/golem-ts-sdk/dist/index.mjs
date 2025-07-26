@@ -2357,14 +2357,12 @@ function mapTypeToAnalysedType(type) {
       if (!promiseType) {
         throw new Error("Promise must have a type argument");
       }
-      throw new Error(`Promise ${promiseType}`);
       return mapTypeToAnalysedType(promiseType);
     case u.PromiseDefinition:
       const promiseDefType = type.getTypeArguments?.()[0];
       if (!promiseDefType) {
-        throw new Error("Promise must have a type argument");
+        throw new Error("PromiseDefinition must have a type argument");
       }
-      throw new Error(`PromiseDefType ${promiseDefType}`);
       return analysedType.option(mapTypeToAnalysedType(promiseDefType));
     case u.ObjectType:
       const obj = type;
@@ -2941,52 +2939,6 @@ function Description(desc) {
     meta.description = desc;
   };
 }
-function AgentDefinition(name) {
-  return function(BaseClass) {
-    const baseName = name ?? BaseClass.name;
-    BaseClass.__agent_base_name__ = baseName;
-    return class extends BaseClass {
-      constructor(...args) {
-        super(...args);
-        const concreteClass = this.constructor;
-        const concreteName = concreteClass.name;
-        if (agentRegistry.has(concreteName)) return;
-        let classType = Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
-        let filteredType = classType;
-        let methodNames = filteredType.getMethods();
-        const methods = methodNames.map((methodInfo) => {
-          const signature = methodInfo.getSignatures()[0];
-          const parameters = signature.getParameters();
-          const returnType = signature.returnType;
-          const methodName = methodInfo.name.toString();
-          const baseMeta = methodMetadata.get(BaseClass.name)?.get(methodName) ?? {};
-          const inputSchema = buildInputSchema(parameters);
-          const outputSchema = buildOutputSchema(returnType);
-          return {
-            name: methodName,
-            description: baseMeta.description ?? "",
-            promptHint: baseMeta.prompt ?? "",
-            inputSchema,
-            outputSchema
-          };
-        });
-        const agentType = {
-          typeName: baseName,
-          description: concreteName,
-          agentConstructor: {
-            name: concreteName,
-            description: `Constructs ${concreteName}`,
-            promptHint: "Enter something...",
-            inputSchema: defaultStringSchema()
-          },
-          methods,
-          requires: []
-        };
-        agentRegistry.set(baseName, agentType);
-      }
-    };
-  };
-}
 function buildInputSchema(paramTypes) {
   return {
     tag: "structured",
@@ -3011,30 +2963,57 @@ function mapToParameterType(type) {
     val: witType
   };
 }
-function AgentImplementation() {
+function AgentImpl() {
   return function(ctor) {
-    const baseName = ctor.__agent_base_name__;
-    const agentClass = Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
-    if (!baseName) {
-      throw new Error(
-        `Unable to determine base class name for ${ctor.name}Ensure it extends a class decorated with @AgentDefinition.`
-      );
-    }
-    agentInitiators.set(baseName, {
+    const className = ctor.name;
+    if (agentRegistry.has(className)) return ctor;
+    let classType = Metadata.getTypes().filter((type) => type.isClass() && type.name == className)[0];
+    let filteredType = classType;
+    let methodNames = filteredType.getMethods();
+    const methods = methodNames.map((methodInfo) => {
+      const signature = methodInfo.getSignatures()[0];
+      const parameters = signature.getParameters();
+      const returnType = signature.returnType;
+      const methodName = methodInfo.name.toString();
+      const baseMeta = methodMetadata.get(className)?.get(methodName) ?? {};
+      const inputSchema = buildInputSchema(parameters);
+      const outputSchema = buildOutputSchema(returnType);
+      return {
+        name: methodName,
+        description: baseMeta.description ?? "",
+        promptHint: baseMeta.prompt ?? "",
+        inputSchema,
+        outputSchema
+      };
+    });
+    const agentType = {
+      typeName: className,
+      description: className,
+      agentConstructor: {
+        name: className,
+        description: `Constructs ${className}`,
+        promptHint: "Enter something...",
+        inputSchema: defaultStringSchema()
+      },
+      methods,
+      requires: []
+    };
+    agentRegistry.set(className, agentType);
+    agentInitiators.set(className, {
       initiate: (agentName, constructor_params) => {
         const instance = new ctor(...constructor_params);
         const tsAgent = {
-          getId: () => `${baseName}--0`,
+          getId: () => `${className}--0`,
           getDefinition: () => {
-            const def = agentRegistry.get(baseName);
-            if (!def) throw new Error(`AgentType not found for ${baseName}`);
+            const def = agentRegistry.get(className);
+            if (!def) throw new Error(`AgentType not found for ${className}`);
             return def;
           },
           invoke: async (method, args) => {
             const fn = instance[method];
-            if (!fn) throw new Error(`Method ${method} not found on agent ${baseName}`);
-            const def = agentRegistry.get(baseName);
-            const methodInfo = agentClass.getMethod(method);
+            if (!fn) throw new Error(`Method ${method} not found on agent ${className}`);
+            const def = agentRegistry.get(className);
+            const methodInfo = classType.getMethod(method);
             const paramTypes = methodInfo.getSignatures()[0].getParameters();
             const convertedArgs = args.map((witVal, idx) => {
               return convertToTsValue(fromWitValue(witVal), paramTypes[idx].type);
@@ -3045,12 +3024,12 @@ function AgentImplementation() {
               const entriesAsStrings = Array.from(agentRegistry.entries()).map(
                 ([key, value]) => `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`
               );
-              throw new Error(`Method ${method} not found in agent definition for ${baseName} ${def} ${def?.methods}. Available: ${entriesAsStrings.join(", ")}`);
+              throw new Error(`Method ${method} not found in agent definition for ${className} ${def} ${def?.methods}. Available: ${entriesAsStrings.join(", ")}`);
             }
             return convertJsToWitValueUsingSchema(result, methodDef.outputSchema);
           }
         };
-        return new ResolvedAgent(baseName, tsAgent);
+        return new ResolvedAgent(className, tsAgent);
       }
     });
   };
@@ -3131,8 +3110,7 @@ var guest = {
 };
 export {
   Agent,
-  AgentDefinition,
-  AgentImplementation,
+  AgentImpl,
   Description,
   Metadata,
   Prompt,
