@@ -6,7 +6,9 @@ import {TSAgent} from "./ts_agent";
 import {ResolvedAgent} from "./resolved_agent";
 import {convertJsToWitValueUsingSchema} from "./conversions";
 import {Metadata} from "./type_metadata";
-import {ClassType} from "rttist";
+import {ClassType, ParameterInfo, Type} from "rttist";
+import {mapTypeToAnalysedType} from "./type_mapping";
+import {WitTypeBuilder} from "./wit_type_builder";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
 
@@ -55,40 +57,35 @@ export function AgentDefinition<T extends abstract new (...args: any[]) => any>(
 
                 if (agentRegistry.has(concreteName)) return;
 
-                const methodNames = Object.getOwnPropertyNames(concreteClass.prototype)
-                    .filter(m => m !== 'constructor' && typeof concreteClass.prototype[m] === 'function');
+                let classType =
+                    Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
 
-                const methods: AgentMethod[] = methodNames.map(methodName => {
-                    // To be replaced with Rttis, but it requires generation of metadata
-                    const paramTypes: Function[] = Reflect.getMetadata(
-                        'design:paramtypes',
-                        concreteClass.prototype,
-                        methodName
-                    ) ?? [];
+                let filteredType = (classType as ClassType);
+                let methodNames = filteredType.getMethods();
 
-                    const returnType: Function | undefined = Reflect.getMetadata(
-                        'design:returntype',
-                        concreteClass.prototype,
-                        methodName
-                    );
 
-                    let classType =
-                        Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
+                const methods: AgentMethod[] = methodNames.map(methodInfo => {
+                    const signature = methodInfo.getSignatures()[0];
 
-                    let filteredType = (classType as ClassType);
-                    let methodInfo = filteredType.getMethod(methodName)!;
-                    let askSignature = methodInfo.getSignatures()[0];
+                    const parameters = signature.getParameters();
 
-                    const baseMeta = methodMetadata.get(BaseClass.name)?.get(methodName) ?? {};
+                    const returnType: Type = signature.returnType;
 
-                    const finalPromptHint = `${baseMeta.prompt ?? ''}  -- more metadata --- ${askSignature}`;
+                    const methodName = methodInfo.name.toString();
+
+                    const baseMeta =
+                        methodMetadata.get(BaseClass.name)?.get(methodName) ?? {};
+
+                    const inputSchema = buildInputSchema(parameters);
+
+                    const outputSchema = buildOutputSchema(returnType);
 
                     return {
                         name: methodName,
                         description: baseMeta.description ?? '',
-                        promptHint: finalPromptHint,
-                        inputSchema: buildInputSchema(paramTypes),
-                        outputSchema: buildOutputSchema(returnType),
+                        promptHint: baseMeta.prompt ?? '',
+                        inputSchema: inputSchema,
+                        outputSchema: outputSchema
                     };
                 });
 
@@ -111,41 +108,34 @@ export function AgentDefinition<T extends abstract new (...args: any[]) => any>(
     };
 }
 
-function buildInputSchema(paramTypes: Function[]): DataSchema {
+function buildInputSchema(paramTypes: readonly ParameterInfo[]): DataSchema {
     return {
         tag: 'structured',
         val: {
-            parameters: paramTypes.map(mapTypeToSchema)
+            parameters: paramTypes.map((parameterInfo) => mapToParameterType(parameterInfo.type))
         }
     };
 }
 
-function buildOutputSchema(returnType?: Function): DataSchema {
+function buildOutputSchema(returnType: Type): DataSchema {
     return {
         tag: 'structured',
         val: {
-            parameters: [mapTypeToSchema(returnType)]
+            parameters: [mapToParameterType(returnType)]
         }
     };
 }
 
 
-// Temporary function, we need rttist to keep track of generic types
-function mapTypeToSchema(type?: Function): ParameterType {
-    console.log('mapTypeToSchema', type);
-    switch (type) {
-        case String:
-            return { tag: 'wit', val: {
-                nodes: [{
-                    tag: "prim-string-type",
-                }]}};
+function mapToParameterType(type: Type): ParameterType {
+    const analysedType = mapTypeToAnalysedType(type)
+    const witType = WitTypeBuilder.buildWitType(analysedType)
 
-        default:
-            return { tag: 'wit', val: {
-                    nodes: [{
-                        tag: "prim-string-type",
-                    }]}};
-    }
+    return {
+        tag: 'wit',
+        val: witType
+    };
+
 }
 
 export function AgentImplementation() {

@@ -468,7 +468,7 @@ var Reflect2;
         k2++;
       }
     }
-    function Type(x2) {
+    function Type2(x2) {
       if (x2 === null)
         return 1;
       switch (typeof x2) {
@@ -501,7 +501,7 @@ var Reflect2;
       return typeof x2 === "object" ? x2 !== null : typeof x2 === "function";
     }
     function ToPrimitive(input, PreferredType) {
-      switch (Type(input)) {
+      switch (Type2(input)) {
         case 0:
           return input;
         case 1:
@@ -581,7 +581,7 @@ var Reflect2;
       return typeof argument === "function";
     }
     function IsPropertyKey(argument) {
-      switch (Type(argument)) {
+      switch (Type2(argument)) {
         case 3:
           return true;
         case 4:
@@ -2145,6 +2145,344 @@ var Metadata = new _e({
   nullability: false
 }, "@user-code", B);
 
+// src/analysed_type.ts
+var analysedType = {
+  field: (name, typ) => ({ name, typ }),
+  case: (name, typ) => ({ name, typ }),
+  optCase: (name, typ) => ({ name, typ }),
+  unitCase: (name) => ({ name }),
+  bool: () => ({ kind: "bool" }),
+  str: () => ({ kind: "str" }),
+  chr: () => ({ kind: "chr" }),
+  f64: () => ({ kind: "f64" }),
+  f32: () => ({ kind: "f32" }),
+  u64: () => ({ kind: "u64" }),
+  s64: () => ({ kind: "s64" }),
+  u32: () => ({ kind: "u32" }),
+  s32: () => ({ kind: "s32" }),
+  u16: () => ({ kind: "u16" }),
+  s16: () => ({ kind: "s16" }),
+  u8: () => ({ kind: "u8" }),
+  s8: () => ({ kind: "s8" }),
+  list: (inner) => ({ kind: "list", value: { inner } }),
+  option: (inner) => ({ kind: "option", value: { inner } }),
+  tuple: (items) => ({ kind: "tuple", value: { items } }),
+  record: (fields) => ({ kind: "record", value: { fields } }),
+  flags: (names) => ({ kind: "flags", value: { names } }),
+  enum: (cases) => ({ kind: "enum", value: { cases } }),
+  variant: (cases) => ({ kind: "variant", value: { cases } }),
+  resultOk: (ok) => ({ kind: "result", value: { ok } }),
+  resultErr: (err) => ({ kind: "result", value: { err } }),
+  result: (ok, err) => ({ kind: "result", value: { ok, err } }),
+  handle: (resourceId, mode) => ({ kind: "handle", value: { resourceId, mode } })
+};
+
+// src/type_mapping.ts
+function mapTypeToAnalysedType(type) {
+  switch (type.kind) {
+    case u.Intrinsic:
+    case u.False:
+      return analysedType.bool();
+    case u.True:
+      return analysedType.bool();
+    case u.DataView:
+      return analysedType.list(analysedType.u8());
+    case u.MapDefinition:
+      const mapKeyType = type.getTypeArguments?.()[0];
+      const mapValueType = type.getTypeArguments?.()[1];
+      const key = mapTypeToAnalysedType(mapKeyType);
+      const value = mapTypeToAnalysedType(mapValueType);
+      return analysedType.list(analysedType.tuple([key, value]));
+    case u.WeakMapDefinition:
+      const weakMapKeyType = type.getTypeArguments?.()[0];
+      const weakMapValueType = type.getTypeArguments?.()[1];
+      const weakKey = mapTypeToAnalysedType(weakMapKeyType);
+      const weakValue = mapTypeToAnalysedType(weakMapValueType);
+      return analysedType.list(analysedType.tuple([weakKey, weakValue]));
+    case u.SetDefinition:
+    case u.WeakSetDefinition:
+      const setType = type.getTypeArguments?.()[0];
+      if (!setType) {
+        throw new Error("Set must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(setType));
+    case u.GeneratorDefinition:
+      const genType = type.getTypeArguments?.()[0];
+      if (!genType) {
+        throw new Error("Generator must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(genType));
+    case u.AsyncGeneratorDefinition:
+      const generatorType = type.getTypeArguments?.()[0];
+      if (!generatorType) {
+        throw new Error("Generator must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(generatorType));
+    case u.IteratorDefinition:
+      const iteratorType = type.getTypeArguments?.()[0];
+      if (!iteratorType) {
+        throw new Error("Iterator must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(iteratorType));
+    case u.IterableDefinition:
+      const iterableType = type.getTypeArguments?.()[0];
+      if (!iterableType) {
+        throw new Error("Iterable must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(iterableType));
+    case u.IterableIteratorDefinition:
+      const iterableIteratorType = type.getTypeArguments?.()[0];
+      if (!iterableIteratorType) {
+        throw new Error("IterableIterator must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(iterableIteratorType));
+    case u.AsyncIteratorDefinition:
+      const asyncIteratorType = type.getTypeArguments?.()[0];
+      if (!asyncIteratorType) {
+        throw new Error("AsyncIterator must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(asyncIteratorType));
+    case u.AsyncIterableDefinition:
+      const asyncIterableType = type.getTypeArguments?.()[0];
+      if (!asyncIterableType) {
+        throw new Error("AsyncIterable must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(asyncIterableType));
+    case u.AsyncIterableIteratorDefinition:
+      const asyncIterableIteratorType = type.getTypeArguments?.()[0];
+      if (!asyncIterableIteratorType) {
+        throw new Error("AsyncIterableIterator must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(asyncIterableIteratorType));
+    case u.Type:
+      const arg = type.getTypeArguments?.()[0];
+      if (!arg) {
+        throw new Error("Type must have a type argument");
+      }
+      return mapTypeToAnalysedType(arg);
+    // To be handled
+    case u.Module:
+    case u.Namespace:
+    case u.Object:
+    case u.Interface:
+    case u.Class:
+    case u.Union:
+    case u.TemplateLiteral:
+    case u.Intersection:
+    case u.ConditionalType:
+    case u.IndexedAccess:
+    case u.TypeParameter:
+    case u.Alias:
+    case u.Method:
+    case u.Function:
+    case u.GeneratorFunction:
+    case u.EnumLiteral:
+    case u.RegExpLiteral:
+    case u.Enum:
+    case u.UniqueSymbol:
+    case u.ESSymbol:
+    case u.Generator:
+    case u.AsyncGenerator:
+    case u.Iterator:
+    case u.Iterable:
+    case u.IterableIterator:
+    case u.AsyncIterator:
+    case u.AsyncIterable:
+    case u.AsyncIterableIterator:
+    case u.Jsx:
+    case u.TypeCtor:
+    case u.Unknown:
+    case u.Any:
+    case u.Never:
+    case u.Void:
+      throw new TypeError("unsupported type in Golem " + type.kind);
+    case u.Undefined:
+      throw new TypeError("undefined type is not supported in Golem");
+    case u.Null:
+      return analysedType.option(analysedType.str());
+    case u.Boolean:
+      return analysedType.bool();
+    case u.BigInt:
+    case u.Float64Array:
+      return analysedType.f64();
+    case u.Number:
+      return analysedType.f64();
+    case u.String:
+      return analysedType.str();
+    case u.Symbol:
+    case u.NonPrimitiveObject:
+    case u.FunctionType:
+    case u.Atomics:
+      throw new TypeError("type is not supported in Golem");
+    case u.Date:
+    case u.RegExp:
+      return analysedType.str();
+    case u.Error:
+      return analysedType.resultErr(analysedType.str());
+    case u.Int8Array:
+      return analysedType.list(analysedType.s8());
+    case u.Uint8Array:
+    case u.Uint8ClampedArray:
+    case u.ArrayBuffer:
+    case u.SharedArrayBuffer:
+      return analysedType.list(analysedType.u8());
+    case u.Int16Array:
+      return analysedType.list(analysedType.s16());
+    case u.Uint16Array:
+      return analysedType.list(analysedType.u16());
+    case u.Int32Array:
+      return analysedType.list(analysedType.s32());
+    case u.Uint32Array:
+      return analysedType.list(analysedType.u32());
+    case u.Float32Array:
+      return analysedType.list(analysedType.f32());
+    case u.BigInt64Array:
+      return analysedType.list(analysedType.s64());
+    case u.BigUint64Array:
+      return analysedType.list(analysedType.u64());
+    case u.Invalid:
+      const typeArgument = type.getTypeArguments?.()[0];
+      if (!typeArgument) {
+        throw new Error("Promise must have a type argument");
+      }
+      return mapTypeToAnalysedType(typeArgument);
+    case u.NumberLiteral:
+      return analysedType.f64();
+    case u.BigIntLiteral:
+      return analysedType.s64();
+    case u.StringLiteral:
+      return analysedType.str();
+    case u.Promise:
+      const promiseType = type.getTypeArguments?.()[0];
+      if (!promiseType) {
+        throw new Error("Promise must have a type argument");
+      }
+      throw new Error(`Promise ${promiseType}`);
+      return mapTypeToAnalysedType(promiseType);
+    case u.PromiseDefinition:
+      const promiseDefType = type.getTypeArguments?.()[0];
+      if (!promiseDefType) {
+        throw new Error("Promise must have a type argument");
+      }
+      throw new Error(`PromiseDefType ${promiseDefType}`);
+      return analysedType.option(mapTypeToAnalysedType(promiseDefType));
+    case u.ObjectType:
+      const obj = type;
+      const fields = obj.getProperties().map((prop) => {
+        return analysedType.field(prop.name.toString(), mapTypeToAnalysedType(prop.type));
+      });
+      return analysedType.record(fields);
+    case u.TupleDefinition:
+      const tupleTypes = type.getTypeArguments?.().map(mapTypeToAnalysedType) || [];
+      return analysedType.tuple(tupleTypes);
+    case u.ArrayDefinition:
+    case u.ReadonlyArrayDefinition:
+      const elementType = type.getTypeArguments?.()[0];
+      if (!elementType) {
+        throw new Error("Array must have a type argument");
+      }
+      return analysedType.list(mapTypeToAnalysedType(elementType));
+  }
+}
+
+// src/wit_type_builder.ts
+var WitTypeBuilder = class _WitTypeBuilder {
+  constructor() {
+    this.nodes = [];
+    this.mapping = /* @__PURE__ */ new Map();
+  }
+  static buildWitType(typ) {
+    const builder = new _WitTypeBuilder();
+    builder.add(typ);
+    return builder.build();
+  }
+  add(typ) {
+    const hash = JSON.stringify(typ);
+    if (this.mapping.has(hash)) {
+      return this.mapping.get(hash);
+    }
+    const idx = this.nodes.length;
+    this.nodes.push({ tag: "prim-bool-type" });
+    const node = this.convert(typ);
+    this.nodes[idx] = node;
+    this.mapping.set(hash, idx);
+    return idx;
+  }
+  build() {
+    return { nodes: this.nodes };
+  }
+  convert(typ) {
+    switch (typ.kind) {
+      case "variant": {
+        const cases = typ.value.cases.map(
+          (c2) => [c2.name, c2.typ ? this.add(c2.typ) : void 0]
+        );
+        return { tag: "variant-type", val: cases };
+      }
+      case "result": {
+        const ok = typ.value.ok ? this.add(typ.value.ok) : void 0;
+        const err = typ.value.err ? this.add(typ.value.err) : void 0;
+        return { tag: "result-type", val: [ok, err] };
+      }
+      case "option": {
+        const inner = this.add(typ.value.inner);
+        return { tag: "option-type", val: inner };
+      }
+      case "enum":
+        return { tag: "enum-type", val: typ.value.cases };
+      case "flags":
+        return { tag: "flags-type", val: typ.value.names };
+      case "record": {
+        const fields = typ.value.fields.map(
+          (f) => [f.name, this.add(f.typ)]
+        );
+        return { tag: "record-type", val: fields };
+      }
+      case "tuple": {
+        const elements = typ.value.items.map((item) => this.add(item));
+        return { tag: "tuple-type", val: elements };
+      }
+      case "list": {
+        const inner = this.add(typ.value.inner);
+        return { tag: "list-type", val: inner };
+      }
+      case "str":
+        return { tag: "prim-string-type" };
+      case "chr":
+        return { tag: "prim-char-type" };
+      case "f64":
+        return { tag: "prim-f64-type" };
+      case "f32":
+        return { tag: "prim-f32-type" };
+      case "u64":
+        return { tag: "prim-u64-type" };
+      case "s64":
+        return { tag: "prim-s64-type" };
+      case "u32":
+        return { tag: "prim-u32-type" };
+      case "s32":
+        return { tag: "prim-s32-type" };
+      case "u16":
+        return { tag: "prim-u16-type" };
+      case "s16":
+        return { tag: "prim-s16-type" };
+      case "u8":
+        return { tag: "prim-u8-type" };
+      case "s8":
+        return { tag: "prim-s8-type" };
+      case "bool":
+        return { tag: "prim-bool-type" };
+      case "handle": {
+        const resId = typ.value.resourceId;
+        const mode = typ.value.mode === "owned" ? "owned" : "borrowed";
+        return { tag: "handle-type", val: [resId, mode] };
+      }
+      default:
+        throw new Error(`Unhandled AnalysedType kind: ${typ.kind}`);
+    }
+  }
+};
+
 // src/registry.ts
 var agentInitiators = /* @__PURE__ */ new Map();
 var agentRegistry = /* @__PURE__ */ new Map();
@@ -2182,30 +2520,23 @@ function AgentDefinition(name) {
         const concreteClass = this.constructor;
         const concreteName = concreteClass.name;
         if (agentRegistry.has(concreteName)) return;
-        const methodNames = Object.getOwnPropertyNames(concreteClass.prototype).filter((m2) => m2 !== "constructor" && typeof concreteClass.prototype[m2] === "function");
-        const methods = methodNames.map((methodName) => {
-          const paramTypes = Reflect.getMetadata(
-            "design:paramtypes",
-            concreteClass.prototype,
-            methodName
-          ) ?? [];
-          const returnType = Reflect.getMetadata(
-            "design:returntype",
-            concreteClass.prototype,
-            methodName
-          );
-          let classType = Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
-          let filteredType = classType;
-          let methodInfo = filteredType.getMethod(methodName);
-          let askSignature = methodInfo.getSignatures()[0];
+        let classType = Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
+        let filteredType = classType;
+        let methodNames = filteredType.getMethods();
+        const methods = methodNames.map((methodInfo) => {
+          const signature = methodInfo.getSignatures()[0];
+          const parameters = signature.getParameters();
+          const returnType = signature.returnType;
+          const methodName = methodInfo.name.toString();
           const baseMeta = methodMetadata.get(BaseClass.name)?.get(methodName) ?? {};
-          const finalPromptHint = `${baseMeta.prompt ?? ""}  -- more metadata --- ${askSignature}`;
+          const inputSchema = buildInputSchema(parameters);
+          const outputSchema = buildOutputSchema(returnType);
           return {
             name: methodName,
             description: baseMeta.description ?? "",
-            promptHint: finalPromptHint,
-            inputSchema: buildInputSchema(paramTypes),
-            outputSchema: buildOutputSchema(returnType)
+            promptHint: baseMeta.prompt ?? "",
+            inputSchema,
+            outputSchema
           };
         });
         const agentType = {
@@ -2229,7 +2560,7 @@ function buildInputSchema(paramTypes) {
   return {
     tag: "structured",
     val: {
-      parameters: paramTypes.map(mapTypeToSchema)
+      parameters: paramTypes.map((parameterInfo) => mapToParameterType(parameterInfo.type))
     }
   };
 }
@@ -2237,26 +2568,17 @@ function buildOutputSchema(returnType) {
   return {
     tag: "structured",
     val: {
-      parameters: [mapTypeToSchema(returnType)]
+      parameters: [mapToParameterType(returnType)]
     }
   };
 }
-function mapTypeToSchema(type) {
-  console.log("mapTypeToSchema", type);
-  switch (type) {
-    case String:
-      return { tag: "wit", val: {
-        nodes: [{
-          tag: "prim-string-type"
-        }]
-      } };
-    default:
-      return { tag: "wit", val: {
-        nodes: [{
-          tag: "prim-string-type"
-        }]
-      } };
-  }
+function mapToParameterType(type) {
+  const analysedType2 = mapTypeToAnalysedType(type);
+  const witType = WitTypeBuilder.buildWitType(analysedType2);
+  return {
+    tag: "wit",
+    val: witType
+  };
 }
 function AgentImplementation() {
   return function(ctor) {

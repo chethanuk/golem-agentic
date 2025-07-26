@@ -3,10 +3,10 @@ import { AgentDefinition, AgentImplementation, Prompt, Description } from 'golem
 
 @AgentDefinition()
 abstract class AssistantAgent {
-    // @ts-ignore (mainly to remove warning for decorators at abstract method levels- this will be a question)
+    //@ts-ignore (mainly to remove warning for decorators at abstract method levels - this will be a question)
     @Prompt("Ask your question")
     @Description("This method allows the agent to answer your question")
-    abstract ask(input: string): Promise<string>;
+    abstract ask(input: string): Promise<string>
 }
 
 @AgentImplementation()
