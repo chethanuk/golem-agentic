@@ -18,13 +18,24 @@ for easier maintainence, such as updating host wit files etc
 
 ### RTTIST installation
 
-User has to install RTTIST, and i think we can help it with the help of golem-cli, and I don't know how exactly,
-but many times user has to install things and given these are within the typescript ecosystem, it shouldn't hurt them
+User should never ever install RTTIST/typegen, and i think we can help it with the help of golem-cli by directly using typegen API.
+golem-cli should re-do what typegen does inspired from code like https://github.com/rttist/rttist/blob/main/packages/plugins/vite6-plugin-rttist/src/index.ts.
 
-The metadata generation pathway is much more convincing to me than deepkit's magic of transformers (or even rttists transformers)
-that we are able to avoid these transformer plugins which can hurt the user with deadly errors
+### RTTIST vs deepkit
 
-Also, always use RC versions
+The metadata generation pathway is much more convincing to me than deepkit's magic of transformers (or even rttists transformers).
+We have more flexibility. Note that, we need type-metadata initialisation before user's code start doing its work.
+
+There are 2 ways to do it.
+1. Load the generated module along with user's module. If the runtime can take an `Array[String]` representing the sorted order of modules 
+to be initialised, that can help avoid using custom transformers/compilers. It gives more flexibility to users if they need to use a specific transformer later on.
+Currently in rust code, I am importing 2 modules along with SDK module - user's module and user's type-metadata-initialisation
+
+2. Use transformer plugin, that will combine everything to 1 user module. But I will be suprised, if we assume that user will never have other initialisers that,
+and end up seeing an existing configuration related to type-metadata - meaning, when we use transformer plugins, we are leaking internal details to what we are doing.
+
+
+Note: RTTIST versions should be the very latest - RC
 
 ```
 npm install -g @rttist/typegen@rc
