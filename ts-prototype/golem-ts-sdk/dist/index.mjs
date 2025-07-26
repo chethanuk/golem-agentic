@@ -2483,6 +2483,437 @@ var WitTypeBuilder = class _WitTypeBuilder {
   }
 };
 
+// src/value_mapping.ts
+function convertToTsValue(wasmRpcValue, expectedType) {
+  switch (expectedType.kind) {
+    case u.Invalid:
+      break;
+    case u.Unknown:
+      break;
+    case u.Any:
+      break;
+    case u.Never:
+      break;
+    case u.Void:
+      break;
+    case u.Undefined:
+      break;
+    case u.Null:
+      if (wasmRpcValue.kind === "option") {
+        return null;
+      } else {
+        throw new Error(`Unrecognized value for ${wasmRpcValue.kind}`);
+      }
+    case u.Intrinsic:
+      break;
+    case u.Boolean:
+      if (wasmRpcValue.kind === "bool") {
+        return wasmRpcValue.value;
+      } else {
+        throw new Error(`Expected boolean, obtained value ${wasmRpcValue}`);
+      }
+    case u.False:
+      if (wasmRpcValue.kind === "bool") {
+        return wasmRpcValue.value;
+      } else {
+        throw new Error(`Expected boolean, obtained value ${wasmRpcValue}`);
+      }
+    case u.True:
+      if (wasmRpcValue.kind === "bool") {
+        return wasmRpcValue.value;
+      } else {
+        throw new Error(`Expected boolean, obtained value ${wasmRpcValue}`);
+      }
+    case u.Number:
+      if (wasmRpcValue.kind === "f64") {
+        return wasmRpcValue.value;
+      } else if (wasmRpcValue.kind === "u8" || wasmRpcValue.kind === "u16" || wasmRpcValue.kind === "u32" || wasmRpcValue.kind === "u64") {
+        return wasmRpcValue.value;
+      } else if (wasmRpcValue.kind === "s8" || wasmRpcValue.kind === "s16" || wasmRpcValue.kind === "s32" || wasmRpcValue.kind === "s64") {
+        return wasmRpcValue.value;
+      } else {
+        throw new Error(`Expected number, obtained value ${wasmRpcValue}`);
+      }
+    case u.BigInt:
+      if (wasmRpcValue.kind == "u64") {
+        return wasmRpcValue.value;
+      } else {
+        throw new Error(`Expected number, obtained value ${wasmRpcValue}`);
+      }
+    case u.String:
+      if (wasmRpcValue.kind === "string") {
+        return wasmRpcValue.value;
+      } else {
+        throw new Error(`Expected string, obtained value ${wasmRpcValue}`);
+      }
+    case u.Symbol:
+      throw new Error(`Unrecognized type for ${wasmRpcValue.kind}`);
+    case u.NonPrimitiveObject:
+      if (wasmRpcValue.kind == "record") {
+        const fieldValues = wasmRpcValue.value;
+        const expectedTypeFields = expectedType.getProperties();
+        return expectedTypeFields.reduce((acc, field, idx) => {
+          const name = field.name.toString();
+          const expectedFieldType = field.type;
+          acc[name] = convertToTsValue(fieldValues[idx], expectedFieldType);
+          return acc;
+        }, {});
+      } else {
+        throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
+      }
+    case u.ObjectType:
+      if (wasmRpcValue.kind === "record") {
+        const fieldValues = wasmRpcValue.value;
+        const expectedTypeFields = expectedType.getProperties();
+        return expectedTypeFields.reduce((acc, field, idx) => {
+          const name = field.name.toString();
+          const expectedFieldType = field.type;
+          acc[name] = convertToTsValue(fieldValues[idx], expectedFieldType);
+          return acc;
+        }, {});
+      } else {
+        throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
+      }
+    case u.FunctionType:
+      throw new Error(`Unrecognized type for ${wasmRpcValue.kind}`);
+    case u.Date:
+      if (wasmRpcValue.kind === "string") {
+        return new Date(wasmRpcValue.value);
+      } else {
+        throw new Error(`Expected date, obtained value ${wasmRpcValue}`);
+      }
+    case u.Error:
+      if (wasmRpcValue.kind === "result") {
+        if (wasmRpcValue.value.err !== void 0) {
+          if (wasmRpcValue.value.err.kind == "string") {
+            return new Error(wasmRpcValue.value.err.value);
+          } else {
+            throw new Error(`Expected error string, obtained value ${wasmRpcValue.value.err}`);
+          }
+        } else {
+          throw new Error(`Expected error, obtained value ${wasmRpcValue}`);
+        }
+      } else {
+        throw new Error(`Expected error, obtained value ${wasmRpcValue}`);
+      }
+    case u.RegExp:
+      if (wasmRpcValue.kind === "string") {
+        return new RegExp(wasmRpcValue.value);
+      } else {
+        throw new Error(`Expected RegExp, obtained value ${wasmRpcValue}`);
+      }
+    case u.Int8Array:
+      if (wasmRpcValue.kind === "list") {
+        return new Int8Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.Number)));
+      } else {
+        throw new Error(`Expected Int8Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.Uint8Array:
+      if (wasmRpcValue.kind === "list") {
+        return new Uint8Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.Number)));
+      } else {
+        throw new Error(`Expected Uint8Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.Uint8ClampedArray:
+      if (wasmRpcValue.kind === "list") {
+        return new Uint8ClampedArray(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.Number)));
+      } else {
+        throw new Error(`Expected Uint8ClampedArray, obtained value ${wasmRpcValue}`);
+      }
+    case u.Int16Array:
+      if (wasmRpcValue.kind === "list") {
+        return new Int16Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.Number)));
+      } else {
+        throw new Error(`Expected Int16Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.Uint16Array:
+      if (wasmRpcValue.kind === "list") {
+        return new Uint16Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.Number)));
+      } else {
+        throw new Error(`Expected Uint16Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.Int32Array:
+      if (wasmRpcValue.kind === "list") {
+        return new Int32Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.Number)));
+      } else {
+        throw new Error(`Expected Int32Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.Uint32Array:
+      if (wasmRpcValue.kind === "list") {
+        return new Uint32Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.Number)));
+      } else {
+        throw new Error(`Expected Uint32Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.Float32Array:
+      if (wasmRpcValue.kind === "list") {
+        return new Float32Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.Number)));
+      } else {
+        throw new Error(`Expected Float32Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.Float64Array:
+      if (wasmRpcValue.kind === "list") {
+        return new Float64Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.Number)));
+      } else {
+        throw new Error(`Expected Float64Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.BigInt64Array:
+      if (wasmRpcValue.kind === "list") {
+        return new BigInt64Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.BigInt)));
+      } else {
+        throw new Error(`Expected BigInt64Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.BigUint64Array:
+      if (wasmRpcValue.kind === "list") {
+        return new BigUint64Array(wasmRpcValue.value.map((v2) => convertToTsValue(v2, i.BigInt)));
+      } else {
+        throw new Error(`Expected BigUint64Array, obtained value ${wasmRpcValue}`);
+      }
+    case u.ArrayBuffer:
+      if (wasmRpcValue.kind === "list") {
+        const byteArray = wasmRpcValue.value.map((v2) => {
+          const convertedValue = convertToTsValue(v2, i.Number);
+          if (typeof convertedValue !== "number") {
+            throw new Error(`Expected number, obtained value ${convertedValue}`);
+          }
+          return convertedValue;
+        });
+        return new Uint8Array(byteArray).buffer;
+      } else {
+        throw new Error(`Expected ArrayBuffer, obtained value ${wasmRpcValue}`);
+      }
+    case u.SharedArrayBuffer:
+      if (wasmRpcValue.kind === "list") {
+        const byteArray = wasmRpcValue.value.map((v2) => {
+          const convertedValue = convertToTsValue(v2, i.Number);
+          if (typeof convertedValue !== "number") {
+            throw new Error(`Expected number, obtained value ${convertedValue}`);
+          }
+          return convertedValue;
+        });
+        return new Uint8Array(byteArray).buffer;
+      } else {
+        throw new Error(`Expected SharedArrayBuffer, obtained value ${wasmRpcValue}`);
+      }
+    case u.Atomics:
+      break;
+    case u.DataView:
+      if (wasmRpcValue.kind === "list") {
+        const byteArray = wasmRpcValue.value.map((v2) => {
+          const convertedValue = convertToTsValue(v2, i.Number);
+          if (typeof convertedValue !== "number") {
+            throw new Error(`Expected number, obtained value ${convertedValue}`);
+          }
+          return convertedValue;
+        });
+        return new DataView(new Uint8Array(byteArray).buffer);
+      } else {
+        throw new Error(`Expected DataView, obtained value ${wasmRpcValue}`);
+      }
+    case u.ArrayDefinition:
+      break;
+    case u.ReadonlyArrayDefinition:
+      break;
+    case u.TupleDefinition:
+      break;
+    case u.MapDefinition:
+      break;
+    case u.WeakMapDefinition:
+      break;
+    case u.SetDefinition:
+      break;
+    case u.WeakSetDefinition:
+      break;
+    case u.PromiseDefinition:
+      break;
+    case u.GeneratorDefinition:
+      break;
+    case u.AsyncGeneratorDefinition:
+      break;
+    case u.IteratorDefinition:
+      break;
+    case u.IterableDefinition:
+      break;
+    case u.IterableIteratorDefinition:
+      break;
+    case u.AsyncIteratorDefinition:
+      break;
+    case u.AsyncIterableDefinition:
+      break;
+    case u.AsyncIterableIteratorDefinition:
+      break;
+    case u.Module:
+      break;
+    case u.Namespace:
+      break;
+    case u.Object:
+      break;
+    case u.Interface:
+      break;
+    case u.Class:
+      break;
+    case u.Union:
+      break;
+    case u.Intersection:
+      break;
+    case u.ConditionalType:
+      break;
+    case u.IndexedAccess:
+      break;
+    case u.TypeParameter:
+      break;
+    case u.Alias:
+      break;
+    case u.Method:
+      break;
+    case u.Function:
+      break;
+    case u.GeneratorFunction:
+      break;
+    case u.NumberLiteral:
+      break;
+    case u.BigIntLiteral:
+      break;
+    case u.StringLiteral:
+      if (wasmRpcValue.kind === "string") {
+        return wasmRpcValue.value;
+      } else {
+        throw new Error(`Unrecognized value for ${wasmRpcValue.kind}`);
+      }
+    case u.TemplateLiteral:
+      break;
+    case u.EnumLiteral:
+      break;
+    case u.RegExpLiteral:
+      break;
+    case u.Enum:
+      break;
+    case u.UniqueSymbol:
+      break;
+    case u.ESSymbol:
+      break;
+    case u.Promise:
+      break;
+    case u.Generator:
+      break;
+    case u.AsyncGenerator:
+      break;
+    case u.Iterator:
+      break;
+    case u.Iterable:
+      break;
+    case u.IterableIterator:
+      break;
+    case u.AsyncIterator:
+      break;
+    case u.AsyncIterable:
+      break;
+    case u.AsyncIterableIterator:
+      break;
+    case u.Jsx:
+      break;
+    case u.Type:
+      break;
+    case u.TypeCtor:
+      break;
+  }
+}
+
+// src/value.ts
+function fromWitValue(wit) {
+  if (!wit.nodes.length) throw new Error("Empty nodes in WitValue");
+  return buildTree(wit.nodes[0], wit.nodes);
+}
+function buildTree(node, nodes) {
+  switch (node.tag) {
+    case "record-value":
+      return {
+        kind: "record",
+        value: node.val.map((i2) => buildTree(nodes[i2], nodes))
+      };
+    case "variant-value": {
+      const [caseIdx, maybeIndex] = node.val;
+      return {
+        kind: "variant",
+        caseIdx,
+        caseValue: maybeIndex !== void 0 ? buildTree(nodes[maybeIndex], nodes) : void 0
+      };
+    }
+    case "enum-value":
+      return { kind: "enum", value: node.val };
+    case "flags-value":
+      return { kind: "flags", value: node.val };
+    case "tuple-value":
+      return {
+        kind: "tuple",
+        value: node.val.map((i2) => buildTree(nodes[i2], nodes))
+      };
+    case "list-value":
+      return {
+        kind: "list",
+        value: node.val.map((i2) => buildTree(nodes[i2], nodes))
+      };
+    case "option-value":
+      return {
+        kind: "option",
+        value: node.val !== void 0 ? buildTree(nodes[node.val], nodes) : void 0
+      };
+    case "result-value": {
+      const res = node.val;
+      if (res.tag === "ok") {
+        return {
+          kind: "result",
+          value: {
+            ok: res.val !== void 0 ? buildTree(nodes[res.val], nodes) : void 0
+          }
+        };
+      } else {
+        return {
+          kind: "result",
+          value: {
+            err: res.val !== void 0 ? buildTree(nodes[res.val], nodes) : void 0
+          }
+        };
+      }
+    }
+    case "prim-u8":
+      return { kind: "u8", value: node.val };
+    case "prim-u16":
+      return { kind: "u16", value: node.val };
+    case "prim-u32":
+      return { kind: "u32", value: node.val };
+    case "prim-u64":
+      return { kind: "u64", value: node.val };
+    case "prim-s8":
+      return { kind: "s8", value: node.val };
+    case "prim-s16":
+      return { kind: "s16", value: node.val };
+    case "prim-s32":
+      return { kind: "s32", value: node.val };
+    case "prim-s64":
+      return { kind: "s64", value: node.val };
+    case "prim-float32":
+      return { kind: "f32", value: node.val };
+    case "prim-float64":
+      return { kind: "f64", value: node.val };
+    case "prim-char":
+      return { kind: "char", value: node.val };
+    case "prim-bool":
+      return { kind: "bool", value: node.val };
+    case "prim-string":
+      return { kind: "string", value: node.val };
+    case "handle": {
+      const [uri, resourceId] = node.val;
+      return {
+        kind: "handle",
+        uri: uri.value,
+        resourceId
+      };
+    }
+    default:
+      throw new Error(`Unhandled tag: ${node.tag}`);
+  }
+}
+
 // src/registry.ts
 var agentInitiators = /* @__PURE__ */ new Map();
 var agentRegistry = /* @__PURE__ */ new Map();
@@ -2583,6 +3014,7 @@ function mapToParameterType(type) {
 function AgentImplementation() {
   return function(ctor) {
     const baseName = ctor.__agent_base_name__;
+    const agentClass = Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0];
     if (!baseName) {
       throw new Error(
         `Unable to determine base class name for ${ctor.name}Ensure it extends a class decorated with @AgentDefinition.`
@@ -2602,20 +3034,17 @@ function AgentImplementation() {
             const fn = instance[method];
             if (!fn) throw new Error(`Method ${method} not found on agent ${baseName}`);
             const def = agentRegistry.get(baseName);
-            const paramTypes = Reflect.getMetadata(
-              "design:paramtypes",
-              Object.getPrototypeOf(instance),
-              method
-            ) ?? [];
-            const convertedArgs = args.map(
-              (witVal, idx) => convertWitValueToJs(witVal, paramTypes[idx])
-            );
+            const methodInfo = agentClass.getMethod(method);
+            const paramTypes = methodInfo.getSignatures()[0].getParameters();
+            const convertedArgs = args.map((witVal, idx) => {
+              return convertToTsValue(fromWitValue(witVal), paramTypes[idx].type);
+            });
             const result = await fn.apply(instance, convertedArgs);
             const methodDef = def?.methods.find((m2) => m2.name === method);
-            const entriesAsStrings = Array.from(agentRegistry.entries()).map(
-              ([key, value]) => `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`
-            );
             if (!methodDef) {
+              const entriesAsStrings = Array.from(agentRegistry.entries()).map(
+                ([key, value]) => `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`
+              );
               throw new Error(`Method ${method} not found in agent definition for ${baseName} ${def} ${def?.methods}. Available: ${entriesAsStrings.join(", ")}`);
             }
             return convertJsToWitValueUsingSchema(result, methodDef.outputSchema);
@@ -2625,14 +3054,6 @@ function AgentImplementation() {
       }
     });
   };
-}
-function convertWitValueToJs(value, expectedType) {
-  switch (expectedType) {
-    case String:
-      if (value.nodes[0].tag === "prim-string") return value.nodes[0].val;
-      break;
-  }
-  throw new Error(`Cannot convert WitValue to ${expectedType.name}`);
 }
 function defaultStringSchema() {
   return {
@@ -2654,8 +3075,8 @@ var Agent = class {
   constructor(name, params) {
     console.log("Agent constructor called", name, params);
     const initiator = agentInitiators.get(name);
-    let entries = Array.from(agentInitiators.keys());
     if (!initiator) {
+      const entries = Array.from(agentInitiators.keys());
       throw new Error(`No implementation found for agent: ${name}. Valid entries are ${entries.join(", ")}`);
     }
     this.resolvedAgent = initiator.initiate(name, params);

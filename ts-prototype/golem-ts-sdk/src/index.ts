@@ -15,15 +15,14 @@ export class Agent {
     constructor(name: string, params: bindings.guest.WitValue[]) {
         console.log("Agent constructor called", name, params);
 
-
         const initiator = agentInitiators.get(name);
 
-        let entries = Array.from(agentInitiators.keys());
-
-
         if (!initiator) {
+            const entries = Array.from(agentInitiators.keys());
+
             throw new Error(`No implementation found for agent: ${name}. Valid entries are ${entries.join(", ")}`);
         }
+
         this.resolvedAgent = initiator.initiate(name, params);
 
     }
@@ -53,6 +52,7 @@ export class Agent {
 
 async function getAgent(agentId: string): Promise<bindings.guest.AgentRef> {
     console.log("getAgent called", agentId);
+
     return {
         agentId: agentId,
         agentName: "dummy-agent",
@@ -62,6 +62,7 @@ async function getAgent(agentId: string): Promise<bindings.guest.AgentRef> {
 
 async function discoverAgents(): Promise<bindings.guest.AgentRef[]> {
     console.log("discoverAgents called");
+
     return [
         {
             agentId: "dummy-agent-id",
@@ -73,6 +74,7 @@ async function discoverAgents(): Promise<bindings.guest.AgentRef[]> {
 
 async function discoverAgentTypes(): Promise<bindings.guest.AgentType[]> {
     console.log("discoverAgentTypes called");
+
     return getRegisteredAgents();
 }
 

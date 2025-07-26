@@ -9,6 +9,8 @@ import {Metadata} from "./type_metadata";
 import {ClassType, ParameterInfo, Type} from "rttist";
 import {mapTypeToAnalysedType} from "./type_mapping";
 import {WitTypeBuilder} from "./wit_type_builder";
+import {convertToTsValue} from "./value_mapping";
+import {fromWitValue} from "./value";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
 
@@ -143,6 +145,9 @@ export function AgentImplementation() {
 
         const baseName = (ctor as any).__agent_base_name__;
 
+        const agentClass =
+            Metadata.getTypes().filter((type) => type.isClass() && type.name == baseName)[0] as ClassType;
+
         if (!baseName) {
             throw new Error(
                 `Unable to determine base class name for ${ctor.name}` +
@@ -167,26 +172,25 @@ export function AgentImplementation() {
 
                         const def = agentRegistry.get(baseName);
 
-                        const paramTypes: Function[] = Reflect.getMetadata(
-                            'design:paramtypes',
-                            Object.getPrototypeOf(instance),
-                            method
-                        ) ?? [];
+                        const methodInfo = agentClass.getMethod(method)!;
+
+                        const paramTypes: readonly ParameterInfo[] =
+                            methodInfo.getSignatures()[0].getParameters();
 
 
-                        const convertedArgs = args.map((witVal, idx) =>
-                            convertWitValueToJs(witVal, paramTypes[idx])
-                        );
+                        const convertedArgs = args.map((witVal, idx) => {
+                            return convertToTsValue(fromWitValue(witVal), paramTypes[idx].type)
+                        });
 
                         const result = await fn.apply(instance, convertedArgs);
 
                         const methodDef = def?.methods.find(m => m.name === method);
 
-                        const entriesAsStrings = Array.from(agentRegistry.entries()).map(
-                            ([key, value]) => `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`
-                        );
-
                         if (!methodDef) {
+                            const entriesAsStrings = Array.from(agentRegistry.entries()).map(
+                                ([key, value]) => `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`
+                            );
+
                             throw new Error(`Method ${method} not found in agent definition for ${baseName} ${def} ${def?.methods}. Available: ${ entriesAsStrings.join(", ")}`);
                         }
 
@@ -200,15 +204,6 @@ export function AgentImplementation() {
     };
 }
 
-
-function convertWitValueToJs(value: WitValue, expectedType: Function): any {
-    switch (expectedType) {
-        case String:
-            if (value.nodes[0].tag === 'prim-string') return value.nodes[0].val
-            break;
-    }
-    throw new Error(`Cannot convert WitValue to ${expectedType.name}`);
-}
 
 
 function defaultStringSchema(): DataSchema {
