@@ -1,3 +1,5 @@
+The structure will change quite a bit once the SDK build starts!
+
 `generated_dnd` is a generated rust, however, manually added to load the user's JS along with sdk module. User's module is imported 
 in the runtime. 
 
