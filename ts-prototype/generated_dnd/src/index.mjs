@@ -19,7 +19,7 @@ var AssistantAgent = class AssistantAgent2 extends Agent {
     __name(this, "AssistantAgent");
   }
   async ask(name) {
-    const weather = new WeatherAgent();
+    const weather = WeatherAgent.createRemote();
     return weather.getWeather(name);
   }
 };

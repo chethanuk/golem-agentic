@@ -127,6 +127,38 @@ export function AgentImpl() {
 
         agentRegistry.set(className, agentType);
 
+        (ctor as any).createRemote = (...args: any[]) => {
+            const instance = new ctor(...args);
+            return new Proxy(instance, {
+                get(target, prop) {
+                    const val = target[prop];
+                    if (typeof val === "function") {
+                        return (...fnArgs: any[]) => {
+                            console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
+                            return Promise.resolve(`<<remote ${String(prop)} result>>`);
+                        };
+                    }
+                    return val;
+                }
+            });
+        };
+
+        (ctor as any).createLocal = (...args: any[]) => {
+            const instance = new ctor(...args);
+            return new Proxy(instance, {
+                get(target, prop) {
+                    const val = target[prop];
+                    if (typeof val === "function") {
+                        return (...fnArgs: any[]) => {
+                            console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
+                            return Promise.resolve(`<<local ${String(prop)} result>>`);
+                        };
+                    }
+                    return val;
+                }
+            });
+        };
+
         agentInitiators.set(className, {
             initiate: (agentName: string, constructor_params: WitValue[]) => {
                 const instance = new ctor(...constructor_params);

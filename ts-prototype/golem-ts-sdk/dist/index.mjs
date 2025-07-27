@@ -2999,6 +2999,36 @@ function AgentImpl() {
       requires: []
     };
     agentRegistry.set(className, agentType);
+    ctor.createRemote = (...args) => {
+      const instance = new ctor(...args);
+      return new Proxy(instance, {
+        get(target, prop) {
+          const val = target[prop];
+          if (typeof val === "function") {
+            return (...fnArgs) => {
+              console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
+              return Promise.resolve(`<<remote ${String(prop)} result>>`);
+            };
+          }
+          return val;
+        }
+      });
+    };
+    ctor.createLocal = (...args) => {
+      const instance = new ctor(...args);
+      return new Proxy(instance, {
+        get(target, prop) {
+          const val = target[prop];
+          if (typeof val === "function") {
+            return (...fnArgs) => {
+              console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
+              return Promise.resolve(`<<local ${String(prop)} result>>`);
+            };
+          }
+          return val;
+        }
+      });
+    };
     agentInitiators.set(className, {
       initiate: (agentName, constructor_params) => {
         const instance = new ctor(...constructor_params);
@@ -3057,6 +3087,12 @@ var Agent = class {
       throw new Error(`Agent type not found for ${this.constructor.name}`);
     }
     return type;
+  }
+  static createRemote(...args) {
+    throw new Error("this is automatically implemented");
+  }
+  static createLocal(...args) {
+    throw new Error("this is automatically implemented");
   }
 };
 
