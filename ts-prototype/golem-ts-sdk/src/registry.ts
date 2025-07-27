@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import {AgentMethod, DataSchema, AgentType, ParameterType} from 'golem:agent/common';
 import {AgentInitiator} from "./agent_initiator";
 import {WitValue} from "golem:rpc/types@0.2.1";
-import {TSAgent} from "./ts_agent";
+import {AgentInternal} from "./ts_agent";
 import {ResolvedAgent} from "./resolved_agent";
 import {convertJsToWitValueUsingSchema} from "./conversions";
 import {Metadata} from "./type_metadata";
@@ -74,7 +74,7 @@ function mapToParameterType(type: Type): ParameterType {
 
 }
 
-export function Agent() {
+export function AgentImpl() {
     return function <T extends new (...args: any[]) => any>(ctor: T){
 
         const className = ctor.name;
@@ -131,7 +131,7 @@ export function Agent() {
             initiate: (agentName: string, constructor_params: WitValue[]) => {
                 const instance = new ctor(...constructor_params);
 
-                const tsAgent: TSAgent = {
+                const tsAgent: AgentInternal = {
                     getId: () => `${className}--0`,
                     getDefinition: () => {
                         const def = agentRegistry.get(className);
@@ -148,7 +148,6 @@ export function Agent() {
 
                         const paramTypes: readonly ParameterInfo[] =
                             methodInfo.getSignatures()[0].getParameters();
-
 
                         const convertedArgs = args.map((witVal, idx) => {
                             return convertToTsValue(fromWitValue(witVal), paramTypes[idx].type)

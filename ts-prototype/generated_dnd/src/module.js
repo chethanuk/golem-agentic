@@ -2963,7 +2963,7 @@ function mapToParameterType(type) {
     val: witType
   };
 }
-function Agent() {
+function AgentImpl() {
   return function(ctor) {
     const className = ctor.name;
     if (agentRegistry.has(className)) return ctor;
@@ -3046,6 +3046,20 @@ function defaultStringSchema() {
   };
 }
 
+// src/agent.ts
+var Agent = class {
+  getId() {
+    return agentRegistry.get(this.constructor.name)?.typeName ?? `${this.constructor.name}--0`;
+  }
+  getAgentType() {
+    const type = agentRegistry.get(this.constructor.name);
+    if (!type) {
+      throw new Error(`Agent type not found for ${this.constructor.name}`);
+    }
+    return type;
+  }
+};
+
 // src/index.ts
 function getRegisteredAgents() {
   return Array.from(agentRegistry.values());
@@ -3110,6 +3124,7 @@ var guest = {
 };
 export {
   Agent,
+  AgentImpl,
   Description,
   Metadata,
   Prompt,

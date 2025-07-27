@@ -17,6 +17,7 @@ function add(library, stripInternals) {
     children: [
       "@golem-ts-sdk",
       "@golem-ts-sdk",
+      "@golem-ts-sdk",
       "@golem-ts-sdk"
     ],
     types: [
@@ -63,10 +64,11 @@ function add(library, stripInternals) {
             returnType: "#void"
           }
         ],
+        extends: "@golem-ts-sdk:Agent",
         decorators: [
           {
-            id: "@golem-ts-sdk:Agent",
-            name: "Agent",
+            id: "@golem-ts-sdk:AgentImpl",
+            name: "AgentImpl",
             args: []
           }
         ],
@@ -115,10 +117,11 @@ function add(library, stripInternals) {
             returnType: "#void"
           }
         ],
+        extends: "@golem-ts-sdk:Agent",
         decorators: [
           {
-            id: "@golem-ts-sdk:Agent",
-            name: "Agent",
+            id: "@golem-ts-sdk:AgentImpl",
+            name: "AgentImpl",
             args: []
           }
         ],

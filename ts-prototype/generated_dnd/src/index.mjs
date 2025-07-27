@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // src/index.ts
-import { Agent, Prompt, Description } from "golem-ts-sdk";
+import { AgentImpl, Agent, Prompt, Description } from "golem-ts-sdk";
 function _ts_decorate(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -14,7 +14,7 @@ function _ts_metadata(k, v) {
   if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 }
 __name(_ts_metadata, "_ts_metadata");
-var AssistantAgent = class AssistantAgent2 {
+var AssistantAgent = class AssistantAgent2 extends Agent {
   static {
     __name(this, "AssistantAgent");
   }
@@ -33,9 +33,9 @@ _ts_decorate([
   _ts_metadata("design:returntype", typeof Promise === "undefined" ? Object : Promise)
 ], AssistantAgent.prototype, "ask", null);
 AssistantAgent = _ts_decorate([
-  Agent()
+  AgentImpl()
 ], AssistantAgent);
-var WeatherAgent = class WeatherAgent2 {
+var WeatherAgent = class WeatherAgent2 extends Agent {
   static {
     __name(this, "WeatherAgent");
   }
@@ -53,5 +53,5 @@ _ts_decorate([
   _ts_metadata("design:returntype", typeof Promise === "undefined" ? Object : Promise)
 ], WeatherAgent.prototype, "getWeather", null);
 WeatherAgent = _ts_decorate([
-  Agent()
+  AgentImpl()
 ], WeatherAgent);

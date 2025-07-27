@@ -2,7 +2,9 @@ import type * as bindings from 'agentic-guest';
 import {  AgentType } from 'golem:agent/common';
 import {agentInitiators, agentRegistry} from './registry';
 import {ResolvedAgent} from "./resolved_agent";
-export { Prompt, Description, agentRegistry, Agent } from './registry';
+
+export { Agent } from './agent';
+export { Prompt, Description, agentRegistry, AgentImpl } from './registry';
 export {Metadata } from './type_metadata';
 
 export function getRegisteredAgents(): AgentType[] {

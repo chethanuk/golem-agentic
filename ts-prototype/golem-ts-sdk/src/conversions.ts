@@ -13,7 +13,6 @@ export function convertJsToWitValueUsingSchema(value: any, schema: DataSchema): 
 
     const nodes: WitNode[] = [];
     convertToWitNodes(value, param.val.nodes, param.val.nodes.length - 1, nodes);
-    //throw new Error(`Only 'nodes' schema is supported ${JSON.stringify(nodes, null, 2)}`);
     return { nodes };
 }
 

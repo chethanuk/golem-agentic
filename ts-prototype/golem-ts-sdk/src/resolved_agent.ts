@@ -1,13 +1,13 @@
 import { AgentType } from 'golem:agent/common';
 import {WitValue} from 'golem:rpc/types@0.2.1';
 import {agentRegistry} from "./registry";
-import {TSAgent} from "./ts_agent";
+import {AgentInternal} from "./ts_agent";
 
 export class ResolvedAgent {
-    private tsAgent: TSAgent;
+    private tsAgent: AgentInternal;
     private readonly name: string;
 
-    constructor(name: string, instance: TSAgent) {
+    constructor(name: string, instance: AgentInternal) {
         this.name = name;
         this.tsAgent = instance;
     }
