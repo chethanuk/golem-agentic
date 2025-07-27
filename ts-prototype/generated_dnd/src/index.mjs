@@ -18,7 +18,7 @@ var AssistantAgent = class AssistantAgent2 extends Agent {
   static {
     __name(this, "AssistantAgent");
   }
-  ask(name) {
+  async ask(name) {
     const weather = new WeatherAgent();
     return weather.getWeather(name);
   }
@@ -30,7 +30,7 @@ _ts_decorate([
   _ts_metadata("design:paramtypes", [
     String
   ]),
-  _ts_metadata("design:returntype", typeof Promise === "undefined" ? Object : Promise)
+  _ts_metadata("design:returntype", Promise)
 ], AssistantAgent.prototype, "ask", null);
 AssistantAgent = _ts_decorate([
   AgentImpl()
@@ -39,7 +39,7 @@ var WeatherAgent = class WeatherAgent2 extends Agent {
   static {
     __name(this, "WeatherAgent");
   }
-  getWeather(name) {
+  async getWeather(name) {
     return Promise.resolve(`Weather in ${name} is sunny. Result ${name}`);
   }
 };
@@ -50,7 +50,7 @@ _ts_decorate([
   _ts_metadata("design:paramtypes", [
     String
   ]),
-  _ts_metadata("design:returntype", typeof Promise === "undefined" ? Object : Promise)
+  _ts_metadata("design:returntype", Promise)
 ], WeatherAgent.prototype, "getWeather", null);
 WeatherAgent = _ts_decorate([
   AgentImpl()
