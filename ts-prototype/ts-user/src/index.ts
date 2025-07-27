@@ -1,7 +1,7 @@
 // @ts-ignore (Needn't worry about this, only to remove warning)
-import { AgentImpl, Prompt, Description } from 'golem-ts-sdk'
+import { Agent, Prompt, Description } from 'golem-ts-sdk'
 
-@AgentImpl()
+@Agent()
 class AssistantAgent {
     @Prompt("Ask your question")
     @Description("This method allows the agent to answer your question")
@@ -11,7 +11,7 @@ class AssistantAgent {
     }
 }
 
-@AgentImpl()
+@Agent()
 class WeatherAgent {
     @Prompt("Get weather")
     @Description("Weather forecast weather for you")

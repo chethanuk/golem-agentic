@@ -2963,7 +2963,7 @@ function mapToParameterType(type) {
     val: witType
   };
 }
-function AgentImpl() {
+function Agent() {
   return function(ctor) {
     const className = ctor.name;
     if (agentRegistry.has(className)) return ctor;
@@ -3050,7 +3050,7 @@ function defaultStringSchema() {
 function getRegisteredAgents() {
   return Array.from(agentRegistry.values());
 }
-var Agent = class {
+var Agent2 = class {
   constructor(name, params) {
     console.log("Agent constructor called", name, params);
     const initiator = agentInitiators.get(name);
@@ -3106,11 +3106,10 @@ var guest = {
   getAgent,
   discoverAgents,
   discoverAgentTypes,
-  Agent
+  Agent: Agent2
 };
 export {
   Agent,
-  AgentImpl,
   Description,
   Metadata,
   Prompt,

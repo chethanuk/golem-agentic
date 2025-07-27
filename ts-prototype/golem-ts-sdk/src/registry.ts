@@ -74,7 +74,7 @@ function mapToParameterType(type: Type): ParameterType {
 
 }
 
-export function AgentImpl() {
+export function Agent() {
     return function <T extends new (...args: any[]) => any>(ctor: T){
 
         const className = ctor.name;

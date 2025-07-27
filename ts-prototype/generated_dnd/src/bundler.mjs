@@ -65,8 +65,8 @@ function add(library, stripInternals) {
         ],
         decorators: [
           {
-            id: "@golem-ts-sdk:AgentImpl",
-            name: "AgentImpl",
+            id: "@golem-ts-sdk:Agent",
+            name: "Agent",
             args: []
           }
         ],
@@ -117,8 +117,8 @@ function add(library, stripInternals) {
         ],
         decorators: [
           {
-            id: "@golem-ts-sdk:AgentImpl",
-            name: "AgentImpl",
+            id: "@golem-ts-sdk:Agent",
+            name: "Agent",
             args: []
           }
         ],

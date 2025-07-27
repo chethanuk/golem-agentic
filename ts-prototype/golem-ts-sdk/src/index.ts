@@ -2,14 +2,14 @@ import type * as bindings from 'agentic-guest';
 import {  AgentType } from 'golem:agent/common';
 import {agentInitiators, agentRegistry} from './registry';
 import {ResolvedAgent} from "./resolved_agent";
-export { Prompt, Description, agentRegistry, AgentImpl } from './registry';
+export { Prompt, Description, agentRegistry, Agent } from './registry';
 export {Metadata } from './type_metadata';
 
 export function getRegisteredAgents(): AgentType[] {
     return Array.from(agentRegistry.values());
 }
 
-export class Agent {
+class Agent {
     private resolvedAgent: ResolvedAgent;
 
     constructor(name: string, params: bindings.guest.WitValue[]) {
