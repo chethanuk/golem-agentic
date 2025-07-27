@@ -1,4 +1,3 @@
-// @ts-ignore (Needn't worry about this, only to remove warning)
 import { Agent, Prompt, Description } from 'golem-ts-sdk'
 
 @Agent()
