@@ -87,6 +87,11 @@ function add(library, stripInternals) {
                     name: "name",
                     type: "#String",
                     flags: 0
+                  },
+                  {
+                    name: "param2",
+                    type: "@ts-user/index:CustomData",
+                    flags: 0
                   }
                 ],
                 returnType: "#Promise{#String}"
@@ -126,6 +131,25 @@ function add(library, stripInternals) {
           }
         ],
         id: "@ts-user/index:WeatherAgent"
+      },
+      {
+        kind: 63,
+        name: "CustomData",
+        properties: [
+          {
+            name: "data",
+            type: "#String",
+            flags: 0
+          },
+          {
+            name: "value",
+            type: "#Number",
+            flags: 0
+          }
+        ],
+        methods: [],
+        indexes: [],
+        id: "@ts-user/index:CustomData"
       }
     ]
   }, stripInternals);

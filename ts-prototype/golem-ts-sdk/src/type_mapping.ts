@@ -1,4 +1,4 @@
-import {ObjectType, PromiseType, Type, TypeKind} from "rttist";
+import {InterfaceType, ObjectType, PromiseType, Type, TypeKind} from "rttist";
 import {analysedType, AnalysedType} from "./analysed_type";
 
 // mapTypeToSchema runs only during initialization and hence
@@ -100,6 +100,12 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
         case TypeKind.Namespace:
         case TypeKind.Object:
         case TypeKind.Interface:
+            const objectInterface = type as InterfaceType;
+            const interfaceFields = objectInterface.getProperties().map(prop => {
+                return analysedType.field(prop.name.toString(), mapTypeToAnalysedType(prop.type));
+            });
+            return analysedType.record(interfaceFields);
+
         case TypeKind.Class:
         case TypeKind.Union:
         case TypeKind.TemplateLiteral:
@@ -146,7 +152,7 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
             return analysedType.f64();
 
         case TypeKind.Number:
-            return analysedType.f64();
+            return analysedType.s32(); // For the same reason - as an example - Rust defaults to i32
 
         case TypeKind.String:
             return analysedType.str();

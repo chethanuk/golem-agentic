@@ -19,11 +19,15 @@ var AssistantAgent = class AssistantAgent2 extends Agent {
     __name(this, "AssistantAgent");
   }
   async ask(name) {
+    const customData = {
+      data: "Sample data",
+      value: 42
+    };
     const remoteWeatherClient = WeatherAgent.createRemote();
-    const remoteWeather = await remoteWeatherClient.getWeather(name);
+    const remoteWeather = await remoteWeatherClient.getWeather(name, customData);
     const localWeatherClient = WeatherAgent.createLocal();
-    const localWeather = await localWeatherClient.getWeather(name);
-    return "Hello " + name + ", remote weather: " + remoteWeather + ", local weather: " + localWeather;
+    const localWeather = await localWeatherClient.getWeather(name, customData);
+    return "Hello! " + name + ", remote weather: " + remoteWeather + ", local weather: " + localWeather;
   }
 };
 _ts_decorate([
@@ -42,7 +46,7 @@ var WeatherAgent = class WeatherAgent2 extends Agent {
   static {
     __name(this, "WeatherAgent");
   }
-  async getWeather(name) {
+  async getWeather(name, param2) {
     return Promise.resolve(`Weather in ${name} is sunny. Result ${name}`);
   }
 };
@@ -51,7 +55,8 @@ _ts_decorate([
   Description("Weather forecast weather for you"),
   _ts_metadata("design:type", Function),
   _ts_metadata("design:paramtypes", [
-    String
+    String,
+    typeof CustomData === "undefined" ? Object : CustomData
   ]),
   _ts_metadata("design:returntype", Promise)
 ], WeatherAgent.prototype, "getWeather", null);

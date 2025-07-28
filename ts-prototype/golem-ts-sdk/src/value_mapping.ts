@@ -1,4 +1,4 @@
-import {ObjectType, PromiseType, PropertyInfo, Type, TypeKind} from "rttist";
+import {InterfaceType, ObjectType, PromiseType, PropertyInfo, Type, TypeKind} from "rttist";
 import {Value, valueFromWitValue} from "./value";
 
 export function convertToTsValue(wasmRpcValue: Value, expectedType: Type): any {
@@ -265,7 +265,18 @@ export function convertToTsValue(wasmRpcValue: Value, expectedType: Type): any {
         case TypeKind.Object:
             break;
         case TypeKind.Interface:
-            break;
+            if (wasmRpcValue.kind === 'record') {
+                const fieldValues = wasmRpcValue.value;
+                const expectedTypeFields: ReadonlyArray<PropertyInfo> = (expectedType as InterfaceType).getProperties();
+                return expectedTypeFields.reduce((acc, field, idx) => {
+                    const name: string = field.name.toString();
+                    const expectedFieldType = field.type;
+                    acc[name] = convertToTsValue(fieldValues[idx], expectedFieldType);
+                    return acc;
+                }, {} as Record<string, any>);
+            } else {
+                throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
+            }
         case TypeKind.Class:
             break;
         case TypeKind.Union:

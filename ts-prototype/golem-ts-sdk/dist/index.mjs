@@ -2265,6 +2265,11 @@ function mapTypeToAnalysedType(type) {
     case u.Namespace:
     case u.Object:
     case u.Interface:
+      const objectInterface = type;
+      const interfaceFields = objectInterface.getProperties().map((prop) => {
+        return analysedType.field(prop.name.toString(), mapTypeToAnalysedType(prop.type));
+      });
+      return analysedType.record(interfaceFields);
     case u.Class:
     case u.Union:
     case u.TemplateLiteral:
@@ -2306,7 +2311,8 @@ function mapTypeToAnalysedType(type) {
     case u.Float64Array:
       return analysedType.f64();
     case u.Number:
-      return analysedType.f64();
+      return analysedType.s32();
+    // For the same reason - as an example - Rust defaults to i32
     case u.String:
       return analysedType.str();
     case u.Symbol:
@@ -2746,7 +2752,18 @@ function convertToTsValue(wasmRpcValue, expectedType) {
     case u.Object:
       break;
     case u.Interface:
-      break;
+      if (wasmRpcValue.kind === "record") {
+        const fieldValues = wasmRpcValue.value;
+        const expectedTypeFields = expectedType.getProperties();
+        return expectedTypeFields.reduce((acc, field, idx) => {
+          const name = field.name.toString();
+          const expectedFieldType = field.type;
+          acc[name] = convertToTsValue(fieldValues[idx], expectedFieldType);
+          return acc;
+        }, {});
+      } else {
+        throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
+      }
     case u.Class:
       break;
     case u.Union:
@@ -3002,6 +3019,7 @@ function buildNodes(value, nodes) {
 }
 
 // src/clients.ts
+import { getSelfMetadata } from "golem:api/host@1.1.7";
 function getLocalClient(ctor) {
   return (...args) => {
     const instance = new ctor(...args);
@@ -3033,6 +3051,7 @@ function getRemoteClient(ctor) {
           const paramInfo = signature.getParameters();
           const returnType = signature.returnType;
           return (...fnArgs) => {
+            const componentId = getSelfMetadata().workerId.componentId;
             const witValues = fnArgs.map((fnArg, index) => {
               const typ = paramInfo[index].type;
               return witValueFromFunctionArg(fnArg, typ);
@@ -3161,7 +3180,22 @@ function valueFromFunctionArg(arg, type) {
     case u.Namespace:
       throw new Error(`Unimplemented type: ${type.kind}`);
     case u.Interface:
-      throw new Error(`Unimplemented type: ${type.kind}`);
+      if (typeof arg === "object" && arg !== null) {
+        const innerType = type;
+        const innerProperties = innerType.getProperties();
+        const values = [];
+        for (const prop of innerProperties) {
+          const key = prop.name.toString();
+          if (!Object.prototype.hasOwnProperty.call(arg, key)) {
+            throw new Error(`Missing property '${key}' in value`);
+          }
+          const fieldVal = valueFromFunctionArg(arg[key], prop.type);
+          values.push(fieldVal);
+        }
+        return { kind: "record", value: values };
+      } else {
+        throw new Error(`Expected object, got ${arg} which is ${typeof arg}`);
+      }
     case u.Class:
       throw new Error(`Unimplemented type: ${type.kind}`);
     case u.Union:

@@ -3,6 +3,7 @@ import {ClassType, ObjectType, Type, TypeKind} from "rttist";
 import {Value, valueFromWitValue, witValueFromValue} from "./value";
 import {WitValue} from "golem:rpc/types@0.2.1";
 import {convertToTsValue} from "./value_mapping";
+import {getSelfMetadata} from "golem:api/host@1.1.7";
 
 export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     return (...args: any[]) => {
@@ -41,6 +42,12 @@ export function getRemoteClient<T extends new (...args: any[]) => any>(ctor: T) 
                     const returnType = signature.returnType;
 
                     return (...fnArgs: any[]) => {
+                        // The actual call in Rust prototype is using `getAgentComponent`
+                        // function but the host implementation in code_first branch in Golem
+                        // is hardcoded to return weather_agent component.
+                        // Only for testing purposes, we are calling selfMetadata to get the current componentId
+                        // since we are sure this prototype has both weatherAgent and assistantAgent to be in the same component
+                        const componentId = getSelfMetadata().workerId.componentId
                         const witValues = fnArgs.map((fnArg, index) => {
                             const typ = paramInfo[index].type;
                             return witValueFromFunctionArg(fnArg, typ);
@@ -209,7 +216,24 @@ function valueFromFunctionArg(arg: any, type: Type): Value {
             throw new Error(`Unimplemented type: ${type.kind}`);
 
         case TypeKind.Interface:
-            throw new Error(`Unimplemented type: ${type.kind}`);
+            if (typeof arg === "object" && arg !== null) {
+                const innerType = type as ObjectType;
+                const innerProperties = innerType.getProperties();
+                const values: Value[] = [];
+                for (const prop of innerProperties) {
+                    const key = prop.name.toString();
+                    if (!Object.prototype.hasOwnProperty.call(arg, key)) {
+                        throw new Error(`Missing property '${key}' in value`);
+                    }
+
+                    const fieldVal = valueFromFunctionArg(arg[key], prop.type);
+                    values.push(fieldVal);
+                }
+
+                return { kind: "record", value: values };  // Wrap the values in an object type
+            } else {
+                throw new Error(`Expected object, got ${arg} which is ${typeof arg}`);
+            }
 
         case TypeKind.Class:
             throw new Error(`Unimplemented type: ${type.kind}`);

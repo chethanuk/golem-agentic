@@ -8,7 +8,7 @@ export default defineConfig({
   dts: false,
   shims: false,
   target: 'esnext',
-  external: ['agentic-guest'],
+  external: ['agentic-guest', 'golem:api'],
   noExternal: ['rttist'],
   outExtension: () => ({ js: '.mjs' }),
 });
