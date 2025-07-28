@@ -468,7 +468,7 @@ var Reflect2;
         k2++;
       }
     }
-    function Type2(x2) {
+    function Type3(x2) {
       if (x2 === null)
         return 1;
       switch (typeof x2) {
@@ -501,7 +501,7 @@ var Reflect2;
       return typeof x2 === "object" ? x2 !== null : typeof x2 === "function";
     }
     function ToPrimitive(input, PreferredType) {
-      switch (Type2(input)) {
+      switch (Type3(input)) {
         case 0:
           return input;
         case 1:
@@ -581,7 +581,7 @@ var Reflect2;
       return typeof argument === "function";
     }
     function IsPropertyKey(argument) {
-      switch (Type2(argument)) {
+      switch (Type3(argument)) {
         case 3:
           return true;
         case 4:
@@ -2817,7 +2817,7 @@ function convertToTsValue(wasmRpcValue, expectedType) {
 }
 
 // src/value.ts
-function fromWitValue(wit) {
+function valueFromWitValue(wit) {
   if (!wit.nodes.length) throw new Error("Empty nodes in WitValue");
   return buildTree(wit.nodes[0], wit.nodes);
 }
@@ -2911,6 +2911,90 @@ function buildTree(node, nodes) {
       throw new Error(`Unhandled tag: ${node.tag}`);
   }
 }
+function witValueFromValue(value) {
+  const nodes = [];
+  buildNodes(value, nodes);
+  return { nodes };
+}
+function buildNodes(value, nodes) {
+  const push = (node) => {
+    nodes.push(node);
+    return nodes.length - 1;
+  };
+  switch (value.kind) {
+    case "record":
+      const recordIndices = value.value.map((v2) => buildNodes(v2, nodes));
+      return push({ tag: "record-value", val: recordIndices });
+    case "variant":
+      return push({ tag: "variant-value", val: value.caseValue !== void 0 ? [value.caseIdx, buildNodes(value.caseValue, nodes)] : [value.caseIdx, void 0] });
+    case "enum":
+      return push({ tag: "enum-value", val: value.value });
+    case "flags":
+      return push({ tag: "flags-value", val: value.value });
+    case "tuple":
+      const tupleIndices = value.value.map((v2) => buildNodes(v2, nodes));
+      return push({ tag: "tuple-value", val: tupleIndices });
+    case "list":
+      const listIndices = value.value.map((v2) => buildNodes(v2, nodes));
+      return push({ tag: "list-value", val: listIndices });
+    case "option":
+      return push({
+        tag: "option-value",
+        val: value.value !== void 0 ? buildNodes(value.value, nodes) : void 0
+      });
+    case "result":
+      if ("ok" in value.value) {
+        return push({
+          tag: "result-value",
+          val: {
+            tag: "ok",
+            val: value.value.ok !== void 0 ? buildNodes(value.value.ok, nodes) : void 0
+          }
+        });
+      } else {
+        return push({
+          tag: "result-value",
+          val: {
+            tag: "err",
+            val: value.value.err !== void 0 ? buildNodes(value.value.err, nodes) : void 0
+          }
+        });
+      }
+    case "u8":
+      return push({ tag: "prim-u8", val: value.value });
+    case "u16":
+      return push({ tag: "prim-u16", val: value.value });
+    case "u32":
+      return push({ tag: "prim-u32", val: value.value });
+    case "u64":
+      return push({ tag: "prim-u64", val: value.value });
+    case "s8":
+      return push({ tag: "prim-s8", val: value.value });
+    case "s16":
+      return push({ tag: "prim-s16", val: value.value });
+    case "s32":
+      return push({ tag: "prim-s32", val: value.value });
+    case "s64":
+      return push({ tag: "prim-s64", val: value.value });
+    case "f32":
+      return push({ tag: "prim-float32", val: value.value });
+    case "f64":
+      return push({ tag: "prim-float64", val: value.value });
+    case "char":
+      return push({ tag: "prim-char", val: value.value });
+    case "bool":
+      return push({ tag: "prim-bool", val: value.value });
+    case "string":
+      return push({ tag: "prim-string", val: value.value });
+    case "handle":
+      return push({
+        tag: "handle",
+        val: [{ value: value.uri }, value.resourceId]
+      });
+    default:
+      throw new Error(`Unhandled kind: ${value.kind}`);
+  }
+}
 
 // src/clients.ts
 function getLocalClient(ctor) {
@@ -2933,19 +3017,303 @@ function getLocalClient(ctor) {
 function getRemoteClient(ctor) {
   return (...args) => {
     const instance = new ctor(...args);
+    const metadata = Metadata.getTypes().filter(
+      (type) => type.isClass() && type.name === ctor.name
+    )[0];
     return new Proxy(instance, {
       get(target, prop) {
         const val = target[prop];
         if (typeof val === "function") {
+          const paramInfo = metadata.getMethod(prop)?.getSignatures()[0].getParameters();
           return (...fnArgs) => {
+            const witValues = fnArgs.map((fnArg, index) => {
+              const typ = paramInfo[index].type;
+              return witValueFromFunctionArg(fnArg, typ);
+            });
             console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
-            return Promise.resolve(`<<remote ${String(prop)} result>>`);
+            return Promise.resolve(`<<remote call with args ${JSON.stringify(witValues)}>>`);
           };
         }
         return val;
       }
     });
   };
+}
+function witValueFromFunctionArg(arg, type) {
+  return witValueFromValue(valueFromFunctionArg(arg, type));
+}
+function valueFromFunctionArg(arg, type) {
+  switch (type.kind) {
+    case u.Invalid:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Unknown:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Any:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Never:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Void:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Undefined:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Null:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Intrinsic:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Boolean:
+      if (typeof arg === "boolean") {
+        return { kind: "bool", value: arg };
+      } else {
+        throw new Error(`Expected boolean, got ${typeof arg}`);
+      }
+    case u.False:
+      if (typeof arg === "boolean") {
+        return { kind: "bool", value: arg };
+      } else {
+        throw new Error(`Expected boolean, got ${typeof arg}`);
+      }
+    case u.True:
+      if (typeof arg === "boolean") {
+        return { kind: "bool", value: arg };
+      } else {
+        throw new Error(`Expected boolean, got ${typeof arg}`);
+      }
+    case u.Number:
+      if (typeof arg === "number") {
+        return { kind: "f64", value: arg };
+      } else {
+        throw new Error(`Expected number, got ${typeof arg}`);
+      }
+    case u.BigInt:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.String:
+      if (typeof arg === "string") {
+        return { kind: "string", value: arg };
+      } else {
+        throw new Error(`Expected string, got ${typeof arg}`);
+      }
+    case u.Symbol:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.NonPrimitiveObject:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.FunctionType:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Date:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Error:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.RegExp:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Int8Array:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.ArrayBuffer:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.SharedArrayBuffer:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Atomics:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.DataView:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.ArrayDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.ReadonlyArrayDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.TupleDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.MapDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.WeakMapDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.SetDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.WeakSetDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.PromiseDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.GeneratorDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.AsyncGeneratorDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.IteratorDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.IterableDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.IterableIteratorDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.AsyncIteratorDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.AsyncIterableDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.AsyncIterableIteratorDefinition:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Module:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Namespace:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Interface:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Class:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Union:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Intersection:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.ConditionalType:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.IndexedAccess:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.TypeParameter:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Alias:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Method:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Function:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.GeneratorFunction:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.NumberLiteral:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.BigIntLiteral:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.TemplateLiteral:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.EnumLiteral:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.RegExpLiteral:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Enum:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.UniqueSymbol:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.ESSymbol:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Promise:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Generator:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.AsyncGenerator:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Iterator:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Iterable:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.IterableIterator:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.AsyncIterator:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.AsyncIterable:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.AsyncIterableIterator:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Jsx:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.Type:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    case u.TypeCtor:
+      throw new Error(`Unimplemented type: ${type.kind}`);
+    // Difference between Object and ObjectType to be determine
+    case u.ObjectType:
+      if (typeof arg === "object" && arg !== null) {
+        const innerType = type;
+        const innerProperties = innerType.getProperties();
+        const values = [];
+        for (const prop of innerProperties) {
+          const key = prop.name.toString();
+          if (!Object.prototype.hasOwnProperty.call(arg, key)) {
+            throw new Error(`Missing property '${key}' in value`);
+          }
+          const fieldVal = valueFromFunctionArg(arg[key], prop.type);
+          values.push(fieldVal);
+        }
+        return { kind: "record", value: values };
+      } else {
+        throw new Error(`Expected object, got ${typeof arg}`);
+      }
+    case u.Uint8Array:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "number")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "u8", value: item })) };
+      } else {
+        throw new Error(`Expected Uint8Array, got ${typeof arg}`);
+      }
+    case u.Uint8ClampedArray:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "number")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "u8", value: item })) };
+      } else {
+        throw new Error(`Expected Uint8ClampedArray, got ${typeof arg}`);
+      }
+    case u.Int16Array:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "number")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "s16", value: item })) };
+      } else {
+        throw new Error(`Expected Int16Array, got ${typeof arg}`);
+      }
+    case u.Uint16Array:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "number")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "u16", value: item })) };
+      } else {
+        throw new Error(`Expected Uint16Array, got ${typeof arg}`);
+      }
+    case u.Int32Array:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "number")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "s32", value: item })) };
+      } else {
+        throw new Error(`Expected Int32Array, got ${typeof arg}`);
+      }
+    case u.Uint32Array:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "number")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "u32", value: item })) };
+      } else {
+        throw new Error(`Expected Uint32Array, got ${typeof arg}`);
+      }
+    case u.Float32Array:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "number")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "f32", value: item })) };
+      } else {
+        throw new Error(`Expected Float32Array, got ${typeof arg}`);
+      }
+    case u.Float64Array:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "number")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "f64", value: item })) };
+      } else {
+        throw new Error(`Expected Float64Array, got ${typeof arg}`);
+      }
+    case u.BigInt64Array:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "bigint")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "s64", value: Number(item) })) };
+      } else {
+        throw new Error(`Expected BigInt64Array, got ${typeof arg}`);
+      }
+    case u.BigUint64Array:
+      if (Array.isArray(arg) && arg.every((item) => typeof item === "bigint")) {
+        return { kind: "list", value: arg.map((item) => ({ kind: "u64", value: Number(item) })) };
+      } else {
+        throw new Error(`Expected BigUint64Array, got ${typeof arg}`);
+      }
+    case u.Object:
+      if (typeof arg === "object" && arg !== null) {
+        const innerType = type;
+        const innerProperties = innerType.getProperties();
+        const values = [];
+        for (const prop of innerProperties) {
+          const key = prop.name.toString();
+          if (!Object.prototype.hasOwnProperty.call(arg, key)) {
+            throw new Error(`Missing property '${key}' in value`);
+          }
+          const fieldVal = valueFromFunctionArg(arg[key], prop.type);
+          values.push(fieldVal);
+        }
+        return { kind: "record", value: values };
+      } else {
+        throw new Error(`Expected object, got ${typeof arg}`);
+      }
+    case u.StringLiteral:
+      if (typeof arg === "string") {
+        return { kind: "string", value: arg };
+      } else {
+        throw new Error(`Expected string literal, got ${typeof arg}`);
+      }
+  }
 }
 
 // src/registry.ts
@@ -3054,7 +3422,7 @@ function AgentImpl() {
             const methodInfo = classType.getMethod(method);
             const paramTypes = methodInfo.getSignatures()[0].getParameters();
             const convertedArgs = args.map((witVal, idx) => {
-              return convertToTsValue(fromWitValue(witVal), paramTypes[idx].type);
+              return convertToTsValue(valueFromWitValue(witVal), paramTypes[idx].type);
             });
             const result = await fn.apply(instance, convertedArgs);
             const methodDef = def?.methods.find((m2) => m2.name === method);

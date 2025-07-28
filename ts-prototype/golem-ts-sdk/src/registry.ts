@@ -10,7 +10,7 @@ import {ClassType, ParameterInfo, Type} from "rttist";
 import {mapTypeToAnalysedType} from "./type_mapping";
 import {WitTypeBuilder} from "./wit_type_builder";
 import {convertToTsValue} from "./value_mapping";
-import {fromWitValue} from "./value";
+import {valueFromWitValue} from "./value";
 import {getLocalClient, getRemoteClient} from "./clients";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
@@ -154,7 +154,7 @@ export function AgentImpl() {
                             methodInfo.getSignatures()[0].getParameters();
 
                         const convertedArgs = args.map((witVal, idx) => {
-                            return convertToTsValue(fromWitValue(witVal), paramTypes[idx].type)
+                            return convertToTsValue(valueFromWitValue(witVal), paramTypes[idx].type)
                         });
 
                         const result = await fn.apply(instance, convertedArgs);

@@ -25,7 +25,7 @@ export type Value =
     | { kind: 'handle'; uri: string; resourceId: number };
 
 
-export function fromWitValue(wit: WitValue): Value {
+export function valueFromWitValue(wit: WitValue): Value {
     if (!wit.nodes.length) throw new Error("Empty nodes in WitValue");
     return buildTree(wit.nodes[0], wit.nodes);
 }
@@ -117,5 +117,97 @@ function buildTree(node: WitNode, nodes: WitNode[]): Value {
 
         default:
             throw new Error(`Unhandled tag: ${(node as any).tag}`);
+    }
+}
+
+
+export function witValueFromValue(value: Value): WitValue {
+    const nodes: WitNode[] = [];
+    buildNodes(value, nodes);
+    return { nodes: nodes };
+}
+
+
+function buildNodes(value: Value, nodes: WitNode[]): number {
+    const push = (node: WitNode): number => {
+        nodes.push(node);
+        return nodes.length - 1;
+    };
+
+    switch (value.kind) {
+        case 'record':
+            const recordIndices = value.value.map(v => buildNodes(v, nodes));
+            return push({ tag: 'record-value', val: recordIndices });
+
+        case 'variant':
+            return push({ tag: 'variant-value', val: value.caseValue !== undefined
+                    ? [value.caseIdx, buildNodes(value.caseValue, nodes)]
+                    : [value.caseIdx, undefined] });
+
+        case 'enum':
+            return push({ tag: 'enum-value', val: value.value });
+
+        case 'flags':
+            return push({ tag: 'flags-value', val: value.value });
+
+        case 'tuple':
+            const tupleIndices = value.value.map(v => buildNodes(v, nodes));
+            return push({ tag: 'tuple-value', val: tupleIndices });
+
+        case 'list':
+            const listIndices = value.value.map(v => buildNodes(v, nodes));
+            return push({ tag: 'list-value', val: listIndices });
+
+        case 'option':
+            return push({
+                tag: 'option-value',
+                val: value.value !== undefined ? buildNodes(value.value, nodes) : undefined
+            });
+
+        case 'result':
+            if ('ok' in value.value) {
+                return push({
+                    tag: 'result-value',
+                    val: {
+                        tag: 'ok',
+                        val: value.value.ok !== undefined
+                            ? buildNodes(value.value.ok, nodes)
+                            : undefined
+                    }
+                });
+            } else {
+                return push({
+                    tag: 'result-value',
+                    val: {
+                        tag: 'err',
+                        val: value.value.err !== undefined
+                            ? buildNodes(value.value.err, nodes)
+                            : undefined
+                    }
+                });
+            }
+
+        case 'u8': return push({ tag: 'prim-u8', val: value.value });
+        case 'u16': return push({ tag: 'prim-u16', val: value.value });
+        case 'u32': return push({ tag: 'prim-u32', val: value.value });
+        case 'u64': return push({ tag: 'prim-u64', val: value.value });
+        case 's8': return push({ tag: 'prim-s8', val: value.value });
+        case 's16': return push({ tag: 'prim-s16', val: value.value });
+        case 's32': return push({ tag: 'prim-s32', val: value.value });
+        case 's64': return push({ tag: 'prim-s64', val: value.value });
+        case 'f32': return push({ tag: 'prim-float32', val: value.value });
+        case 'f64': return push({ tag: 'prim-float64', val: value.value });
+        case 'char': return push({ tag: 'prim-char', val: value.value });
+        case 'bool': return push({ tag: 'prim-bool', val: value.value });
+        case 'string': return push({ tag: 'prim-string', val: value.value });
+
+        case 'handle':
+            return push({
+                tag: 'handle',
+                val: [{ value: value.uri }, value.resourceId]
+            });
+
+        default:
+            throw new Error(`Unhandled kind: ${(value as any).kind}`);
     }
 }
