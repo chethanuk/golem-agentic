@@ -47,7 +47,7 @@ var WeatherAgent = class WeatherAgent2 extends Agent {
     __name(this, "WeatherAgent");
   }
   async getWeather(name, param2) {
-    return Promise.resolve(`Weather in ${name} is sunny. Result ${name}`);
+    return Promise.resolve(`Weather in ${name} is sunny. Result ${name} ${param2}`);
   }
 };
 _ts_decorate([

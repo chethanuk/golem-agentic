@@ -1,9 +1,9 @@
 import {Metadata} from "./type_metadata";
 import {ClassType, ObjectType, Type, TypeKind} from "rttist";
 import {Value, valueFromWitValue, witValueFromValue} from "./value";
-import {WitValue} from "golem:rpc/types@0.2.1";
+import {WasmRpc, WitValue, WorkerId} from "golem:rpc/types@0.2.1";
 import {convertToTsValue} from "./value_mapping";
-import {getSelfMetadata} from "golem:api/host@1.1.7";
+import {ComponentId, getSelfMetadata} from "golem:api/host@1.1.7";
 
 export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     return (...args: any[]) => {
@@ -31,9 +31,38 @@ export function getRemoteClient<T extends new (...args: any[]) => any>(ctor: T) 
             (type) => type.isClass() && type.name === ctor.name
         )[0];
 
+        const componentId = getSelfMetadata().workerId.componentId;
+        const rpc = WasmRpc.ephemeral(componentId);
+
+        const result =
+            rpc.invokeAndAwait( "golem:simulated-agentic-typescript/simulated-agent.{weather-agent.new}", []);
+
+        const resourceWitValues = result.tag === "err"
+            ? (() => { throw new Error("Failed to create resource: " + JSON.stringify(result.val)); })()
+            : result.val;
+
+        const resourceValue = valueFromWitValue(resourceWitValues);
+
+        // Unwrap tuple
+        const resourceVal = (() => {
+            switch (resourceValue.kind) {
+                case "tuple":
+                    return resourceValue.value[0];
+                default:
+                    throw new Error("Unsupported kind: " + resourceValue.kind);
+            }
+        })();
+
+        const workerId = getWorkerName(resourceVal, componentId);
+
+        const resourceWitValue =
+            witValueFromValue(resourceVal);
+
         return new Proxy(instance, {
             get(target, prop) {
+
                 const val = target[prop];
+
                 if (typeof val === "function") {
                     const signature =
                         (metadata as ClassType).getMethod(prop)?.getSignatures()[0]!;
@@ -42,23 +71,20 @@ export function getRemoteClient<T extends new (...args: any[]) => any>(ctor: T) 
                     const returnType = signature.returnType;
 
                     return (...fnArgs: any[]) => {
-                        // The actual call in Rust prototype is using `getAgentComponent`
-                        // function but the host implementation in code_first branch in Golem
-                        // is hardcoded to return weather_agent component.
-                        // Only for testing purposes, we are calling selfMetadata to get the current componentId
-                        // since we are sure this prototype has both weatherAgent and assistantAgent to be in the same component
-                        const componentId = getSelfMetadata().workerId.componentId
-                        const witValues = fnArgs.map((fnArg, index) => {
+                        const functionName = `golem:simulated-agentic-typescript/simulated-agent.{[method]{weather-agent.{${prop.toString()}}`;
+                        const parameterWitValues = fnArgs.map((fnArg, index) => {
                             const typ = paramInfo[index].type;
                             return witValueFromFunctionArg(fnArg, typ);
                         })
-                        console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
-                        // To be replaced with actual remote call logic which already returns a
-                        // dummy logic
-                        const x = witValueFromValue({kind: "string", value: "remote call"});
-                        const y = valueFromWitValue(x);
-                        const z = convertToTsValue(y, returnType);
-                        return `[Remote] ${returnType}, ${JSON.stringify(x)} ${JSON.stringify(y)} ${JSON.stringify(z)}`;
+                        const inputArgs: WitValue[] = [resourceWitValue, ...parameterWitValues];
+                        const invokeRpc = new WasmRpc(workerId);
+                        const rpcResult = invokeRpc.invokeAndAwait(functionName, inputArgs);
+                        const rpcWitValue = rpcResult.tag === "err"
+                            ? (() => { throw new Error("Failed to invoke function: " + JSON.stringify(result.val)); })()
+                            : result.val;
+
+                        const rpcValue = valueFromWitValue(rpcWitValue);
+                        return convertToTsValue(rpcValue, returnType);
                     };
                 }
                 return val;
@@ -432,4 +458,17 @@ function valueFromFunctionArg(arg: any, type: Type): Value {
             }
     }
 
+}
+
+function getWorkerName(value: Value, componentId: ComponentId): WorkerId {
+    if (value.kind === 'handle') {
+        const parts = value.uri.split('/');
+        const workerName = parts[parts.length - 1];
+        if (!workerName) {
+            throw new Error("Worker name not found in URI");
+        }
+        return {componentId, workerName};
+    }
+
+    throw new Error(`Expected value to be a handle, but got: ${JSON.stringify(value)}`);
 }

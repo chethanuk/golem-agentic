@@ -3019,6 +3019,7 @@ function buildNodes(value, nodes) {
 }
 
 // src/clients.ts
+import { WasmRpc } from "golem:rpc/types@0.2.1";
 import { getSelfMetadata } from "golem:api/host@1.1.7";
 function getLocalClient(ctor) {
   return (...args) => {
@@ -3043,6 +3044,23 @@ function getRemoteClient(ctor) {
     const metadata = Metadata.getTypes().filter(
       (type) => type.isClass() && type.name === ctor.name
     )[0];
+    const componentId = getSelfMetadata().workerId.componentId;
+    const rpc = WasmRpc.ephemeral(componentId);
+    const result = rpc.invokeAndAwait("golem:simulated-agentic-typescript/simulated-agent.{weather-agent.new}", []);
+    const resourceWitValues = result.tag === "err" ? (() => {
+      throw new Error("Failed to create resource: " + JSON.stringify(result.val));
+    })() : result.val;
+    const resourceValue = valueFromWitValue(resourceWitValues);
+    const resourceVal = (() => {
+      switch (resourceValue.kind) {
+        case "tuple":
+          return resourceValue.value[0];
+        default:
+          throw new Error("Unsupported kind: " + resourceValue.kind);
+      }
+    })();
+    const workerId = getWorkerName(resourceVal, componentId);
+    const resourceWitValue = witValueFromValue(resourceVal);
     return new Proxy(instance, {
       get(target, prop) {
         const val = target[prop];
@@ -3051,16 +3069,19 @@ function getRemoteClient(ctor) {
           const paramInfo = signature.getParameters();
           const returnType = signature.returnType;
           return (...fnArgs) => {
-            const componentId = getSelfMetadata().workerId.componentId;
-            const witValues = fnArgs.map((fnArg, index) => {
+            const functionName = `golem:simulated-agentic-typescript/simulated-agent.{[method]{weather-agent.{${prop.toString()}}`;
+            const parameterWitValues = fnArgs.map((fnArg, index) => {
               const typ = paramInfo[index].type;
               return witValueFromFunctionArg(fnArg, typ);
             });
-            console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
-            const x2 = witValueFromValue({ kind: "string", value: "remote call" });
-            const y2 = valueFromWitValue(x2);
-            const z2 = convertToTsValue(y2, returnType);
-            return `[Remote] ${returnType}, ${JSON.stringify(x2)} ${JSON.stringify(y2)} ${JSON.stringify(z2)}`;
+            const inputArgs = [resourceWitValue, ...parameterWitValues];
+            const invokeRpc = new WasmRpc(workerId);
+            const rpcResult = invokeRpc.invokeAndAwait(functionName, inputArgs);
+            const rpcWitValue = rpcResult.tag === "err" ? (() => {
+              throw new Error("Failed to invoke function: " + JSON.stringify(result.val));
+            })() : result.val;
+            const rpcValue = valueFromWitValue(rpcWitValue);
+            return convertToTsValue(rpcValue, returnType);
           };
         }
         return val;
@@ -3358,6 +3379,17 @@ function valueFromFunctionArg(arg, type) {
         throw new Error(`Expected string literal, got ${typeof arg}`);
       }
   }
+}
+function getWorkerName(value, componentId) {
+  if (value.kind === "handle") {
+    const parts = value.uri.split("/");
+    const workerName = parts[parts.length - 1];
+    if (!workerName) {
+      throw new Error("Worker name not found in URI");
+    }
+    return { componentId, workerName };
+  }
+  throw new Error(`Expected value to be a handle, but got: ${JSON.stringify(value)}`);
 }
 
 // src/registry.ts

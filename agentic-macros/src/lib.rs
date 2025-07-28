@@ -224,7 +224,7 @@ pub fn agent_definition(_attrs: TokenStream, item: TokenStream) -> TokenStream {
                 match value  {
                     golem_wasm_rpc::Value::Tuple(values) => {
                         let handle = values[0].clone();
-                             let handle_wit = golem_wasm_rpc::WitValue::from(handle.clone());
+                        let handle_wit = golem_wasm_rpc::WitValue::from(handle.clone());
 
                         let worker_name = match handle.clone() {
                             golem_wasm_rpc::Value::Handle {uri, ..} => {
