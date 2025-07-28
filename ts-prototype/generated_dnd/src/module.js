@@ -2777,6 +2777,9 @@ function convertToTsValue(wasmRpcValue, expectedType) {
       } else {
         throw new Error(`Unrecognized value for ${wasmRpcValue.kind}`);
       }
+    case u.Promise:
+      const innerType = expectedType.getTypeArguments()[0];
+      return convertToTsValue(wasmRpcValue, innerType);
     case u.TemplateLiteral:
       break;
     case u.EnumLiteral:
@@ -2788,8 +2791,6 @@ function convertToTsValue(wasmRpcValue, expectedType) {
     case u.UniqueSymbol:
       break;
     case u.ESSymbol:
-      break;
-    case u.Promise:
       break;
     case u.Generator:
       break;
@@ -2810,7 +2811,11 @@ function convertToTsValue(wasmRpcValue, expectedType) {
     case u.Jsx:
       break;
     case u.Type:
-      break;
+      const arg = expectedType.getTypeArguments?.()[0];
+      if (!arg) {
+        throw new Error("Type must have a type argument");
+      }
+      return convertToTsValue(wasmRpcValue, arg);
     case u.TypeCtor:
       break;
   }
@@ -3024,14 +3029,19 @@ function getRemoteClient(ctor) {
       get(target, prop) {
         const val = target[prop];
         if (typeof val === "function") {
-          const paramInfo = metadata.getMethod(prop)?.getSignatures()[0].getParameters();
+          const signature = metadata.getMethod(prop)?.getSignatures()[0];
+          const paramInfo = signature.getParameters();
+          const returnType = signature.returnType;
           return (...fnArgs) => {
             const witValues = fnArgs.map((fnArg, index) => {
               const typ = paramInfo[index].type;
               return witValueFromFunctionArg(fnArg, typ);
             });
             console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
-            return Promise.resolve(`<<remote call with args ${JSON.stringify(witValues)}>>`);
+            const x2 = witValueFromValue({ kind: "string", value: "remote call" });
+            const y2 = valueFromWitValue(x2);
+            const z2 = convertToTsValue(y2, returnType);
+            return `[Remote] ${returnType}, ${JSON.stringify(x2)} ${JSON.stringify(y2)} ${JSON.stringify(z2)}`;
           };
         }
         return val;

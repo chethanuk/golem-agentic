@@ -1,7 +1,8 @@
 import {Metadata} from "./type_metadata";
 import {ClassType, ObjectType, Type, TypeKind} from "rttist";
-import {Value, witValueFromValue} from "./value";
+import {Value, valueFromWitValue, witValueFromValue} from "./value";
 import {WitValue} from "golem:rpc/types@0.2.1";
+import {convertToTsValue} from "./value_mapping";
 
 export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     return (...args: any[]) => {
@@ -33,15 +34,24 @@ export function getRemoteClient<T extends new (...args: any[]) => any>(ctor: T) 
             get(target, prop) {
                 const val = target[prop];
                 if (typeof val === "function") {
-                    const paramInfo =
-                        (metadata as ClassType).getMethod(prop)?.getSignatures()[0].getParameters()!;
+                    const signature =
+                        (metadata as ClassType).getMethod(prop)?.getSignatures()[0]!;
+
+                    const paramInfo = signature.getParameters();
+                    const returnType = signature.returnType;
+
                     return (...fnArgs: any[]) => {
                         const witValues = fnArgs.map((fnArg, index) => {
                             const typ = paramInfo[index].type;
                             return witValueFromFunctionArg(fnArg, typ);
                         })
                         console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
-                        return Promise.resolve(`<<remote call with args ${JSON.stringify(witValues)}>>`);
+                        // To be replaced with actual remote call logic which already returns a
+                        // dummy logic
+                        const x = witValueFromValue({kind: "string", value: "remote call"});
+                        const y = valueFromWitValue(x);
+                        const z = convertToTsValue(y, returnType);
+                        return `[Remote] ${returnType}, ${JSON.stringify(x)} ${JSON.stringify(y)} ${JSON.stringify(z)}`;
                     };
                 }
                 return val;

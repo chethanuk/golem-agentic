@@ -1,5 +1,5 @@
-import {ObjectType, PropertyInfo, Type, TypeKind} from "rttist";
-import {Value} from "./value";
+import {ObjectType, PromiseType, PropertyInfo, Type, TypeKind} from "rttist";
+import {Value, valueFromWitValue} from "./value";
 
 export function convertToTsValue(wasmRpcValue: Value, expectedType: Type): any {
     switch (expectedType.kind)  {
@@ -296,6 +296,9 @@ export function convertToTsValue(wasmRpcValue: Value, expectedType: Type): any {
             } else {
                 throw new Error(`Unrecognized value for ${wasmRpcValue.kind}`);
             }
+        case TypeKind.Promise:
+            const innerType = (expectedType as PromiseType).getTypeArguments()[0];
+            return convertToTsValue(wasmRpcValue, innerType);
         case TypeKind.TemplateLiteral:
             break;
         case TypeKind.EnumLiteral:
@@ -307,8 +310,6 @@ export function convertToTsValue(wasmRpcValue: Value, expectedType: Type): any {
         case TypeKind.UniqueSymbol:
             break;
         case TypeKind.ESSymbol:
-            break;
-        case TypeKind.Promise:
             break;
         case TypeKind.Generator:
             break;
@@ -329,7 +330,12 @@ export function convertToTsValue(wasmRpcValue: Value, expectedType: Type): any {
         case TypeKind.Jsx:
             break;
         case TypeKind.Type:
-            break;
+            const arg = expectedType.getTypeArguments?.()[0];
+            if (!arg) {
+                throw new Error("Type must have a type argument");
+            }
+            return convertToTsValue(wasmRpcValue, arg);
+
         case TypeKind.TypeCtor:
             break;
 
