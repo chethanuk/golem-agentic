@@ -11,17 +11,22 @@ in `internal.rs`
 The SDK above is pretty much inspired from the template of the golem SDK, but it is not a blund output of template SDK.
 So to debug things and have better control, I build .dts files using wasm-quickjs wrapper toolings, and wrote the agent implementation in the SDK,
 and generated the rust component using wasm-quickjs rust component generator, with necessary changes in the emitted wrapper
-to support.
+to simulate the idea of importing users JS dynamically.
 
 Once the experimentation is done, we will move the SDK logic to the output of `golem app new ts` 
 for easier maintainence, such as updating host wit files etc  
 
-### RTTIST installation
+### RTTIST for Type Reflection
 
 ```
-npm install -g @rttist/typegen@0.2.0
-
+> npm install -g @rttist/typegen@0.2.0
+> rttist --version
+0.2.0
+> typegen --version
+0.2.0
 ```
+
+Please stick on to this version. Any version upgrades can be done only after integration tests in place. 
 
 **User should never ever install RTTIST/typegen**, and i think we can help it with the help of golem-cli by directly using typegen API.
 golem-cli should re-do what typegen does inspired from code like https://github.com/rttist/rttist/blob/main/packages/plugins/vite6-plugin-rttist/src/index.ts.
@@ -40,10 +45,10 @@ Currently in rust code, I am importing 2 modules along with SDK module - user's 
 and end up seeing an existing configuration related to type-metadata - meaning, when we use transformer plugins, we are leaking internal details to what we are doing.
 
 
-Note: RTTIST versions should be the very latest - RC
+Note: RTTIST versions should be the very latest
 
 ```
-npm install -g @rttist/typegen@rc
+npm install -g @rttist/typegen@0.2.0
 ```
 
 ### Quick testing
