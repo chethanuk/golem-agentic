@@ -2912,6 +2912,25 @@ function buildTree(node, nodes) {
   }
 }
 
+// src/clients.ts
+function getLocalClient(ctor) {
+  return (...args) => {
+    const instance = new ctor(...args);
+    return new Proxy(instance, {
+      get(target, prop) {
+        const val = target[prop];
+        if (typeof val === "function") {
+          return (...fnArgs) => {
+            console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
+            return val.apply(target, fnArgs);
+          };
+        }
+        return val;
+      }
+    });
+  };
+}
+
 // src/registry.ts
 var agentInitiators = /* @__PURE__ */ new Map();
 var agentRegistry = /* @__PURE__ */ new Map();
@@ -3046,23 +3065,6 @@ function AgentImpl() {
           }
         };
         return new ResolvedAgent(className, tsAgent);
-      }
-    });
-  };
-}
-function getLocalClient(ctor) {
-  return (...args) => {
-    const instance = new ctor(...args);
-    return new Proxy(instance, {
-      get(target, prop) {
-        const val = target[prop];
-        if (typeof val === "function") {
-          return (...fnArgs) => {
-            console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
-            return val.apply(target, fnArgs);
-          };
-        }
-        return val;
       }
     });
   };

@@ -11,6 +11,7 @@ import {mapTypeToAnalysedType} from "./type_mapping";
 import {WitTypeBuilder} from "./wit_type_builder";
 import {convertToTsValue} from "./value_mapping";
 import {fromWitValue} from "./value";
+import {getLocalClient} from "./clients";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
 
@@ -193,24 +194,6 @@ export function AgentImpl() {
     };
 }
 
-function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
-    return (...args: any[]) => {
-        const instance = new ctor(...args);
-        return new Proxy(instance, {
-            get(target, prop) {
-                const val = target[prop];
-                if (typeof val === "function") {
-                    return (...fnArgs: any[]) => {
-                        console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
-                        return val.apply(target, fnArgs);
-                    };
-                }
-                return val;
-            }
-        });
-
-    }
-}
 
 function defaultStringSchema(): DataSchema {
     return {
