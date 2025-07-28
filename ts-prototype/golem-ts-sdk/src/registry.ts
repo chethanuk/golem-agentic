@@ -11,7 +11,7 @@ import {mapTypeToAnalysedType} from "./type_mapping";
 import {WitTypeBuilder} from "./wit_type_builder";
 import {convertToTsValue} from "./value_mapping";
 import {fromWitValue} from "./value";
-import {getLocalClient} from "./clients";
+import {getLocalClient, getRemoteClient} from "./clients";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
 
@@ -128,22 +128,7 @@ export function AgentImpl() {
 
         agentRegistry.set(className, agentType);
 
-        (ctor as any).createRemote = (...args: any[]) => {
-            const instance = new ctor(...args);
-            return new Proxy(instance, {
-                get(target, prop) {
-                    const val = target[prop];
-                    if (typeof val === "function") {
-                        return (...fnArgs: any[]) => {
-                            console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
-                            return Promise.resolve(`<<remote ${String(prop)} result>>`);
-                        };
-                    }
-                    return val;
-                }
-            });
-        };
-
+        (ctor as any).createRemote = getRemoteClient(ctor);
         (ctor as any).createLocal = getLocalClient(ctor);
 
         agentInitiators.set(className, {

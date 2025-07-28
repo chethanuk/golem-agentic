@@ -2930,6 +2930,23 @@ function getLocalClient(ctor) {
     });
   };
 }
+function getRemoteClient(ctor) {
+  return (...args) => {
+    const instance = new ctor(...args);
+    return new Proxy(instance, {
+      get(target, prop) {
+        const val = target[prop];
+        if (typeof val === "function") {
+          return (...fnArgs) => {
+            console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
+            return Promise.resolve(`<<remote ${String(prop)} result>>`);
+          };
+        }
+        return val;
+      }
+    });
+  };
+}
 
 // src/registry.ts
 var agentInitiators = /* @__PURE__ */ new Map();
@@ -3018,21 +3035,7 @@ function AgentImpl() {
       requires: []
     };
     agentRegistry.set(className, agentType);
-    ctor.createRemote = (...args) => {
-      const instance = new ctor(...args);
-      return new Proxy(instance, {
-        get(target, prop) {
-          const val = target[prop];
-          if (typeof val === "function") {
-            return (...fnArgs) => {
-              console.log(`[Remote] ${ctor.name}.${String(prop)}(${fnArgs})`);
-              return Promise.resolve(`<<remote ${String(prop)} result>>`);
-            };
-          }
-          return val;
-        }
-      });
-    };
+    ctor.createRemote = getRemoteClient(ctor);
     ctor.createLocal = getLocalClient(ctor);
     agentInitiators.set(className, {
       initiate: (agentName, constructor_params) => {
