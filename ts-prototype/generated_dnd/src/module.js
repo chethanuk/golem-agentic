@@ -3022,7 +3022,7 @@ function AgentImpl() {
           if (typeof val === "function") {
             return (...fnArgs) => {
               console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
-              return Promise.resolve(`<<local ${String(prop)} result>>`);
+              return val.apply(target, fnArgs);
             };
           }
           return val;

@@ -5,8 +5,14 @@ class AssistantAgent extends Agent {
     @Prompt("Ask your question")
     @Description("This method allows the agent to answer your question")
     async ask(name: string): Promise<string> {
-        const weather = WeatherAgent.createRemote();
-        return weather.getWeather(name);
+        const remoteWeatherClient = WeatherAgent.createRemote();
+        const remoteWeather = await remoteWeatherClient.getWeather(name);
+        const localWeatherClient = WeatherAgent.createLocal();
+        const localWeather = await localWeatherClient.getWeather(name);
+
+        return "Hello " + name + ", remote weather: " + remoteWeather + ", local weather: " + localWeather;
+
+
     }
 }
 
