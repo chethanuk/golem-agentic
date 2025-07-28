@@ -3014,21 +3014,7 @@ function AgentImpl() {
         }
       });
     };
-    ctor.createLocal = (...args) => {
-      const instance = new ctor(...args);
-      return new Proxy(instance, {
-        get(target, prop) {
-          const val = target[prop];
-          if (typeof val === "function") {
-            return (...fnArgs) => {
-              console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
-              return val.apply(target, fnArgs);
-            };
-          }
-          return val;
-        }
-      });
-    };
+    ctor.createLocal = getLocalClient(ctor);
     agentInitiators.set(className, {
       initiate: (agentName, constructor_params) => {
         const instance = new ctor(...constructor_params);
@@ -3060,6 +3046,23 @@ function AgentImpl() {
           }
         };
         return new ResolvedAgent(className, tsAgent);
+      }
+    });
+  };
+}
+function getLocalClient(ctor) {
+  return (...args) => {
+    const instance = new ctor(...args);
+    return new Proxy(instance, {
+      get(target, prop) {
+        const val = target[prop];
+        if (typeof val === "function") {
+          return (...fnArgs) => {
+            console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
+            return val.apply(target, fnArgs);
+          };
+        }
+        return val;
       }
     });
   };

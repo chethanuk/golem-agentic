@@ -143,21 +143,7 @@ export function AgentImpl() {
             });
         };
 
-        (ctor as any).createLocal = (...args: any[]) => {
-            const instance = new ctor(...args);
-            return new Proxy(instance, {
-                get(target, prop) {
-                    const val = target[prop];
-                    if (typeof val === "function") {
-                        return (...fnArgs: any[]) => {
-                            console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
-                            return val.apply(target, fnArgs);
-                        };
-                    }
-                    return val;
-                }
-            });
-        };
+        (ctor as any).createLocal = getLocalClient(ctor);
 
         agentInitiators.set(className, {
             initiate: (agentName: string, constructor_params: WitValue[]) => {
@@ -207,21 +193,23 @@ export function AgentImpl() {
     };
 }
 
-function getLocalClient<T extends new (...args: any[]) => any>(ctor: T, args: any[]): ProxyConstructor {
-    const instance = new ctor(...args);
-
-    return new Proxy(instance, {
-        get(target, prop) {
-            const val = target[prop];
-            if (typeof val === "function") {
-                return (...fnArgs: any[]) => {
-                    console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
-                    return val.apply(target, fnArgs);
-                };
+function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
+    return (...args: any[]) => {
+        const instance = new ctor(...args);
+        return new Proxy(instance, {
+            get(target, prop) {
+                const val = target[prop];
+                if (typeof val === "function") {
+                    return (...fnArgs: any[]) => {
+                        console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
+                        return val.apply(target, fnArgs);
+                    };
+                }
+                return val;
             }
-            return val;
-        }
-    });
+        });
+
+    }
 }
 
 function defaultStringSchema(): DataSchema {

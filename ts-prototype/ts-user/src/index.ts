@@ -11,8 +11,6 @@ class AssistantAgent extends Agent {
         const localWeather = await localWeatherClient.getWeather(name);
 
         return "Hello " + name + ", remote weather: " + remoteWeather + ", local weather: " + localWeather;
-
-
     }
 }
 
