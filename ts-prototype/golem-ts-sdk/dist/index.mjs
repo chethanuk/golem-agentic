@@ -3520,11 +3520,27 @@ function AgentImpl() {
     agentRegistry.set(className, agentType);
     ctor.createRemote = getRemoteClient(ctor);
     ctor.createLocal = getLocalClient(ctor);
+    const agentIdProps = filteredType.getProperties().filter((prop) => prop.name.toString() == "agentId");
     agentInitiators.set(className, {
       initiate: (agentName, constructor_params) => {
         const instance = new ctor(...constructor_params);
         const uniqueAgentId = createUniqueAgentId(createAgentName(className));
         instance.getId = () => uniqueAgentId.toString();
+        if (agentIdProps.length === 1) {
+          const agentIdProp = agentIdProps[0];
+          if (instance[agentIdProp.name.toString()] === void 0) {
+            const uniqueAgentId2 = createUniqueAgentId(createAgentName(className));
+            instance[agentIdProp.name.toString()] = uniqueAgentId2;
+            instance.getId = () => uniqueAgentId2.toString();
+          } else {
+            throw new Error(
+              `Property ${agentIdProp.name} on ${className} must be uninitialized for injection`
+            );
+          }
+        } else {
+          const uniqueAgentId2 = createUniqueAgentId(createAgentName(className));
+          instance.getId = () => uniqueAgentId2.toString();
+        }
         const tsAgent = {
           getId: () => {
             return uniqueAgentId;
@@ -3658,6 +3674,7 @@ var guest = {
 };
 export {
   Agent,
+  AgentId,
   AgentImpl,
   Description,
   Metadata,

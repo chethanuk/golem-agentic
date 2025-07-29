@@ -1,4 +1,4 @@
-import {Metadata} from "./type_metadata";
+import {Metadata}  from "./type_metadata";
 import {ClassType, ObjectType, Type, TypeKind} from "rttist";
 import {Value, valueFromWitValue, witValueFromValue} from "./value";
 import {WasmRpc, WitValue, WorkerId} from "golem:rpc/types@0.2.1";

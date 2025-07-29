@@ -5,8 +5,9 @@ import {ResolvedAgent} from "./resolved_agent";
 import {AgentId} from "./agent_management";
 
 export { Agent } from './agent';
+export { AgentId } from './agent_management';
 export { Prompt, Description, agentRegistry, AgentImpl } from './registry';
-export {Metadata } from './type_metadata';
+export { Metadata } from "./type_metadata";
 
 export function getRegisteredAgents(): AgentType[] {
     return Array.from(agentRegistry.values());

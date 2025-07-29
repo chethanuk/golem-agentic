@@ -44,8 +44,9 @@ var WeatherAgent = class WeatherAgent2 extends Agent {
   static {
     __name(this, "WeatherAgent");
   }
+  agentId;
   async getWeather(name, param2) {
-    return Promise.resolve(`Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}.`);
+    return Promise.resolve(`Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}. Automatically initialised agentId: ${this.agentId.toString()}`);
   }
 };
 _ts_decorate([

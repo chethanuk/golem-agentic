@@ -5,7 +5,7 @@ import {WitValue} from "golem:rpc/types@0.2.1";
 import {AgentInternal} from "./ts_agent";
 import {ResolvedAgent} from "./resolved_agent";
 import {convertJsToWitValueUsingSchema} from "./conversions";
-import {Metadata} from "./type_metadata";
+import {Metadata}  from "./type_metadata";
 import {ClassType, ParameterInfo, Type} from "rttist";
 import {mapTypeToAnalysedType} from "./type_mapping";
 import {WitTypeBuilder} from "./wit_type_builder";
@@ -134,6 +134,11 @@ export function AgentImpl() {
         (ctor as any).createRemote = getRemoteClient(ctor);
         (ctor as any).createLocal = getLocalClient(ctor);
 
+        // Unfortunately, the AgentId type matching in reflection is not working properly,
+        // TODO; something to fix
+        const agentIdProps =
+            filteredType.getProperties().filter(prop => prop.name.toString() == "agentId");
+
         agentInitiators.set(className, {
             initiate: (agentName: string, constructor_params: WitValue[]) => {
                 const instance = new ctor(...constructor_params);
@@ -143,6 +148,25 @@ export function AgentImpl() {
                     createUniqueAgentId(createAgentName(className));
 
                 (instance as Agent).getId = () => uniqueAgentId.toString();
+
+                if (agentIdProps.length === 1) {
+                    const agentIdProp = agentIdProps[0];
+
+                    // Check if property is uninitialized, inject if so
+                    if ((instance as any)[agentIdProp.name.toString()] === undefined) {
+                        const uniqueAgentId = createUniqueAgentId(createAgentName(className));
+                        (instance as any)[agentIdProp.name.toString()] = uniqueAgentId;
+
+                        (instance as Agent).getId = () => uniqueAgentId.toString();
+                    } else {
+                        throw new Error(
+                            `Property ${agentIdProp.name} on ${className} must be uninitialized for injection`
+                        );
+                    }
+                } else {
+                    const uniqueAgentId = createUniqueAgentId(createAgentName(className));
+                    (instance as Agent).getId = () => uniqueAgentId.toString();
+                }
 
                 const tsAgent: AgentInternal = {
                     getId: () => {

@@ -8,7 +8,7 @@ type SkipAgentParams<T extends any[]> = T extends [infer Head, ...infer Tail]
         : [Head, ...SkipAgentParams<Tail>]
     : [];
 
-export class Agent {
+export abstract class Agent {
     getId(): string {
        throw new Error("An agent Id is created only after agent is instantiated");
     }

@@ -18,6 +18,8 @@ function add(library, stripInternals) {
       "@golem-ts-sdk",
       "@golem-ts-sdk",
       "@golem-ts-sdk",
+      "@golem-ts-sdk",
+      "@golem-ts-sdk",
       "@golem-ts-sdk"
     ],
     types: [
@@ -77,6 +79,13 @@ function add(library, stripInternals) {
       {
         kind: 64,
         name: "WeatherAgent",
+        properties: [
+          {
+            name: "agentId",
+            type: "@golem-ts-sdk:AgentId",
+            flags: 8
+          }
+        ],
         methods: [
           {
             name: "getWeather",
