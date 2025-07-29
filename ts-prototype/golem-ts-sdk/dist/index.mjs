@@ -946,14 +946,14 @@ var Reflect2;
 
 // src/resolved_agent.ts
 var ResolvedAgent = class {
-  constructor(name, instance) {
+  constructor(name, tsAgentInternal, originalInstance) {
     this.name = name;
-    this.tsAgent = instance;
+    this.tsAgent = tsAgentInternal;
+    this.originalInstance = originalInstance;
   }
   getId() {
-    return `${this.name}--0`;
+    return this.tsAgent.getId();
   }
-  // Convert WitValue to TS
   invoke(methodName, args) {
     return this.tsAgent.invoke(methodName, args);
   }
@@ -3020,10 +3020,13 @@ function buildNodes(value, nodes) {
 
 // src/clients.ts
 import { WasmRpc } from "golem:rpc/types@0.2.1";
-import { getSelfMetadata } from "golem:api/host@1.1.7";
+import { getAgentComponent, getSelfMetadata } from "golem:api/host@1.1.7";
 function getLocalClient(ctor) {
   return (...args) => {
-    const instance = new ctor(...args);
+    const agentName = ctor.name;
+    const agentInitiator = agentInitiators.get(agentName);
+    const resolvedAgent = agentInitiator.initiate(agentName, []);
+    const instance = resolvedAgent.originalInstance;
     return new Proxy(instance, {
       get(target, prop) {
         const val = target[prop];
@@ -3044,11 +3047,13 @@ function getRemoteClient(ctor) {
     const metadata = Metadata.getTypes().filter(
       (type) => type.isClass() && type.name === ctor.name
     )[0];
-    const componentId = getSelfMetadata().workerId.componentId;
+    const agentType = agentRegistry.get(ctor.name);
+    const componentId = getAgentComponent(agentType.typeName);
+    const forDebugging = getSelfMetadata().workerId.componentId;
     const rpc = WasmRpc.ephemeral(componentId);
-    const result = rpc.invokeAndAwait("golem:simulated-agentic-typescript/simulated-agent.{weather-agent.new}", []);
+    const result = rpc.invokeAndAwait("golem:simulated-agentic-typescript/simulated-agent-ts.{weather-agent.new}", []);
     const resourceWitValues = result.tag === "err" ? (() => {
-      throw new Error("Failed to create resource: " + JSON.stringify(result.val));
+      throw new Error("Failed to create resource: " + JSON.stringify(result.val) + " " + JSON.stringify(componentId) + " should be the same as " + JSON.stringify(componentId));
     })() : result.val;
     const resourceValue = valueFromWitValue(resourceWitValues);
     const resourceVal = (() => {
@@ -3392,6 +3397,40 @@ function getWorkerName(value, componentId) {
   throw new Error(`Expected value to be a handle, but got: ${JSON.stringify(value)}`);
 }
 
+// src/agent_management.ts
+import { getSelfMetadata as getSelfMetadata2 } from "golem:api/host@1.1.7";
+var AgentId = class _AgentId {
+  constructor(workerName, agentName, count) {
+    this.workerName = workerName;
+    this.agentName = agentName;
+    this.count = count;
+  }
+  toString() {
+    return `${this.workerName}--${this.agentName}--${this.count}`;
+  }
+  static fromString(s2) {
+    const parts = s2.split("--");
+    if (parts.length < 3) {
+      throw new Error(`Invalid AgentId format: ${s2}`);
+    }
+    const count = parseInt(parts.pop(), 10);
+    const agentName = parts.pop();
+    const workerName = parts.join("--");
+    return new _AgentId(workerName, agentName, count);
+  }
+};
+function createAgentName(name) {
+  return name;
+}
+var agentInstanceCounters = /* @__PURE__ */ new Map();
+function createUniqueAgentId(agentName) {
+  const current = agentInstanceCounters.get(agentName) ?? 0;
+  agentInstanceCounters.set(agentName, current + 1);
+  const count = agentInstanceCounters.get(agentName);
+  const workerName = getSelfMetadata2().workerId.workerName;
+  return new AgentId(workerName, agentName, count);
+}
+
 // src/registry.ts
 var agentInitiators = /* @__PURE__ */ new Map();
 var agentRegistry = /* @__PURE__ */ new Map();
@@ -3484,8 +3523,12 @@ function AgentImpl() {
     agentInitiators.set(className, {
       initiate: (agentName, constructor_params) => {
         const instance = new ctor(...constructor_params);
+        const uniqueAgentId = createUniqueAgentId(createAgentName(className));
+        instance.getId = () => uniqueAgentId.toString();
         const tsAgent = {
-          getId: () => `${className}--0`,
+          getId: () => {
+            return uniqueAgentId;
+          },
           getDefinition: () => {
             const def = agentRegistry.get(className);
             if (!def) throw new Error(`AgentType not found for ${className}`);
@@ -3511,7 +3554,7 @@ function AgentImpl() {
             return convertJsToWitValueUsingSchema(result, methodDef.outputSchema);
           }
         };
-        return new ResolvedAgent(className, tsAgent);
+        return new ResolvedAgent(className, tsAgent, instance);
       }
     });
   };
@@ -3531,7 +3574,7 @@ function defaultStringSchema() {
 // src/agent.ts
 var Agent = class {
   getId() {
-    return agentRegistry.get(this.constructor.name)?.typeName ?? `${this.constructor.name}--0`;
+    throw new Error("An agent Id is created only after agent is instantiated");
   }
   getAgentType() {
     const type = agentRegistry.get(this.constructor.name);
@@ -3541,10 +3584,10 @@ var Agent = class {
     return type;
   }
   static createRemote(...args) {
-    throw new Error("this is automatically implemented");
+    throw new Error("Remote clients will exist after AgentImpl initialisation");
   }
   static createLocal(...args) {
-    throw new Error("this is automatically implemented");
+    throw new Error("Local Clients will exist after AgentImpl initialisation");
   }
 };
 
@@ -3552,6 +3595,7 @@ var Agent = class {
 function getRegisteredAgents() {
   return Array.from(agentRegistry.values());
 }
+var agents = /* @__PURE__ */ new Map();
 var Agent2 = class {
   constructor(name, params) {
     console.log("Agent constructor called", name, params);
@@ -3560,10 +3604,12 @@ var Agent2 = class {
       const entries = Array.from(agentInitiators.keys());
       throw new Error(`No implementation found for agent: ${name}. Valid entries are ${entries.join(", ")}`);
     }
-    this.resolvedAgent = initiator.initiate(name, params);
+    const resolvedAgent = initiator.initiate(name, params);
+    this.resolvedAgent = resolvedAgent;
+    agents.set(resolvedAgent.getId(), this);
   }
   async getId() {
-    return this.resolvedAgent.getId();
+    return this.resolvedAgent.getId().toString();
   }
   async invoke(methodName, args) {
     return this.resolvedAgent.invoke(methodName, args).then((result) => {
@@ -3617,6 +3663,7 @@ export {
   Metadata,
   Prompt,
   agentRegistry,
+  agents,
   getRegisteredAgents,
   guest
 };

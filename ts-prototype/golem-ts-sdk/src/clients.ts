@@ -3,11 +3,17 @@ import {ClassType, ObjectType, Type, TypeKind} from "rttist";
 import {Value, valueFromWitValue, witValueFromValue} from "./value";
 import {WasmRpc, WitValue, WorkerId} from "golem:rpc/types@0.2.1";
 import {convertToTsValue} from "./value_mapping";
-import {ComponentId, getSelfMetadata} from "golem:api/host@1.1.7";
+import {ComponentId, getAgentComponent, getSelfMetadata} from "golem:api/host@1.1.7";
+import {agentInitiators, agentRegistry} from "./registry";
 
 export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     return (...args: any[]) => {
-        const instance = new ctor(...args);
+        const agentName = ctor.name;
+        const agentInitiator = agentInitiators.get(agentName)!;
+        // We ensure to create every agent using agentInitiator
+        const resolvedAgent = agentInitiator.initiate(agentName, []) // convert args to wit value
+        const instance = resolvedAgent.originalInstance;
+
         return new Proxy(instance, {
             get(target, prop) {
                 const val = target[prop];
@@ -31,14 +37,19 @@ export function getRemoteClient<T extends new (...args: any[]) => any>(ctor: T) 
             (type) => type.isClass() && type.name === ctor.name
         )[0];
 
-        const componentId = getSelfMetadata().workerId.componentId;
+        const agentType = agentRegistry.get(ctor.name)!;
+
+        const componentId = getAgentComponent(agentType.typeName)!;
+
+        const forDebugging = getSelfMetadata().workerId.componentId;
+
         const rpc = WasmRpc.ephemeral(componentId);
 
         const result =
-            rpc.invokeAndAwait( "golem:simulated-agentic-typescript/simulated-agent.{weather-agent.new}", []);
+            rpc.invokeAndAwait( "golem:simulated-agentic-typescript/simulated-agent-ts.{weather-agent.new}", []);
 
         const resourceWitValues = result.tag === "err"
-            ? (() => { throw new Error("Failed to create resource: " + JSON.stringify(result.val)); })()
+            ? (() => { throw new Error("Failed to create resource: " + JSON.stringify(result.val) + " " + JSON.stringify(componentId) + " should be the same as " + JSON.stringify(componentId)); })()
             : result.val;
 
         const resourceValue = valueFromWitValue(resourceWitValues);

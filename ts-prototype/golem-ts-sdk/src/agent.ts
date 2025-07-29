@@ -10,8 +10,7 @@ type SkipAgentParams<T extends any[]> = T extends [infer Head, ...infer Tail]
 
 export class Agent {
     getId(): string {
-        // to be implemented by the agent implementation
-        return agentRegistry.get(this.constructor.name)?.typeName ?? `${this.constructor.name}--0`;
+       throw new Error("An agent Id is created only after agent is instantiated");
     }
 
     getAgentType(): AgentType {
@@ -26,14 +25,14 @@ export class Agent {
         this: T,
         ...args: SkipAgentParams<ConstructorParameters<T>>
     ): InstanceType<T> {
-        throw new Error("this is automatically implemented");
+        throw new Error("Remote clients will exist after AgentImpl initialisation");
     }
 
     static createLocal<T extends new (...args: any[]) => Agent>(
         this: T,
         ...args: SkipAgentParams<ConstructorParameters<T>>
     ): InstanceType<T> {
-        throw new Error("this is automatically implemented");
+        throw new Error("Local Clients will exist after AgentImpl initialisation");
     }
 }
 

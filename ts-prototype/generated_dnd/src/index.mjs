@@ -23,11 +23,9 @@ var AssistantAgent = class AssistantAgent2 extends Agent {
       data: "Sample data",
       value: 42
     };
-    const remoteWeatherClient = WeatherAgent.createRemote();
-    const remoteWeather = await remoteWeatherClient.getWeather(name, customData);
     const localWeatherClient = WeatherAgent.createLocal();
     const localWeather = await localWeatherClient.getWeather(name, customData);
-    return "Hello! " + name + ", remote weather: " + remoteWeather + ", local weather: " + localWeather;
+    return "Hello! weather at " + name + ",is being computed by assistant-agent with id " + this.getId() + "., Result from weather agent: " + localWeather + " weather agent used " + localWeatherClient.getId();
   }
 };
 _ts_decorate([
@@ -47,7 +45,7 @@ var WeatherAgent = class WeatherAgent2 extends Agent {
     __name(this, "WeatherAgent");
   }
   async getWeather(name, param2) {
-    return Promise.resolve(`Weather in ${name} is sunny. Result ${name} ${param2}`);
+    return Promise.resolve(`Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}.`);
   }
 };
 _ts_decorate([

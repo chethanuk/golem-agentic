@@ -2,6 +2,7 @@ import type * as bindings from 'agentic-guest';
 import {  AgentType } from 'golem:agent/common';
 import {agentInitiators, agentRegistry} from './registry';
 import {ResolvedAgent} from "./resolved_agent";
+import {AgentId} from "./agent_management";
 
 export { Agent } from './agent';
 export { Prompt, Description, agentRegistry, AgentImpl } from './registry';
@@ -10,6 +11,8 @@ export {Metadata } from './type_metadata';
 export function getRegisteredAgents(): AgentType[] {
     return Array.from(agentRegistry.values());
 }
+
+export const agents = new Map<AgentId, Agent>();
 
 class Agent {
     private resolvedAgent: ResolvedAgent;
@@ -25,12 +28,16 @@ class Agent {
             throw new Error(`No implementation found for agent: ${name}. Valid entries are ${entries.join(", ")}`);
         }
 
-        this.resolvedAgent = initiator.initiate(name, params);
+        const resolvedAgent = initiator.initiate(name, params);
+
+        this.resolvedAgent = resolvedAgent;
+
+        agents.set(resolvedAgent.getId(), this)
 
     }
 
     async getId(): Promise<string> {
-        return this.resolvedAgent.getId()
+        return this.resolvedAgent.getId().toString()
     }
 
     async invoke(methodName: string, args: bindings.guest.WitValue[]): Promise<bindings.guest.StatusUpdate> {

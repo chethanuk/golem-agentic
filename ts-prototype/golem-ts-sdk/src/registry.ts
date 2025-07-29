@@ -12,6 +12,8 @@ import {WitTypeBuilder} from "./wit_type_builder";
 import {convertToTsValue} from "./value_mapping";
 import {valueFromWitValue} from "./value";
 import {getLocalClient, getRemoteClient} from "./clients";
+import {createAgentName, createUniqueAgentId} from "./agent_management";
+import {Agent} from "./agent";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
 
@@ -128,6 +130,7 @@ export function AgentImpl() {
 
         agentRegistry.set(className, agentType);
 
+
         (ctor as any).createRemote = getRemoteClient(ctor);
         (ctor as any).createLocal = getLocalClient(ctor);
 
@@ -135,8 +138,16 @@ export function AgentImpl() {
             initiate: (agentName: string, constructor_params: WitValue[]) => {
                 const instance = new ctor(...constructor_params);
 
+                // Only when the agent is created, we create a unique ID for it
+                const uniqueAgentId =
+                    createUniqueAgentId(createAgentName(className));
+
+                (instance as Agent).getId = () => uniqueAgentId.toString();
+
                 const tsAgent: AgentInternal = {
-                    getId: () => `${className}--0`,
+                    getId: () => {
+                        return uniqueAgentId;
+                    },
                     getDefinition: () => {
                         const def = agentRegistry.get(className);
                         if (!def) throw new Error(`AgentType not found for ${className}`);
@@ -173,7 +184,7 @@ export function AgentImpl() {
                     }
                 };
 
-                return new ResolvedAgent(className, tsAgent);
+                return new ResolvedAgent(className, tsAgent, instance);
             }
         });
     };
