@@ -25,6 +25,7 @@ export type Value =
     | { kind: 'handle'; uri: string; resourceId: number };
 
 
+// To be replaced properly
 export function valueFromWitValue(wit: WitValue): Value {
     if (!wit.nodes.length) throw new Error("Empty nodes in WitValue");
     return buildTree(wit.nodes[0], wit.nodes);

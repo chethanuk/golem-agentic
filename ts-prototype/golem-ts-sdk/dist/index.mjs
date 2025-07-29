@@ -3025,7 +3025,16 @@ function getLocalClient(ctor) {
   return (...args) => {
     const agentName = ctor.name;
     const agentInitiator = agentInitiators.get(agentName);
-    const resolvedAgent = agentInitiator.initiate(agentName, []);
+    const agentConstructorDependencies = Metadata.getTypes().filter(
+      (type) => type.isClass() && type.name === agentName
+    )[0];
+    const constructor = agentConstructorDependencies.getConstructors()[0];
+    const parameters = constructor.getParameters();
+    const parameterWitValues = args.map((fnArg, index) => {
+      const typ = parameters[index].type;
+      return witValueFromFunctionArg(fnArg, typ);
+    });
+    const resolvedAgent = agentInitiator.initiate(agentName, parameterWitValues);
     const instance = resolvedAgent.originalInstance;
     return new Proxy(instance, {
       get(target, prop) {
@@ -3524,7 +3533,12 @@ function AgentImpl() {
     const agentIdProps = filteredType.getProperties().filter((prop) => prop.name.toString() == "agentId");
     agentInitiators.set(className, {
       initiate: (agentName, constructor_params) => {
-        const instance = new ctor(...constructor_params);
+        const methodInfo = classType.getConstructors()[0];
+        const constructorParamTypes = methodInfo.getParameters();
+        const convertedConstructorArgs = constructor_params.map((witVal, idx) => {
+          return convertToTsValue(valueFromWitValue(witVal), constructorParamTypes[idx].type);
+        });
+        const instance = new ctor(...convertedConstructorArgs);
         const uniqueAgentId = createUniqueAgentId(createAgentName(className));
         instance.getId = () => uniqueAgentId.toString();
         if (agentDependencies.length === 1) {
@@ -3561,8 +3575,8 @@ function AgentImpl() {
             const fn = instance[method];
             if (!fn) throw new Error(`Method ${method} not found on agent ${className}`);
             const def = agentRegistry.get(className);
-            const methodInfo = classType.getMethod(method);
-            const paramTypes = methodInfo.getSignatures()[0].getParameters();
+            const methodInfo2 = classType.getMethod(method);
+            const paramTypes = methodInfo2.getSignatures()[0].getParameters();
             const convertedArgs = args.map((witVal, idx) => {
               return convertToTsValue(valueFromWitValue(witVal), paramTypes[idx].type);
             });

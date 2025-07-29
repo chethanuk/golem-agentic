@@ -145,7 +145,18 @@ export function AgentImpl() {
 
         agentInitiators.set(className, {
             initiate: (agentName: string, constructor_params: WitValue[]) => {
-                const instance = new ctor(...constructor_params);
+
+                // Fix, what if multiple constructors?
+                const methodInfo = (classType as ClassType).getConstructors()[0];
+
+                const constructorParamTypes: readonly ParameterInfo[] =
+                    methodInfo.getParameters();
+
+                const convertedConstructorArgs = constructor_params.map((witVal, idx) => {
+                    return convertToTsValue(valueFromWitValue(witVal), constructorParamTypes[idx].type)
+                });
+
+                const instance = new ctor(...convertedConstructorArgs);
 
                 // Only when the agent is created, we create a unique ID for it
                 const uniqueAgentId =

@@ -23,7 +23,7 @@ var AssistantAgent = class AssistantAgent2 extends Agent {
       data: "Sample data",
       value: 42
     };
-    const localWeatherClient = WeatherAgent.createLocal();
+    const localWeatherClient = WeatherAgent.createLocal("Afsal");
     const localWeather = await localWeatherClient.getWeather(name, customData);
     return "Hello! weather at " + name + ", is being computed by assistant-agent with id " + this.getId() + "., Result from weather agent: " + localWeather + " weather agent used " + localWeatherClient.getId();
   }
@@ -46,8 +46,13 @@ var WeatherAgent = class WeatherAgent2 extends Agent {
   }
   agentId;
   assistantAgent;
+  userName;
+  constructor(username) {
+    super();
+    this.userName = username;
+  }
   async getWeather(name, param2) {
-    return Promise.resolve(`Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}. Automatically initialised agentId: ${this.agentId.toString()}The query was done by assistant-agent ${this.assistantAgent.getId()}`);
+    return Promise.resolve(`Hi ${this.userName}! Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}. Automatically initialised agentId: ${this.agentId.toString()}The query was done by assistant-agent ${this.assistantAgent.getId()}`);
   }
 };
 _ts_decorate([
@@ -61,5 +66,9 @@ _ts_decorate([
   _ts_metadata("design:returntype", Promise)
 ], WeatherAgent.prototype, "getWeather", null);
 WeatherAgent = _ts_decorate([
-  AgentImpl()
+  AgentImpl(),
+  _ts_metadata("design:type", Function),
+  _ts_metadata("design:paramtypes", [
+    String
+  ])
 ], WeatherAgent);

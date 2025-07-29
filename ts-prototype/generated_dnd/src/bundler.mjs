@@ -88,6 +88,11 @@ function add(library, stripInternals) {
             name: "assistantAgent",
             type: "@ts-user/index:AssistantAgent",
             flags: 8
+          },
+          {
+            name: "userName",
+            type: "#String",
+            flags: 8
           }
         ],
         methods: [
@@ -132,7 +137,14 @@ function add(library, stripInternals) {
         indexes: [],
         constructors: [
           {
-            returnType: "#void"
+            returnType: "#void",
+            parameters: [
+              {
+                name: "username",
+                type: "#String",
+                flags: 0
+              }
+            ]
           }
         ],
         extends: "@golem-ts-sdk:Agent",

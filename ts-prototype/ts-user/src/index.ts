@@ -17,7 +17,7 @@ class AssistantAgent extends Agent {
         //  const remoteWeatherClient = WeatherAgent.createRemote();
         //  const remoteWeather = await remoteWeatherClient.getWeather(name, customData);
 
-        const localWeatherClient = WeatherAgent.createLocal();
+        const localWeatherClient = WeatherAgent.createLocal("Afsal");
         const localWeather = await localWeatherClient.getWeather(name, customData);
 
         return (
@@ -33,12 +33,18 @@ class AssistantAgent extends Agent {
 class WeatherAgent extends Agent {
     private agentId!: AgentId;
     private assistantAgent!: AssistantAgent;
+    private readonly userName: string;
+
+    constructor(username: string) {
+        super();
+        this.userName = username;
+    }
 
     @Prompt("Get weather")
     @Description("Weather forecast weather for you")
     async getWeather(name: string, param2: CustomData): Promise<string> {
         return Promise.resolve(
-            `Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. ` +
+            `Hi ${this.userName} Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. ` +
             `Computed by weather-agent ${this.getId()}. ` +
             `Automatically initialised agentId: ${this.agentId.toString()}` +
             `The query was done by assistant-agent ${this.assistantAgent.getId()}`

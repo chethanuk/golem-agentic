@@ -10,8 +10,21 @@ export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     return (...args: any[]) => {
         const agentName = ctor.name;
         const agentInitiator = agentInitiators.get(agentName)!;
+        const agentConstructorDependencies = Metadata.getTypes().filter(
+            (type) => type.isClass() && type.name === agentName
+        )[0] as ClassType;
+
+        const constructor = agentConstructorDependencies.getConstructors()[0];
+
+        const parameters = constructor.getParameters();
+
+        const parameterWitValues = args.map((fnArg, index) => {
+            const typ = parameters[index].type;
+            return witValueFromFunctionArg(fnArg, typ);
+        })
+
         // We ensure to create every agent using agentInitiator
-        const resolvedAgent = agentInitiator.initiate(agentName, []) // convert args to wit value
+        const resolvedAgent = agentInitiator.initiate(agentName, parameterWitValues) // convert args to wit value
         const instance = resolvedAgent.originalInstance;
 
         return new Proxy(instance, {
