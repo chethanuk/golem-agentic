@@ -33,7 +33,6 @@ export function createAgentName(name: string): AgentName {
 
 export const agentInstanceCounters = new Map<AgentName, number>();
 
-
 export function createUniqueAgentId(agentName: AgentName): AgentId {
     const current = agentInstanceCounters.get(agentName) ?? 0;
     agentInstanceCounters.set(agentName, current + 1);

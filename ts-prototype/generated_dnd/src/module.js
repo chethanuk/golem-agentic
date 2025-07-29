@@ -3520,22 +3520,29 @@ function AgentImpl() {
     agentRegistry.set(className, agentType);
     ctor.createRemote = getRemoteClient(ctor);
     ctor.createLocal = getLocalClient(ctor);
+    const agentDependencies = filteredType.getProperties().filter((prop) => prop.type.name == "AssistantAgent");
     const agentIdProps = filteredType.getProperties().filter((prop) => prop.name.toString() == "agentId");
     agentInitiators.set(className, {
       initiate: (agentName, constructor_params) => {
         const instance = new ctor(...constructor_params);
         const uniqueAgentId = createUniqueAgentId(createAgentName(className));
         instance.getId = () => uniqueAgentId.toString();
+        if (agentDependencies.length === 1) {
+          const agentDependency = agentDependencies[0];
+          if (instance[agentDependency.name.toString()] === void 0) {
+            const agentInstance = findAgentByName(agentDependency.type.name.toString());
+            if (!agentInstance) {
+              throw new Error(`Agent dependency ${agentDependency.name.toString()} not found for ${className}  ${agents.entries()}`);
+            }
+            instance[agentDependency.name.toString()] = agentInstance.resolvedAgent.originalInstance;
+          }
+        }
         if (agentIdProps.length === 1) {
           const agentIdProp = agentIdProps[0];
           if (instance[agentIdProp.name.toString()] === void 0) {
             const uniqueAgentId2 = createUniqueAgentId(createAgentName(className));
             instance[agentIdProp.name.toString()] = uniqueAgentId2;
             instance.getId = () => uniqueAgentId2.toString();
-          } else {
-            throw new Error(
-              `Property ${agentIdProp.name} on ${className} must be uninitialized for injection`
-            );
           }
         } else {
           const uniqueAgentId2 = createUniqueAgentId(createAgentName(className));
@@ -3612,6 +3619,15 @@ function getRegisteredAgents() {
   return Array.from(agentRegistry.values());
 }
 var agents = /* @__PURE__ */ new Map();
+function findAgentByName(agentName) {
+  let lastMatch = void 0;
+  for (const [agentId, agent] of agents.entries()) {
+    if (agentId.agentName === agentName) {
+      lastMatch = agent;
+    }
+  }
+  return lastMatch;
+}
 var Agent2 = class {
   constructor(name, params) {
     console.log("Agent constructor called", name, params);
@@ -3681,6 +3697,7 @@ export {
   Prompt,
   agentRegistry,
   agents,
+  findAgentByName,
   getRegisteredAgents,
   guest
 };

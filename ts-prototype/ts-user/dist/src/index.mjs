@@ -25,7 +25,7 @@ var AssistantAgent = class AssistantAgent2 extends Agent {
     };
     const localWeatherClient = WeatherAgent.createLocal();
     const localWeather = await localWeatherClient.getWeather(name, customData);
-    return "Hello! weather at " + name + ",is being computed by assistant-agent with id " + this.getId() + "., Result from weather agent: " + localWeather + " weather agent used " + localWeatherClient.getId();
+    return "Hello! weather at " + name + ", is being computed by assistant-agent with id " + this.getId() + "., Result from weather agent: " + localWeather + " weather agent used " + localWeatherClient.getId();
   }
 };
 _ts_decorate([
@@ -45,8 +45,9 @@ var WeatherAgent = class WeatherAgent2 extends Agent {
     __name(this, "WeatherAgent");
   }
   agentId;
+  assistantAgent;
   async getWeather(name, param2) {
-    return Promise.resolve(`Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}. Automatically initialised agentId: ${this.agentId.toString()}`);
+    return Promise.resolve(`Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}. Automatically initialised agentId: ${this.agentId.toString()}The query was done by assistant-agent ${this.assistantAgent.getId()}`);
   }
 };
 _ts_decorate([

@@ -14,6 +14,7 @@ import {valueFromWitValue} from "./value";
 import {getLocalClient, getRemoteClient} from "./clients";
 import {createAgentName, createUniqueAgentId} from "./agent_management";
 import {Agent} from "./agent";
+import {agents, findAgentByName} from "./index";
 
 export const agentInitiators = new Map<string, AgentInitiator>();
 
@@ -136,6 +137,9 @@ export function AgentImpl() {
 
         // Unfortunately, the AgentId type matching in reflection is not working properly,
         // TODO; something to fix
+        const agentDependencies =
+            filteredType.getProperties().filter(prop => prop.type.name == "AssistantAgent");
+
         const agentIdProps =
             filteredType.getProperties().filter(prop => prop.name.toString() == "agentId");
 
@@ -149,19 +153,28 @@ export function AgentImpl() {
 
                 (instance as Agent).getId = () => uniqueAgentId.toString();
 
+                if (agentDependencies.length === 1) {
+                    const agentDependency = agentDependencies[0];
+
+                    if ((instance as any)[agentDependency.name.toString()] === undefined) {
+                        const agentInstance = findAgentByName(agentDependency.type.name.toString());
+
+                        if (!agentInstance) {
+                            throw new Error(`Agent dependency ${agentDependency.name.toString()} not found for ${className} ` + ` ${agents.entries()}`);
+                        }
+
+                        (instance as any)[agentDependency.name.toString()] =
+                            agentInstance.resolvedAgent.originalInstance;
+                    }
+                }
+
                 if (agentIdProps.length === 1) {
                     const agentIdProp = agentIdProps[0];
 
-                    // Check if property is uninitialized, inject if so
                     if ((instance as any)[agentIdProp.name.toString()] === undefined) {
                         const uniqueAgentId = createUniqueAgentId(createAgentName(className));
                         (instance as any)[agentIdProp.name.toString()] = uniqueAgentId;
-
                         (instance as Agent).getId = () => uniqueAgentId.toString();
-                    } else {
-                        throw new Error(
-                            `Property ${agentIdProp.name} on ${className} must be uninitialized for injection`
-                        );
                     }
                 } else {
                     const uniqueAgentId = createUniqueAgentId(createAgentName(className));

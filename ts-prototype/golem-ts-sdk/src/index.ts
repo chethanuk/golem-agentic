@@ -15,8 +15,20 @@ export function getRegisteredAgents(): AgentType[] {
 
 export const agents = new Map<AgentId, Agent>();
 
+export function findAgentByName(agentName: string): Agent | undefined {
+    let lastMatch: Agent | undefined = undefined;
+
+    for (const [agentId, agent] of agents.entries()) {
+        if (agentId.agentName === agentName) {
+            lastMatch = agent;
+        }
+    }
+
+    return lastMatch;
+}
+
 class Agent {
-    private resolvedAgent: ResolvedAgent;
+    readonly resolvedAgent: ResolvedAgent;
 
     constructor(name: string, params: bindings.guest.WitValue[]) {
         console.log("Agent constructor called", name, params);
