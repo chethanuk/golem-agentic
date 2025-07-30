@@ -9,7 +9,7 @@ export default defineConfig({
   bundle: true,
   shims: false,
   target: 'esnext',
-  external: ['agentic-guest', 'golem:api', 'golem:rpc'],
+  external: ['golem:api', 'golem:rpc'],
   noExternal: ['rttist', '@afsalthaj/golem-ts-sdk'],
   outExtension: () => ({ js: '.mjs' }),
 });
