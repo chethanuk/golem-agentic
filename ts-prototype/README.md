@@ -16,39 +16,17 @@ to simulate the idea of importing users JS dynamically.
 Once the experimentation is done, we will move the SDK logic to the output of `golem app new ts` 
 for easier maintainence, such as updating host wit files etc  
 
-### RTTIST for Type Reflection
+### What are the pre-requisites for user?
+
+* npm
+* npx (comes with npm for latest versions of npm)
+
+ 
+While rttist is needed, we incorporated it part of the build. We used some plugins, but it gave me errors, but this prototype makes sure
+user can simply write the code using SDK, and then by running the following, everything should work
 
 ```
-> npm install -g @rttist/typegen@0.2.0
-> rttist --version
-0.2.0
-> typegen --version
-0.2.0
-```
-
-Please stick on to this version. Any version upgrades can be done only after integration tests in place. 
-
-**User should never ever install RTTIST/typegen**, and i think we can help it with the help of golem-cli by directly using typegen API.
-golem-cli should re-do what typegen does inspired from code like https://github.com/rttist/rttist/blob/main/packages/plugins/vite6-plugin-rttist/src/index.ts.
-
-### RTTIST vs deepkit
-
-The metadata generation pathway is much more convincing to me than deepkit's magic of transformers (or even rttists transformers).
-We have more flexibility. Note that, we need type-metadata initialisation before user's code start doing its work.
-
-There are 2 ways to do it.
-1. Load the generated module along with user's module. If the runtime can take an `Array[String]` representing the sorted order of modules 
-to be initialised, that can help avoid using custom transformers/compilers. It gives more flexibility to users if they need to use a specific transformer later on.
-Currently in rust code, I am importing 2 modules along with SDK module - user's module and user's type-metadata-initialisation
-
-2. Use transformer plugin, that will combine everything to 1 user module. But I will be suprised, if we assume that user will never have other initialisers that,
-and end up seeing an existing configuration related to type-metadata - meaning, when we use transformer plugins, we are leaking internal details to what we are doing.
-
-
-Note: RTTIST versions should be the very latest
-
-```
-npm install -g @rttist/typegen@0.2.0
+npm run build
 ```
 
 ### Quick testing
@@ -65,17 +43,13 @@ cp dist/index.mjs  ../generated_dnd/src/module.js
 
 ```shell
 cd ../ts-user
-rttist generate # to be done by golem cli
 npn install ../golem-ts-sdk
 npn run build
 
 # this step is not exactly needed in real implementation, 
 # as it will be done through wrapping users-js in another component which exports get-script method
 
-# The component should take not just user's js but bootstrap or a sorted order of modules that are initialisers
-# In our case, we will have bundler.js as well as index.js
-cp dist/.metadata/bundler.mjs  ../generated_dnd/src/bundler.mjs
-cp dist/src/index.mjs  ../generated_dnd/src/index.mjs
+cp dist/index.mjs  ../generated_dnd/src/index.mjs (it can be any name - index.mjs or index.js - doesn't matter, and in reality, its going to be a "string" import)
 
 ```
 
@@ -84,17 +58,20 @@ cd ../generated_dnd
 golem app build
 # mv the component to code_first_agent branch's test-components directory
 cd golem/integration-tests
-cargo run --bin rib-repl agentic_gues
+cargo run --bin rib-repl agentic_guest
 ```
 
 ```rust
 >>> let x = instance()
 ()
->>> let r = x.agent("AssistantAgent", [{nodes: [prim-string("foo")]}])
+>>> let r = x.agent("AssistantAgent", [])
 ()
->>> r.invoke("ask", [{nodes: [prim-string("foo")]}])
-emit("Hi foo")
+>>> r.invoke("ask", [{nodes: [prim-string("nyc1")]}])
+emit("Hello! weather at nyc1,
+is being computed by assistant-agent with id worker-1-fad6b578-fefb-4385-8c1f-d31f6096815d--AssistantAgent--2.,
+Result from weather agent: Hi username Weather in nyc1 is sunny. Params passed: nyc1 {
+  \"data\":\"Sample data\",
+  \"value\":42
+}. Computed by weather-agent worker-1-fad6b578-fefb-4385-8c1f-d31f6096815d--WeatherAgent--2. The query was done by assistant-agent worker-1-fad6b578-fefb-4385-8c1f-d31f6096815d--AssistantAgent--2 weather agent used worker-1-fad6b578-fefb-4385-8c1f-d31f6096815d--WeatherAgent--2")
 >>>
->>>
-
 ```
