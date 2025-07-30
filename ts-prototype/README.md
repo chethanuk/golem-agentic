@@ -6,25 +6,26 @@ in the runtime.
 When the rust-component generator is specialised to support dynamic loading of user's JS, it should be following this change
 in `internal.rs`
 
-### Golem CLI template for SDK
+### Prototype SDK notes
 
-The SDK above is pretty much inspired from the template of the golem SDK, but it is not a blund output of template SDK.
-So to debug things and have better control, I build .dts files using wasm-quickjs wrapper toolings, and wrote the agent implementation in the SDK,
-and generated the rust component using wasm-quickjs rust component generator, with necessary changes in the emitted wrapper
-to simulate the idea of importing users JS dynamically.
+The SDK above is pretty much inspired from the typescript template of the golem SDK, but it is not a blund output of template SDK.
+So to debug things and have better control, I build .dts files using wasm-quickjs wrapper toolings with the wit that I need, 
+and wrote the agent implementation in the SDK. Later generated the rust component using wasm-quickjs rust component generator.
+Also made some changes to the generated rust, with the assumption that user code is going to be dynamically loaded.
+Changed `internal.rs` to simply add 1 more import which is user module. 
 
-Once the experimentation is done, we will move the SDK logic to the output of `golem app new ts` 
-for easier maintainence, such as updating host wit files etc  
+We can discuss this with @vigoo, whether to port the whole code in this prototype SDK to the golem-cli template generated code.
+Regardless this SDK has to be npm published (along with being part of a pre-compiled wasm)
 
-### What are the pre-requisites for user?
+### What are the pre-requisites for user given this SDK?
 
 * npm
 * npx (comes with npm for latest versions of npm)
 
  
-While rttist is needed, we incorporated it part of the build using certain configuration and generated code as part of npm run build. 
-While I can't conclude if this is the best of the best approach, this prototype really makes sure user can simply write the 
-code using SDK, and then by running the following, everything should work given the above pre-requisites
+While rttist is needed, we incorporated it part of the build using certain configuration and generated code. 
+While I can't conclude if this is the best of the best approach, it makes sure  prototype already allows user to simply write their 
+code using SDK, and then by running the following, they create 1 single JS file that will be dynamically loaded at runtime
 
 ```sh
 npm run build
