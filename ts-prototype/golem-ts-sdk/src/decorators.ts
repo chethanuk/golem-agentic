@@ -1,24 +1,18 @@
-import 'reflect-metadata';
 import {AgentMethod, DataSchema, AgentType, ParameterType} from 'golem:agent/common';
-import {AgentInitiator} from "./agent_initiator";
 import {WitValue} from "golem:rpc/types@0.2.1";
-import {AgentInternal} from "./ts_agent";
-import {ResolvedAgent} from "./resolved_agent";
-import {convertJsToWitValueUsingSchema} from "./conversions";
+import {AgentInternal} from "./ts-agent";
+import {ResolvedAgent} from "./resolved-agent";
 import {Metadata}  from "./type_metadata";
 import {ClassType, ParameterInfo, Type} from "rttist";
-import {mapTypeToAnalysedType} from "./type_mapping";
-import {WitTypeBuilder} from "./wit_type_builder";
-import {convertToTsValue} from "./value_mapping";
-import {valueFromWitValue} from "./value";
-import {getLocalClient, getRemoteClient} from "./clients";
-import {createAgentName, createUniqueAgentId} from "./agent_management";
-import {Agent} from "./agent";
+import {constructWitTypeFromTsType} from "./mapping/type-mapping";
+import {getLocalClient, getRemoteClient} from "./client-generation";
+import {BaseAgent} from "./base-agent";
 import {agents, findAgentByName} from "./index";
+import {agentInitiators, agentRegistry} from "./index";
+import {createUniqueAgentId} from "./agent-instance-counter";
+import {createAgentName} from "./agent-name";
+import {constructTsValueFromWitValue, constructWitValueFromTsValue} from "./mapping/value-mapping";
 
-export const agentInitiators = new Map<string, AgentInitiator>();
-
-export const agentRegistry = new Map<string, AgentType>();
 
 const methodMetadata = new Map<string, Map<string, { prompt?: string; description?: string }>>();
 
@@ -68,8 +62,7 @@ function buildOutputSchema(returnType: Type): DataSchema {
 
 
 function mapToParameterType(type: Type): ParameterType {
-    const analysedType = mapTypeToAnalysedType(type)
-    const witType = WitTypeBuilder.buildWitType(analysedType)
+    const witType = constructWitTypeFromTsType(type)
 
     return {
         tag: 'wit',
@@ -78,7 +71,7 @@ function mapToParameterType(type: Type): ParameterType {
 
 }
 
-export function AgentImpl() {
+export function Agent() {
     return function <T extends new (...args: any[]) => any>(ctor: T){
 
         const className = ctor.name;
@@ -144,7 +137,7 @@ export function AgentImpl() {
             filteredType.getProperties().filter(prop => prop.name.toString() == "agentId");
 
         agentInitiators.set(className, {
-            initiate: (agentName: string, constructor_params: WitValue[]) => {
+            initiate: (agentName: string, constructorParams: WitValue[]) => {
 
                 // Fix, what if multiple constructors?
                 const methodInfo = (classType as ClassType).getConstructors()[0];
@@ -152,8 +145,8 @@ export function AgentImpl() {
                 const constructorParamTypes: readonly ParameterInfo[] =
                     methodInfo.getParameters();
 
-                const convertedConstructorArgs = constructor_params.map((witVal, idx) => {
-                    return convertToTsValue(valueFromWitValue(witVal), constructorParamTypes[idx].type)
+                const convertedConstructorArgs = constructorParams.map((witVal, idx) => {
+                    return constructTsValueFromWitValue(witVal, constructorParamTypes[idx].type)
                 });
 
                 const instance = new ctor(...convertedConstructorArgs);
@@ -162,7 +155,7 @@ export function AgentImpl() {
                 const uniqueAgentId =
                     createUniqueAgentId(createAgentName(className));
 
-                (instance as Agent).getId = () => uniqueAgentId.toString();
+                (instance as BaseAgent).getId = () => uniqueAgentId;
 
                 if (agentDependencies.length === 1) {
                     const agentDependency = agentDependencies[0];
@@ -185,18 +178,18 @@ export function AgentImpl() {
                     if ((instance as any)[agentIdProp.name.toString()] === undefined) {
                         const uniqueAgentId = createUniqueAgentId(createAgentName(className));
                         (instance as any)[agentIdProp.name.toString()] = uniqueAgentId;
-                        (instance as Agent).getId = () => uniqueAgentId.toString();
+                        (instance as BaseAgent).getId = () => uniqueAgentId;
                     }
                 } else {
                     const uniqueAgentId = createUniqueAgentId(createAgentName(className));
-                    (instance as Agent).getId = () => uniqueAgentId.toString();
+                    (instance as BaseAgent).getId = () => uniqueAgentId;
                 }
 
-                const tsAgent: AgentInternal = {
+                const agentInternal: AgentInternal = {
                     getId: () => {
                         return uniqueAgentId;
                     },
-                    getDefinition: () => {
+                    getAgentType: () => {
                         const def = agentRegistry.get(className);
                         if (!def) throw new Error(`AgentType not found for ${className}`);
                         return def;
@@ -209,11 +202,16 @@ export function AgentImpl() {
 
                         const methodInfo = (classType as ClassType).getMethod(method)!;
 
+                        const methodSignature = methodInfo.getSignatures()[0];
+
                         const paramTypes: readonly ParameterInfo[] =
-                            methodInfo.getSignatures()[0].getParameters();
+                            methodSignature.getParameters();
+
+                        const returnType: Type =
+                            methodSignature.returnType;
 
                         const convertedArgs = args.map((witVal, idx) => {
-                            return convertToTsValue(valueFromWitValue(witVal), paramTypes[idx].type)
+                            return constructTsValueFromWitValue(witVal, paramTypes[idx].type)
                         });
 
                         const result = await fn.apply(instance, convertedArgs);
@@ -228,11 +226,11 @@ export function AgentImpl() {
                             throw new Error(`Method ${method} not found in agent definition for ${className} ${def} ${def?.methods}. Available: ${ entriesAsStrings.join(", ")}`);
                         }
 
-                        return convertJsToWitValueUsingSchema(result, methodDef.outputSchema);
+                        return constructWitValueFromTsValue(result, returnType);
                     }
                 };
 
-                return new ResolvedAgent(className, tsAgent, instance);
+                return new ResolvedAgent(className, agentInternal, instance);
             }
         });
     };

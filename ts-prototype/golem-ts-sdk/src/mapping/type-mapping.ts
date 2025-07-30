@@ -1,11 +1,133 @@
-import {InterfaceType, ObjectType, PromiseType, Type, TypeKind} from "rttist";
-import {analysedType, AnalysedType} from "./analysed_type";
+import {
+    AnalysedType,
+    NameOptionTypePair,
+    NameTypePair,
+} from './analysed-type';
+import {NodeIndex, ResourceMode, WitTypeNode} from "golem:rpc/types@0.2.1";
+import {WitType} from "golem:agent/common";
+import {Type} from "rttist";
+import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
+import {analysedType} from "./analysed-type";
 
-// mapTypeToSchema runs only during initialization and hence
-// it's safe to convert to a proper type such as Analysed type
-// and then convert it back to WitType following the rules of Golem's wasm-rpc
-// rust implementations
-export function mapTypeToAnalysedType(type: Type): AnalysedType {
+export function constructWitTypeFromTsType(type: Type) : WitType {
+    const analysedType = analysedTypeFromType(type)
+    return constructFromAnalysedType(analysedType)
+}
+
+function constructFromAnalysedType(typ: AnalysedType): WitType {
+    const builder = new WitTypeBuilder();
+    builder.add(typ);
+    return builder.build();
+}
+
+// Copied from wasm-rpc rust implementation
+class WitTypeBuilder {
+    private nodes: WitTypeNode[] = [];
+    private mapping = new Map<string, number>();
+
+    add(typ: AnalysedType): NodeIndex {
+        const hash = JSON.stringify(typ);
+        if (this.mapping.has(hash)) {
+            return this.mapping.get(hash)!;
+        }
+
+        const idx = this.nodes.length;
+        this.nodes.push({ tag: 'prim-bool-type' });
+
+        const node: WitTypeNode = this.convert(typ);
+        this.nodes[idx] = node;
+        this.mapping.set(hash, idx);
+        return idx;
+    }
+
+    build(): WitType {
+        return { nodes: this.nodes };
+    }
+
+    private convert(typ: AnalysedType): WitTypeNode {
+        switch (typ.kind) {
+            case 'variant': {
+                const cases: [string, NodeIndex | undefined][] = typ.value.cases.map(
+                    (c: NameOptionTypePair) => [c.name, c.typ ? this.add(c.typ) : undefined],
+                );
+                return { tag: 'variant-type', val: cases };
+            }
+
+            case 'result': {
+                const ok = typ.value.ok ? this.add(typ.value.ok) : undefined;
+                const err = typ.value.err ? this.add(typ.value.err) : undefined;
+                return { tag: 'result-type', val: [ok, err] };
+            }
+
+            case 'option': {
+                const inner = this.add(typ.value.inner);
+                return { tag: 'option-type', val: inner };
+            }
+
+            case 'enum':
+                return { tag: 'enum-type', val: typ.value.cases };
+
+            case 'flags':
+                return { tag: 'flags-type', val: typ.value.names };
+
+            case 'record': {
+                const fields: [string, NodeIndex][] = typ.value.fields.map(
+                    (f: NameTypePair) => [f.name, this.add(f.typ)],
+                );
+                return { tag: 'record-type', val: fields };
+            }
+
+            case 'tuple': {
+                const elements = typ.value.items.map((item) => this.add(item));
+                return { tag: 'tuple-type', val: elements };
+            }
+
+            case 'list': {
+                const inner = this.add(typ.value.inner);
+                return { tag: 'list-type', val: inner };
+            }
+
+            case 'str':
+                return { tag: 'prim-string-type' };
+            case 'chr':
+                return { tag: 'prim-char-type' };
+            case 'f64':
+                return { tag: 'prim-f64-type' };
+            case 'f32':
+                return { tag: 'prim-f32-type' };
+            case 'u64':
+                return { tag: 'prim-u64-type' };
+            case 's64':
+                return { tag: 'prim-s64-type' };
+            case 'u32':
+                return { tag: 'prim-u32-type' };
+            case 's32':
+                return { tag: 'prim-s32-type' };
+            case 'u16':
+                return { tag: 'prim-u16-type' };
+            case 's16':
+                return { tag: 'prim-s16-type' };
+            case 'u8':
+                return { tag: 'prim-u8-type' };
+            case 's8':
+                return { tag: 'prim-s8-type' };
+            case 'bool':
+                return { tag: 'prim-bool-type' };
+
+            case 'handle': {
+                const resId: number = typ.value.resourceId;
+                const mode: ResourceMode =
+                    typ.value.mode === 'owned' ? 'owned' : 'borrowed';
+                return { tag: 'handle-type', val: [resId, mode] };
+            }
+
+            default:
+                throw new Error(`Unhandled AnalysedType kind: ${(typ as any).kind}`);
+        }
+    }
+}
+
+function analysedTypeFromType(type: TsType): AnalysedType {
     switch (type.kind) {
         case TypeKind.Intrinsic:
         case TypeKind.False:
@@ -17,15 +139,15 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
         case TypeKind.MapDefinition:
             const mapKeyType = type.getTypeArguments?.()[0];
             const mapValueType = type.getTypeArguments?.()[1];
-            const key = mapTypeToAnalysedType(mapKeyType);
-            const value = mapTypeToAnalysedType(mapValueType);
+            const key = analysedTypeFromType(mapKeyType);
+            const value = analysedTypeFromType(mapValueType);
             return analysedType.list(analysedType.tuple([key, value]));
 
         case TypeKind.WeakMapDefinition:
             const weakMapKeyType = type.getTypeArguments?.()[0];
             const weakMapValueType = type.getTypeArguments?.()[1];
-            const weakKey = mapTypeToAnalysedType(weakMapKeyType);
-            const weakValue = mapTypeToAnalysedType(weakMapValueType);
+            const weakKey = analysedTypeFromType(weakMapKeyType);
+            const weakValue = analysedTypeFromType(weakMapValueType);
             return analysedType.list(analysedType.tuple([weakKey, weakValue]));
 
         case TypeKind.SetDefinition:
@@ -34,65 +156,65 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
             if (!setType) {
                 throw new Error("Set must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(setType));
+            return analysedType.list(analysedTypeFromType(setType));
 
         case TypeKind.GeneratorDefinition:
             const genType = type.getTypeArguments?.()[0];
             if (!genType) {
                 throw new Error("Generator must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(genType));
+            return analysedType.list(analysedTypeFromType(genType));
         case TypeKind.AsyncGeneratorDefinition:
             const generatorType = type.getTypeArguments?.()[0];
             if (!generatorType) {
                 throw new Error("Generator must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(generatorType));
+            return analysedType.list(analysedTypeFromType(generatorType));
 
         case TypeKind.IteratorDefinition:
             const iteratorType = type.getTypeArguments?.()[0];
             if (!iteratorType) {
                 throw new Error("Iterator must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(iteratorType));
+            return analysedType.list(analysedTypeFromType(iteratorType));
         case TypeKind.IterableDefinition:
             const iterableType = type.getTypeArguments?.()[0];
             if (!iterableType) {
                 throw new Error("Iterable must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(iterableType));
+            return analysedType.list(analysedTypeFromType(iterableType));
         case TypeKind.IterableIteratorDefinition:
             const iterableIteratorType = type.getTypeArguments?.()[0];
             if (!iterableIteratorType) {
                 throw new Error("IterableIterator must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(iterableIteratorType));
+            return analysedType.list(analysedTypeFromType(iterableIteratorType));
         case TypeKind.AsyncIteratorDefinition:
             const asyncIteratorType = type.getTypeArguments?.()[0];
             if (!asyncIteratorType) {
                 throw new Error("AsyncIterator must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(asyncIteratorType));
+            return analysedType.list(analysedTypeFromType(asyncIteratorType));
         case TypeKind.AsyncIterableDefinition:
             const asyncIterableType = type.getTypeArguments?.()[0];
             if (!asyncIterableType) {
                 throw new Error("AsyncIterable must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(asyncIterableType));
+            return analysedType.list(analysedTypeFromType(asyncIterableType));
         case TypeKind.AsyncIterableIteratorDefinition:
             const asyncIterableIteratorType = type.getTypeArguments?.()[0];
             if (!asyncIterableIteratorType) {
                 throw new Error("AsyncIterableIterator must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(asyncIterableIteratorType));
+            return analysedType.list(analysedTypeFromType(asyncIterableIteratorType));
 
         case TypeKind.Type:
-           const arg = type.getTypeArguments?.()[0];
+            const arg = type.getTypeArguments?.()[0];
             if (!arg) {
                 throw new Error("Type must have a type argument");
             }
 
-            return mapTypeToAnalysedType(arg);
+            return analysedTypeFromType(arg);
 
 
         // To be handled
@@ -102,7 +224,7 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
         case TypeKind.Interface:
             const objectInterface = type as InterfaceType;
             const interfaceFields = objectInterface.getProperties().map(prop => {
-                return analysedType.field(prop.name.toString(), mapTypeToAnalysedType(prop.type));
+                return analysedType.field(prop.name.toString(), analysedTypeFromType(prop.type));
             });
             return analysedType.record(interfaceFields);
 
@@ -205,7 +327,7 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
             if (!typeArgument) {
                 throw new Error("Promise must have a type argument");
             }
-            return mapTypeToAnalysedType(typeArgument);
+            return analysedTypeFromType(typeArgument);
 
 
         case TypeKind.NumberLiteral:
@@ -221,7 +343,7 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
                 throw new Error("Promise must have a type argument");
             }
 
-            return mapTypeToAnalysedType(promiseType);
+            return analysedTypeFromType(promiseType);
 
         case TypeKind.PromiseDefinition:
             const promiseDefType = type.getTypeArguments?.()[0];
@@ -230,17 +352,17 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
                 throw new Error("PromiseDefinition must have a type argument");
             }
 
-            return analysedType.option(mapTypeToAnalysedType(promiseDefType));
+            return analysedType.option(analysedTypeFromType(promiseDefType));
 
         case TypeKind.ObjectType:
             const obj = type as ObjectType;
             const fields = obj.getProperties().map(prop => {
-                return analysedType.field(prop.name.toString(), mapTypeToAnalysedType(prop.type));
+                return analysedType.field(prop.name.toString(), analysedTypeFromType(prop.type));
             });
             return analysedType.record(fields);
 
         case TypeKind.TupleDefinition:
-            const tupleTypes = type.getTypeArguments?.().map(mapTypeToAnalysedType) || [];
+            const tupleTypes = type.getTypeArguments?.().map(analysedTypeFromType) || [];
             return analysedType.tuple(tupleTypes);
 
         case TypeKind.ArrayDefinition:
@@ -249,8 +371,6 @@ export function mapTypeToAnalysedType(type: Type): AnalysedType {
             if (!elementType) {
                 throw new Error("Array must have a type argument");
             }
-            return analysedType.list(mapTypeToAnalysedType(elementType));
-
-
+            return analysedType.list(analysedTypeFromType(elementType));
     }
 }

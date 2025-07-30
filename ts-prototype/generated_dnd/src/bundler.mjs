@@ -18,7 +18,6 @@ function add(library, stripInternals) {
       "@golem-ts-sdk",
       "@golem-ts-sdk",
       "@golem-ts-sdk",
-      "@golem-ts-sdk",
       "@golem-ts-sdk"
     ],
     types: [
@@ -65,11 +64,11 @@ function add(library, stripInternals) {
             returnType: "#void"
           }
         ],
-        extends: "@golem-ts-sdk:Agent",
+        extends: "@golem-ts-sdk:BaseAgent",
         decorators: [
           {
-            id: "@golem-ts-sdk:AgentImpl",
-            name: "AgentImpl",
+            id: "@golem-ts-sdk:Agent",
+            name: "Agent",
             args: []
           }
         ],
@@ -79,11 +78,6 @@ function add(library, stripInternals) {
         kind: 64,
         name: "WeatherAgent",
         properties: [
-          {
-            name: "agentId",
-            type: "@golem-ts-sdk:AgentId",
-            flags: 8
-          },
           {
             name: "assistantAgent",
             type: "@ts-user/index:AssistantAgent",
@@ -147,11 +141,11 @@ function add(library, stripInternals) {
             ]
           }
         ],
-        extends: "@golem-ts-sdk:Agent",
+        extends: "@golem-ts-sdk:BaseAgent",
         decorators: [
           {
-            id: "@golem-ts-sdk:AgentImpl",
-            name: "AgentImpl",
+            id: "@golem-ts-sdk:Agent",
+            name: "Agent",
             args: []
           }
         ],

@@ -1,4 +1,3 @@
-//tadataLibrary, GlobalMetadata} from ".";
 import {BaseMetadataLibrary, GlobalMetadata} from "rttist";
 
 export const Metadata = new BaseMetadataLibrary({

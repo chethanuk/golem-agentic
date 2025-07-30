@@ -1,23 +1,22 @@
 import {
-    AgentImpl,
+    BaseAgent,
     Agent,
     Prompt,
     Description,
-    AgentId,
 } from 'golem-ts-sdk';
 
-@AgentImpl()
-class AssistantAgent extends Agent {
+@Agent()
+class AssistantAgent extends BaseAgent {
     @Prompt("Ask your question")
     @Description("This method allows the agent to answer your question")
     async ask(name: string): Promise<string> {
         const customData = { data: "Sample data", value: 42 };
 
         // Can be used after solving https://github.com/golemcloud/wasm-rquickjs/issues/2
-        //  const remoteWeatherClient = WeatherAgent.createRemote();
-        //  const remoteWeather = await remoteWeatherClient.getWeather(name, customData);
+        // const remoteWeatherClient = WeatherAgent.createRemote("");
+        // const remoteWeather = await remoteWeatherClient.getWeather(name, customData);
 
-        const localWeatherClient = WeatherAgent.createLocal("Afsal");
+        const localWeatherClient = WeatherAgent.createLocal("username");
         const localWeather = await localWeatherClient.getWeather(name, customData);
 
         return (
@@ -29,9 +28,10 @@ class AssistantAgent extends Agent {
     }
 }
 
-@AgentImpl()
-class WeatherAgent extends Agent {
-    private agentId!: AgentId;
+// TODO; Remove dependency injection in favor of pessimitic dependecy- every other agent
+// TODO; remove agentId, because this.getId() exists
+@Agent()
+class WeatherAgent extends BaseAgent {
     private assistantAgent!: AssistantAgent;
     private readonly userName: string;
 
@@ -46,7 +46,6 @@ class WeatherAgent extends Agent {
         return Promise.resolve(
             `Hi ${this.userName} Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. ` +
             `Computed by weather-agent ${this.getId()}. ` +
-            `Automatically initialised agentId: ${this.agentId.toString()}` +
             `The query was done by assistant-agent ${this.assistantAgent.getId()}`
         );
     }

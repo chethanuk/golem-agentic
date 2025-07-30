@@ -1,15 +1,16 @@
-import {agentRegistry} from "./registry";
+import {agentRegistry} from "./index";
 import {AgentType} from "golem:agent/common";
+import {AgentId} from "./agent-id";
 
 
 type SkipAgentParams<T extends any[]> = T extends [infer Head, ...infer Tail]
-    ? Head extends Agent
+    ? Head extends BaseAgent
         ? SkipAgentParams<Tail>
         : [Head, ...SkipAgentParams<Tail>]
     : [];
 
-export abstract class Agent {
-    getId(): string {
+export class BaseAgent {
+    getId(): AgentId {
        throw new Error("An agent Id is created only after agent is instantiated");
     }
 
@@ -21,14 +22,14 @@ export abstract class Agent {
         return type
     }
 
-    static createRemote<T extends new (...args: any[]) => Agent>(
+    static createRemote<T extends new (...args: any[]) => BaseAgent>(
         this: T,
         ...args: SkipAgentParams<ConstructorParameters<T>>
     ): InstanceType<T> {
         throw new Error("Remote clients will exist after AgentImpl initialisation");
     }
 
-    static createLocal<T extends new (...args: any[]) => Agent>(
+    static createLocal<T extends new (...args: any[]) => BaseAgent>(
         this: T,
         ...args: SkipAgentParams<ConstructorParameters<T>>
     ): InstanceType<T> {
