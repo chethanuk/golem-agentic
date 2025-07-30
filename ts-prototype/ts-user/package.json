@@ -17,7 +17,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "golem-ts-sdk": "file:../golem-ts-sdk",
+    "@afsalthaj/golem-ts-sdk": "^0.0.1-dev.2",
     "rttist": "^1.0.0-rc.4"
   }
 }

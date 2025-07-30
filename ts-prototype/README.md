@@ -43,16 +43,17 @@ npm run build
 ```shell
 cd golem-ts-sdk
 npn run build
+npm publish --access public --tag test
 # this step is not needed in real implementation, 
 # as it will be automatically done when pre-compiling with specialised rust generator with wasm-rquickjs
 # with the changes as mentioned above
 
-cp dist/index.mjs  ../generated_dnd/src/module.js
+cp dist/index.mjs  ../generated_dnd/src/module.js #alternatively you can copy the js in the published package as well
 ```
 
 ```shell
 cd ../ts-user
-npn install ../golem-ts-sdk
+npm install @afsalthaj/golem-ts-sdk@test
 npn run build
 
 # this step is not exactly needed in real implementation, 

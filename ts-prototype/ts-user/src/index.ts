@@ -3,7 +3,7 @@ import {
     Agent,
     Prompt,
     Description,
-} from 'golem-ts-sdk';
+} from '@afsalthaj/golem-ts-sdk';
 
 @Agent()
 class AssistantAgent extends BaseAgent {

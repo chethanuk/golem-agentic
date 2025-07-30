@@ -1,7 +1,10 @@
 {
-  "name": "golem-ts-sdk",
-  "version": "1.0.0",
-  "files": ["types", "dist"],
+  "name": "@afsalthaj/golem-ts-sdk",
+  "version": "0.0.1-dev.2",
+  "files": [
+    "types",
+    "dist"
+  ],
   "main": "dist/index.mjs",
   "exports": {
     ".": {
@@ -11,8 +14,12 @@
   },
   "typesVersions": {
     "*": {
-      "agentic-guest": ["types/exports.d.ts"],
-      "golem:agent/common": ["types/golem_agent_common.d.ts"]
+      "agentic-guest": [
+        "types/exports.d.ts"
+      ],
+      "golem:agent/common": [
+        "types/golem_agent_common.d.ts"
+      ]
     }
   },
   "scripts": {
@@ -31,5 +38,6 @@
     "rttist": "^1.0.0-rc.4",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3"
-  }
+  },
+  "private": false
 }

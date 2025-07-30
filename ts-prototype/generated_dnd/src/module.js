@@ -1302,9 +1302,13 @@ B.addType(xt, _t);
 B.addModule(c.Native, c.Invalid, c.Dynamic);
 
 // src/type_metadata.ts
-var Metadata = new _e({
-  nullability: false
-}, "@user-code", B);
+var Metadata = new _e(
+  {
+    nullability: false
+  },
+  "@afsalthaj/golem-ts-sdk",
+  B
+);
 
 // src/mapping/analysed-type.ts
 var analysedType = {

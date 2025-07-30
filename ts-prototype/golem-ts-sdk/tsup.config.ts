@@ -5,7 +5,7 @@ export default defineConfig({
   format: ['esm'],
   splitting: false,
   clean: true,
-  dts: false,
+  dts: true,
   shims: false,
   target: 'esnext',
   external: ['agentic-guest', 'golem:api', 'golem:rpc'],

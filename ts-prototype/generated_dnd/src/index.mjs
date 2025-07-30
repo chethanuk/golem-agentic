@@ -11,7 +11,7 @@ var __export = (target, all) => {
 
 // src/index.ts
 var src_exports = {};
-import { BaseAgent, Agent, Prompt, Description } from "golem-ts-sdk";
+import { BaseAgent, Agent, Prompt, Description } from "@afsalthaj/golem-ts-sdk";
 function _ts_decorate(decorators, target, key, desc) {
   var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
   if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -98,10 +98,10 @@ function add(library, stripInternals) {
     name: "",
     id: "@ts-user/index",
     children: [
-      "@golem-ts-sdk",
-      "@golem-ts-sdk",
-      "@golem-ts-sdk",
-      "@golem-ts-sdk"
+      "@@afsalthaj/golem-ts-sdk",
+      "@@afsalthaj/golem-ts-sdk",
+      "@@afsalthaj/golem-ts-sdk",
+      "@@afsalthaj/golem-ts-sdk"
     ],
     types: [
       {
@@ -124,14 +124,14 @@ function add(library, stripInternals) {
             ],
             decorators: [
               {
-                id: "@golem-ts-sdk:Prompt",
+                id: "@@afsalthaj/golem-ts-sdk:Prompt",
                 name: "Prompt",
                 args: [
                   "Ask your question"
                 ]
               },
               {
-                id: "@golem-ts-sdk:Description",
+                id: "@@afsalthaj/golem-ts-sdk:Description",
                 name: "Description",
                 args: [
                   "This method allows the agent to answer your question"
@@ -147,10 +147,10 @@ function add(library, stripInternals) {
             returnType: "#void"
           }
         ],
-        extends: "@golem-ts-sdk:BaseAgent",
+        extends: "@@afsalthaj/golem-ts-sdk:BaseAgent",
         decorators: [
           {
-            id: "@golem-ts-sdk:Agent",
+            id: "@@afsalthaj/golem-ts-sdk:Agent",
             name: "Agent",
             args: []
           }
@@ -189,14 +189,14 @@ function add(library, stripInternals) {
             ],
             decorators: [
               {
-                id: "@golem-ts-sdk:Prompt",
+                id: "@@afsalthaj/golem-ts-sdk:Prompt",
                 name: "Prompt",
                 args: [
                   "Get weather"
                 ]
               },
               {
-                id: "@golem-ts-sdk:Description",
+                id: "@@afsalthaj/golem-ts-sdk:Description",
                 name: "Description",
                 args: [
                   "Weather forecast weather for you"
@@ -219,10 +219,10 @@ function add(library, stripInternals) {
             ]
           }
         ],
-        extends: "@golem-ts-sdk:BaseAgent",
+        extends: "@@afsalthaj/golem-ts-sdk:BaseAgent",
         decorators: [
           {
-            id: "@golem-ts-sdk:Agent",
+            id: "@@afsalthaj/golem-ts-sdk:Agent",
             name: "Agent",
             args: []
           }
@@ -259,7 +259,8 @@ var metadataCollection = [
 ];
 
 // .generated/index.ts
-import { Metadata } from "golem-ts-sdk";
+import { Metadata } from "@afsalthaj/golem-ts-sdk";
+Metadata.clearMetadata("@afsalthaj/golem-ts-sdk");
 metadataCollection.forEach((mod) => mod.add(Metadata, false));
 var userModulePromise = Promise.resolve().then(() => (init_src(), src_exports));
 var index_default = (async () => {

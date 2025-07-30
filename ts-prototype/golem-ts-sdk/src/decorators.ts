@@ -7,7 +7,6 @@ import {ClassType, ParameterInfo, Type} from "rttist";
 import {constructWitTypeFromTsType} from "./mapping/type-mapping";
 import {getLocalClient, getRemoteClient} from "./client-generation";
 import {BaseAgent} from "./base-agent";
-import {agents, findAgentByName} from "./index";
 import {agentInitiators, agentRegistry} from "./index";
 import {createUniqueAgentId} from "./agent-instance-counter";
 import {createAgentName} from "./agent-name";

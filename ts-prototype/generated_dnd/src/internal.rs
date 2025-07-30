@@ -65,12 +65,12 @@ impl JsState {
             }).await;
             rt.idle().await;
 
-            let resolver = BuiltinResolver::default().with_module("golem-ts-sdk").with_module("bundle/user_script");
+            let resolver = BuiltinResolver::default().with_module("@afsalthaj/golem-ts-sdk").with_module("bundle/user_script");
             let resolver = crate::modules::add_native_module_resolvers(resolver);
             let resolver = crate::builtin::add_module_resolvers(resolver);
 
             let loader = (
-                BuiltinLoader::default().with_module("golem-ts-sdk", SDK_JS_MODULE).with_module("bundle/user_script", USER_MODULE),
+                BuiltinLoader::default().with_module("@afsalthaj/golem-ts-sdk", SDK_JS_MODULE).with_module("bundle/user_script", USER_MODULE),
                 crate::modules::module_loader(),
                 crate::builtin::module_loader(),
                 ScriptLoader::default(),
@@ -90,7 +90,7 @@ impl JsState {
                     "test",
                     format!(r#"
                     {wiring}
-                    import * as userModule from 'golem-ts-sdk';
+                    import * as userModule from '@afsalthaj/golem-ts-sdk';
                     globalThis.userModule = userModule;
                     "#),
                 )

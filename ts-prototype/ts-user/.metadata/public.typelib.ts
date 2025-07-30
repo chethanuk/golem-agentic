@@ -7,5 +7,6 @@ GlobalMetadata.clearMetadata("@ts-user");
 const Metadata = new BaseMetadataLibrary({
 	nullability: false,
 }, "@ts-user", GlobalMetadata);
+
 metadataCollection.forEach((mod) => mod.add(Metadata, true));
 export { Metadata };

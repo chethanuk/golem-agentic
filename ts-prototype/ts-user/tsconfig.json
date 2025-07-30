@@ -12,9 +12,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "useDefineForClassFields": false,
-    "paths": {
-      "golem-ts-sdk": ["../golem-ts-sdk/src/index.ts"],
-    }
   },
   "include": [
     "src/**/*"
