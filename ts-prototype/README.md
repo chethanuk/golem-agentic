@@ -24,8 +24,13 @@ Regardless this SDK has to be npm published (along with being part of a pre-comp
 
  
 While rttist is needed, we incorporated it part of the build using certain configuration and generated code. 
-While I can't conclude if this is the best of the best approach, it makes sure  prototype already allows user to simply write their 
-code using SDK, and then by running the following, they create 1 single JS file that will be dynamically loaded at runtime
+While I can't conclude if this is the best of the best approach, the prototype already makes sure it is just `npm run build` 
+for a user code that uses the SDK. 
+
+
+Note that when this becomes a template in golem-cli, it will be `golem app build` and it becomes a wasm.
+Users js module (output of npm run build) will be lifted to be a component that exports a function called `get-user-script` returning a string.
+This component should be composed with the pre-compiled wasm (which is mainly SDK) 
 
 ```sh
 npm run build
