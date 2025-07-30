@@ -30,7 +30,7 @@ export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
 
         // We ensure to create every agent using agentInitiator
         const resolvedAgent = agentInitiator.initiate(agentName, parameterWitValues) // convert args to wit value
-        const instance = resolvedAgent.originalInstance;
+        const instance = resolvedAgent.classInstance;
 
         return new Proxy(instance, {
             get(target, prop) {

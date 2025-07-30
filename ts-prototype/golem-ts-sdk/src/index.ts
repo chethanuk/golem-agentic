@@ -20,18 +20,6 @@ export function getRegisteredAgents(): AgentType[] {
     return Array.from(agentRegistry.values());
 }
 
-export function findAgentByName(agentName: string): Agent | undefined {
-    let lastMatch: Agent | undefined = undefined;
-
-    for (const [agentId, agent] of agents.entries()) {
-        if (agentId.agentName === agentName) {
-            lastMatch = agent;
-        }
-    }
-
-    return lastMatch;
-}
-
 class Agent {
     readonly resolvedAgent: ResolvedAgent;
 

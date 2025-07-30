@@ -151,7 +151,7 @@ var require_dist = __commonJS({
 // src/base-agent.ts
 var BaseAgent = class {
   getId() {
-    throw new Error("An agent Id is created only after agent is instantiated");
+    throw new Error("An agent ID will be created at runtime");
   }
   getAgentType() {
     const type = agentRegistry.get(this.constructor.name);
@@ -161,10 +161,10 @@ var BaseAgent = class {
     return type;
   }
   static createRemote(...args) {
-    throw new Error("Remote clients will exist after AgentImpl initialisation");
+    throw new Error("A remote client will be created at runtime");
   }
   static createLocal(...args) {
-    throw new Error("Local Clients will exist after AgentImpl initialisation");
+    throw new Error("A local client will be created at runtime");
   }
 };
 
@@ -205,7 +205,7 @@ var ResolvedAgent = class {
   constructor(name, tsAgentInternal, originalInstance) {
     this.name = name;
     this.agentInternal = tsAgentInternal;
-    this.originalInstance = originalInstance;
+    this.classInstance = originalInstance;
   }
   getId() {
     return this.agentInternal.getId();
@@ -2499,7 +2499,7 @@ function getLocalClient(ctor) {
       return constructWitValueFromTsValue(fnArg, typ);
     });
     const resolvedAgent = agentInitiator.initiate(agentName, parameterWitValues);
-    const instance = resolvedAgent.originalInstance;
+    const instance = resolvedAgent.classInstance;
     return new Proxy(instance, {
       get(target, prop) {
         const val = target[prop];
@@ -2679,8 +2679,6 @@ function Agent() {
     agentRegistry.set(className, agentType);
     ctor.createRemote = getRemoteClient(ctor);
     ctor.createLocal = getLocalClient(ctor);
-    const agentDependencies = filteredType.getProperties().filter((prop) => prop.type.name == "AssistantAgent");
-    const agentIdProps = filteredType.getProperties().filter((prop) => prop.name.toString() == "agentId");
     agentInitiators.set(className, {
       initiate: (agentName, constructorParams) => {
         const methodInfo = classType.getConstructors()[0];
@@ -2691,27 +2689,6 @@ function Agent() {
         const instance = new ctor(...convertedConstructorArgs);
         const uniqueAgentId = createUniqueAgentId(createAgentName(className));
         instance.getId = () => uniqueAgentId;
-        if (agentDependencies.length === 1) {
-          const agentDependency = agentDependencies[0];
-          if (instance[agentDependency.name.toString()] === void 0) {
-            const agentInstance = findAgentByName(agentDependency.type.name.toString());
-            if (!agentInstance) {
-              throw new Error(`Agent dependency ${agentDependency.name.toString()} not found for ${className}  ${agents.entries()}`);
-            }
-            instance[agentDependency.name.toString()] = agentInstance.resolvedAgent.originalInstance;
-          }
-        }
-        if (agentIdProps.length === 1) {
-          const agentIdProp = agentIdProps[0];
-          if (instance[agentIdProp.name.toString()] === void 0) {
-            const uniqueAgentId2 = createUniqueAgentId(createAgentName(className));
-            instance[agentIdProp.name.toString()] = uniqueAgentId2;
-            instance.getId = () => uniqueAgentId2;
-          }
-        } else {
-          const uniqueAgentId2 = createUniqueAgentId(createAgentName(className));
-          instance.getId = () => uniqueAgentId2;
-        }
         const agentInternal = {
           getId: () => {
             return uniqueAgentId;
@@ -2766,15 +2743,6 @@ var agentInitiators = /* @__PURE__ */ new Map();
 var agentRegistry = /* @__PURE__ */ new Map();
 function getRegisteredAgents() {
   return Array.from(agentRegistry.values());
-}
-function findAgentByName(agentName) {
-  let lastMatch = void 0;
-  for (const [agentId, agent] of agents.entries()) {
-    if (agentId.agentName === agentName) {
-      lastMatch = agent;
-    }
-  }
-  return lastMatch;
 }
 var Agent2 = class {
   constructor(name, params) {
@@ -2846,7 +2814,6 @@ export {
   agentInitiators,
   agentRegistry,
   agents,
-  findAgentByName,
   getRegisteredAgents,
   guest
 };

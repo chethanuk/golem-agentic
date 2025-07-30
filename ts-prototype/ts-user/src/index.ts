@@ -16,27 +16,23 @@ class AssistantAgent extends BaseAgent {
         // const remoteWeatherClient = WeatherAgent.createRemote("");
         // const remoteWeather = await remoteWeatherClient.getWeather(name, customData);
 
-        const localWeatherClient = WeatherAgent.createLocal("username");
+        const localWeatherClient = WeatherAgent.createLocal("afsal");
         const localWeather = await localWeatherClient.getWeather(name, customData);
 
         return (
-            "Hello! weather at " + name +
-            ", is being computed by assistant-agent with id " + this.getId() + "." +
-            ", Result from weather agent: " + localWeather +
-            " weather agent used " + localWeatherClient.getId()
+            `Hello! I'm the assistant agent (${this.getId()}) reporting on the weather in ${name}. ` +
+            `Here’s what the weather agent says: "\n${localWeather}\n". ` +
+            `Info retrieved using weather agent (${localWeatherClient.getId()}).`
         );
     }
 }
 
-// TODO; Remove dependency injection in favor of pessimitic dependecy- every other agent
-// TODO; remove agentId, because this.getId() exists
 @Agent()
 class WeatherAgent extends BaseAgent {
-    private assistantAgent!: AssistantAgent;
     private readonly userName: string;
 
     constructor(username: string) {
-        super();
+        super()
         this.userName = username;
     }
 
@@ -45,8 +41,7 @@ class WeatherAgent extends BaseAgent {
     async getWeather(name: string, param2: CustomData): Promise<string> {
         return Promise.resolve(
             `Hi ${this.userName} Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. ` +
-            `Computed by weather-agent ${this.getId()}. ` +
-            `The query was done by assistant-agent ${this.assistantAgent.getId()}`
+            `Computed by weather-agent ${this.getId()}. `
         );
     }
 }

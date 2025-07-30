@@ -36,9 +36,11 @@ var init_src = __esm({
           data: "Sample data",
           value: 42
         };
-        const localWeatherClient = WeatherAgent.createLocal("username");
+        const localWeatherClient = WeatherAgent.createLocal("afsal");
         const localWeather = await localWeatherClient.getWeather(name, customData);
-        return "Hello! weather at " + name + ", is being computed by assistant-agent with id " + this.getId() + "., Result from weather agent: " + localWeather + " weather agent used " + localWeatherClient.getId();
+        return `Hello! I'm the assistant agent (${this.getId()}) reporting on the weather in ${name}. Here\u2019s what the weather agent says: "
+${localWeather}
+". Info retrieved using weather agent (${localWeatherClient.getId()}).`;
       }
     };
     _ts_decorate([
@@ -57,14 +59,13 @@ var init_src = __esm({
       static {
         __name(this, "WeatherAgent");
       }
-      assistantAgent;
       userName;
       constructor(username) {
         super();
         this.userName = username;
       }
       async getWeather(name, param2) {
-        return Promise.resolve(`Hi ${this.userName} Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}. The query was done by assistant-agent ${this.assistantAgent.getId()}`);
+        return Promise.resolve(`Hi ${this.userName} Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}. `);
       }
     };
     _ts_decorate([
@@ -160,11 +161,6 @@ function add(library, stripInternals) {
         kind: 64,
         name: "WeatherAgent",
         properties: [
-          {
-            name: "assistantAgent",
-            type: "@ts-user/index:AssistantAgent",
-            flags: 8
-          },
           {
             name: "userName",
             type: "#String",

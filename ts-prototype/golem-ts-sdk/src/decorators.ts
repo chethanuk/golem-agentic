@@ -1,6 +1,6 @@
 import {AgentMethod, DataSchema, AgentType, ParameterType} from 'golem:agent/common';
 import {WitValue} from "golem:rpc/types@0.2.1";
-import {AgentInternal} from "./ts-agent";
+import {AgentInternal} from "./agent-internal";
 import {ResolvedAgent} from "./resolved-agent";
 import {Metadata}  from "./type_metadata";
 import {ClassType, ParameterInfo, Type} from "rttist";
@@ -128,14 +128,6 @@ export function Agent() {
         (ctor as any).createRemote = getRemoteClient(ctor);
         (ctor as any).createLocal = getLocalClient(ctor);
 
-        // Unfortunately, the AgentId type matching in reflection is not working properly,
-        // TODO; something to fix
-        const agentDependencies =
-            filteredType.getProperties().filter(prop => prop.type.name == "AssistantAgent");
-
-        const agentIdProps =
-            filteredType.getProperties().filter(prop => prop.name.toString() == "agentId");
-
         agentInitiators.set(className, {
             initiate: (agentName: string, constructorParams: WitValue[]) => {
 
@@ -151,39 +143,8 @@ export function Agent() {
 
                 const instance = new ctor(...convertedConstructorArgs);
 
-                // Only when the agent is created, we create a unique ID for it
-                const uniqueAgentId =
-                    createUniqueAgentId(createAgentName(className));
-
+                const uniqueAgentId = createUniqueAgentId(createAgentName(className));
                 (instance as BaseAgent).getId = () => uniqueAgentId;
-
-                if (agentDependencies.length === 1) {
-                    const agentDependency = agentDependencies[0];
-
-                    if ((instance as any)[agentDependency.name.toString()] === undefined) {
-                        const agentInstance = findAgentByName(agentDependency.type.name.toString());
-
-                        if (!agentInstance) {
-                            throw new Error(`Agent dependency ${agentDependency.name.toString()} not found for ${className} ` + ` ${agents.entries()}`);
-                        }
-
-                        (instance as any)[agentDependency.name.toString()] =
-                            agentInstance.resolvedAgent.originalInstance;
-                    }
-                }
-
-                if (agentIdProps.length === 1) {
-                    const agentIdProp = agentIdProps[0];
-
-                    if ((instance as any)[agentIdProp.name.toString()] === undefined) {
-                        const uniqueAgentId = createUniqueAgentId(createAgentName(className));
-                        (instance as any)[agentIdProp.name.toString()] = uniqueAgentId;
-                        (instance as BaseAgent).getId = () => uniqueAgentId;
-                    }
-                } else {
-                    const uniqueAgentId = createUniqueAgentId(createAgentName(className));
-                    (instance as BaseAgent).getId = () => uniqueAgentId;
-                }
 
                 const agentInternal: AgentInternal = {
                     getId: () => {

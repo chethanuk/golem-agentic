@@ -3,15 +3,9 @@ import {AgentType} from "golem:agent/common";
 import {AgentId} from "./agent-id";
 
 
-type SkipAgentParams<T extends any[]> = T extends [infer Head, ...infer Tail]
-    ? Head extends BaseAgent
-        ? SkipAgentParams<Tail>
-        : [Head, ...SkipAgentParams<Tail>]
-    : [];
-
 export class BaseAgent {
     getId(): AgentId {
-       throw new Error("An agent Id is created only after agent is instantiated");
+       throw new Error("An agent ID will be created at runtime");
     }
 
     getAgentType(): AgentType {
@@ -24,16 +18,16 @@ export class BaseAgent {
 
     static createRemote<T extends new (...args: any[]) => BaseAgent>(
         this: T,
-        ...args: SkipAgentParams<ConstructorParameters<T>>
+        ...args: ConstructorParameters<T>
     ): InstanceType<T> {
-        throw new Error("Remote clients will exist after AgentImpl initialisation");
+        throw new Error("A remote client will be created at runtime");
     }
 
     static createLocal<T extends new (...args: any[]) => BaseAgent>(
         this: T,
-        ...args: SkipAgentParams<ConstructorParameters<T>>
+        ...args: ConstructorParameters<T>
     ): InstanceType<T> {
-        throw new Error("Local Clients will exist after AgentImpl initialisation");
+        throw new Error("A local client will be created at runtime");
     }
 }
 
