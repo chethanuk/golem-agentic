@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ts-node scripts/prebuild.ts && tsup"
+    "build": "tsc --noEmit && ts-node bootstrap/prebuild.ts &&  tsup"
   },
   "type": "module",
   "keywords": [],

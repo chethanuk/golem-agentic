@@ -31,7 +31,7 @@ import { Metadata } from '@afsalthaj/golem-ts-sdk';
 import { metadataCollection } from '../.metadata/metadata.index';
 
 // Since user code already depends on RTTIST's metadata, 
-we hvave to clear the global metadata to avoid duplicate modules
+// we hvave to clear the SDK metadata that is already pre-loaded.
 Metadata.clearMetadata("@afsalthaj/golem-ts-sdk");
 
 // Generated metadata is loaded into SDK's shared metadata 
