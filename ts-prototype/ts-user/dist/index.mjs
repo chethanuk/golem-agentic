@@ -1,9 +1,91 @@
 var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
+
+// src/index.ts
+var src_exports = {};
+import { BaseAgent, Agent, Prompt, Description } from "golem-ts-sdk";
+function _ts_decorate(decorators, target, key, desc) {
+  var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+  else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+function _ts_metadata(k, v) {
+  if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+}
+var AssistantAgent, WeatherAgent;
+var init_src = __esm({
+  "src/index.ts"() {
+    "use strict";
+    __name(_ts_decorate, "_ts_decorate");
+    __name(_ts_metadata, "_ts_metadata");
+    AssistantAgent = class AssistantAgent2 extends BaseAgent {
+      static {
+        __name(this, "AssistantAgent");
+      }
+      async ask(name) {
+        const customData = {
+          data: "Sample data",
+          value: 42
+        };
+        const localWeatherClient = WeatherAgent.createLocal("username");
+        const localWeather = await localWeatherClient.getWeather(name, customData);
+        return "Hello! weather at " + name + ", is being computed by assistant-agent with id " + this.getId() + "., Result from weather agent: " + localWeather + " weather agent used " + localWeatherClient.getId();
+      }
+    };
+    _ts_decorate([
+      Prompt("Ask your question"),
+      Description("This method allows the agent to answer your question"),
+      _ts_metadata("design:type", Function),
+      _ts_metadata("design:paramtypes", [
+        String
+      ]),
+      _ts_metadata("design:returntype", Promise)
+    ], AssistantAgent.prototype, "ask", null);
+    AssistantAgent = _ts_decorate([
+      Agent()
+    ], AssistantAgent);
+    WeatherAgent = class WeatherAgent2 extends BaseAgent {
+      static {
+        __name(this, "WeatherAgent");
+      }
+      assistantAgent;
+      userName;
+      constructor(username) {
+        super();
+        this.userName = username;
+      }
+      async getWeather(name, param2) {
+        return Promise.resolve(`Hi ${this.userName} Weather in ${name} is sunny. Params passed: ${name} ${JSON.stringify(param2)}. Computed by weather-agent ${this.getId()}. The query was done by assistant-agent ${this.assistantAgent.getId()}`);
+      }
+    };
+    _ts_decorate([
+      Prompt("Get weather"),
+      Description("Weather forecast weather for you"),
+      _ts_metadata("design:type", Function),
+      _ts_metadata("design:paramtypes", [
+        String,
+        typeof CustomData === "undefined" ? Object : CustomData
+      ]),
+      _ts_metadata("design:returntype", Promise)
+    ], WeatherAgent.prototype, "getWeather", null);
+    WeatherAgent = _ts_decorate([
+      Agent(),
+      _ts_metadata("design:type", Function),
+      _ts_metadata("design:paramtypes", [
+        String
+      ])
+    ], WeatherAgent);
+  }
+});
 
 // .metadata/index.ts
 var index_exports = {};
@@ -180,6 +262,14 @@ var metadataCollection = [
   index_exports
 ];
 
-// .metadata/bootstrap.ts
+// .generated/index.ts
 import { Metadata } from "golem-ts-sdk";
 metadataCollection.forEach((mod) => mod.add(Metadata, false));
+var userModulePromise = Promise.resolve().then(() => (init_src(), src_exports));
+var index_default = (async () => {
+  const mod = await userModulePromise;
+  return mod;
+})();
+export {
+  index_default as default
+};
