@@ -22,10 +22,11 @@ for easier maintainence, such as updating host wit files etc
 * npx (comes with npm for latest versions of npm)
 
  
-While rttist is needed, we incorporated it part of the build. We used some plugins, but it gave me errors, but this prototype makes sure
-user can simply write the code using SDK, and then by running the following, everything should work
+While rttist is needed, we incorporated it part of the build using certain configuration and generated code as part of npm run build. 
+While I can't conclude if this is the best of the best approach, this prototype really makes sure user can simply write the 
+code using SDK, and then by running the following, everything should work given the above pre-requisites
 
-```
+```sh
 npm run build
 ```
 
