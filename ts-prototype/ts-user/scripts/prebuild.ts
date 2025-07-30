@@ -31,7 +31,7 @@ import { metadataCollection } from '../.metadata/metadata.index';
 
 metadataCollection.forEach(mod => mod.add(Metadata, false));
 
-let userModulePromise = import("../src/index");
+let userModulePromise = import("../${config.entry}");
 
 export default (async () => {
   const mod = await userModulePromise;

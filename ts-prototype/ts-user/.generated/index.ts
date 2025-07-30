@@ -7,7 +7,7 @@ import { metadataCollection } from '../.metadata/metadata.index';
 
 metadataCollection.forEach(mod => mod.add(Metadata, false));
 
-let userModulePromise = import("../src/index");
+let userModulePromise = import("../src/index.ts");
 
 export default (async () => {
   const mod = await userModulePromise;

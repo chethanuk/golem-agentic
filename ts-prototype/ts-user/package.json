@@ -19,10 +19,5 @@
   "dependencies": {
     "golem-ts-sdk": "file:../golem-ts-sdk",
     "rttist": "^1.0.0-rc.4"
-  },
-  "sideEffects": [
-    "**/.metadata/**/*.ts",
-    "**/.generated/**/*.ts",
-    "**/entry-wrapper.ts"
-  ]
+  }
 }
