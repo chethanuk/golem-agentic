@@ -5,6 +5,7 @@
   "scripts": {
     "build": "ts-node scripts/prebuild.ts && tsup"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
