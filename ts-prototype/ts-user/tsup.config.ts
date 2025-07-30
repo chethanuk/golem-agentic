@@ -10,6 +10,6 @@ export default defineConfig({
   shims: false,
   target: 'esnext',
   external: ['golem:api', 'golem:rpc'],
-  noExternal: ['rttist', '@afsalthaj/golem-ts-sdk'],
+  noExternal: ['rttist'],
   outExtension: () => ({ js: '.mjs' }),
 });

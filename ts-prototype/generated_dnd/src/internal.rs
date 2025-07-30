@@ -15,7 +15,7 @@ use std::time::Duration;
 use wasi::clocks::monotonic_clock::subscribe_duration;
 use wasi_async_runtime::{Reactor, block_on};
 
-static SDK_JS_MODULE: &str = include_str!("module.js");
+static USER_MODULE: &str = include_str!("module.js");
 
 pub const RESOURCE_TABLE_NAME: &str = "__wasm_rquickjs_resources";
 pub const RESOURCE_ID_KEY: &str = "__wasm_rquickjs_resource_id";
@@ -63,12 +63,12 @@ impl JsState {
             }).await;
             rt.idle().await;
 
-            let resolver = BuiltinResolver::default().with_module("@afsalthaj/golem-ts-sdk").with_module("bundle/user_script");
+            let resolver = BuiltinResolver::default().with_module("bundle/user_script");
             let resolver = crate::modules::add_native_module_resolvers(resolver);
             let resolver = crate::builtin::add_module_resolvers(resolver);
 
             let loader = (
-                BuiltinLoader::default().with_module("@afsalthaj/golem-ts-sdk", SDK_JS_MODULE).with_module("bundle/user_script", USER_MODULE),
+                BuiltinLoader::default().with_module("bundle/user_script", USER_MODULE),
                 crate::modules::module_loader(),
                 crate::builtin::module_loader(),
                 ScriptLoader::default(),
@@ -88,20 +88,13 @@ impl JsState {
                     "test",
                     format!(r#"
                     {wiring}
-                    import * as userModule from '@afsalthaj/golem-ts-sdk';
+                    import * as userModule from 'bundle/user_script';
                     globalThis.userModule = userModule;
                     "#),
                 )
                 .catch(&ctx).expect("Failed to evaluate module initialization")
                 .finish::<()>()
                 .catch(&ctx).expect("Failed to finish module initialization");
-
-                Module::import(&ctx, "bundle/user_script")
-                 .catch(&ctx)
-                 .expect("Failed to import user module")
-                 .finish::<()>()
-                 .catch(&ctx)
-                 .expect("Failed to finish user module");
             })
             .await;
             rt.idle().await;
