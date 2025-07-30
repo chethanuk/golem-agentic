@@ -17,8 +17,6 @@ use wasi_async_runtime::{Reactor, block_on};
 
 static SDK_JS_MODULE: &str = include_str!("module.js");
 
-static USER_MODULE: &str = include_str!("index.mjs");
-
 pub const RESOURCE_TABLE_NAME: &str = "__wasm_rquickjs_resources";
 pub const RESOURCE_ID_KEY: &str = "__wasm_rquickjs_resource_id";
 pub const DISPOSE_SYMBOL: &str = "__wasm_rquickjs_symbol_dispose";
