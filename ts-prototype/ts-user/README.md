@@ -5,7 +5,12 @@ npm run build
 
 ```
 
-Note that npm run build generates `dist`, `.generated` and `.metadata` - all of them are git-ignored.
-The `bootstrap/prebuild.ts` is all that is required. The responsibility of prebuild.ts can be lifted back to golem-cli (not preferred) or keep it as is.
-So that user can do `npm run build` for some debugging etc (Example: they want to see the output of just `npm run build` and not `golem app build`)
+The user module will be in dist.
 
+Note that `npm run build` generates `.metadata`, `.generated` and `dist` - all of them are git-ignored.
+
+
+#### Internals
+
+`npm run build` makes use of `bootstrap/prebuild.ts`. This idea of dealing with RTTIST does seem to be more reliable than any other transformers which 
+complicates the build configuration by far. This step can be easily lifted to golem-cli templates too.
