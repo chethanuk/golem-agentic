@@ -6,14 +6,6 @@ in the runtime.
 When the rust-component generator is specialised to support dynamic loading of user's JS, it should be following this change
 in `internal.rs`
 
-### Prototype SDK notes
-
-The SDK above is pretty much inspired from the typescript template of the golem SDK, but it is not a blund output of template SDK.
-So to debug things and have better control, I build .dts files using wasm-quickjs wrapper toolings with the wit that I need, 
-and wrote the agent implementation in the SDK. Later generated the rust component using wasm-quickjs rust component generator.
-Also made some changes to the generated rust, with the assumption that user code is going to be dynamically loaded.
-Changed `internal.rs` to simply add 1 more import which is user module. 
-
 We can discuss this with @vigoo, whether to port the whole code in this prototype SDK to the golem-cli template generated code.
 Regardless this SDK has to be npm published (along with being part of a pre-compiled wasm)
 
@@ -41,32 +33,28 @@ npm run build
 ### Quick testing
 
 ```shell
-cd golem-ts-sdk
+# Not needed - just for prototype
+cd ../../golem-ts-sdk
 npn run build
-npm publish --access public --tag test
-# this step is not needed in real implementation, 
-# as it will be automatically done when pre-compiling with specialised rust generator with wasm-rquickjs
-# with the changes as mentioned above
 
 cp dist/index.mjs  ../generated_dnd/src/module.js #alternatively you can copy the js in the published package as well
 ```
 
 ```shell
-cd ../ts-user
-npm install @afsalthaj/golem-ts-sdk@test
+cd ts-examples/ts-user
+npm install
 npn run build
 
 # this step is not exactly needed in real implementation, 
 # as it will be done through wrapping users-js in another component which exports get-script method
 
-cp dist/index.mjs  ../generated_dnd/src/index.mjs (it can be any name - index.mjs or index.js - doesn't matter, and in reality, its going to be a "string" import)
+cp dist/index.mjs  ../generated_dnd/src/index.mjs
 
 ```
 
 ```shell
 cd ../generated_dnd
 golem app build
-# mv the component to code_first_agent branch's test-components directory
 cd golem/integration-tests
 cargo run --bin rib-repl agentic_guest
 ```
