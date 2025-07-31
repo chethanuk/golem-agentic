@@ -11,7 +11,6 @@ const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
 try {
     execSync('npx --version', { stdio: 'ignore' });
-    // npx is available, run your command
     execSync('npx @rttist/typegen@0.2.0 generate', { stdio: 'inherit' });
 } catch (e) {
     console.error('npx is not available. Please install Node.js with npm >= 5.2.0');
