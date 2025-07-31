@@ -5,19 +5,11 @@ export default defineConfig({
   format: ['esm'],
   splitting: false,
   clean: true,
-  dts: {
-    resolve: true
-  },
+  dts: true,
   shims: false,
   target: 'esnext',
-  external: ['agentic-guest', 'golem:agent/common',],
+  external: ['agentic-guest', 'golem:api', 'golem:rpc'],
+  noExternal: ['rttist'],
   outExtension: () => ({ js: '.mjs' }),
-  tsconfigRaw: {
-    compilerOptions: {
-      experimentalDecorators: true,
-      emitDecoratorMetadata: true,
-      useDefineForClassFields: false
-    }
-  }
 });
 

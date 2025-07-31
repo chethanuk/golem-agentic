@@ -1,35 +1,50 @@
 import type * as bindings from 'agentic-guest';
 import {  AgentType } from 'golem:agent/common';
-import {agentInitiators, agentRegistry} from './registry';
-import {ResolvedAgent} from "./resolved_agent";
-export { AgentImplementation, AgentDefinition, Prompt, Description, agentRegistry } from './registry';
+import {ResolvedAgent} from "./resolved-agent";
+import { AgentId } from "./agent-id";
+import {AgentInitiator} from "./agent-Initiator";
 
+export { BaseAgent } from './base-agent';
+export { AgentId, } from './agent-id';
+export { Prompt, Description, Agent } from './decorators';
+export { Metadata } from "./type_metadata";
+
+/// Registry
+export const agents = new Map<AgentId, Agent>();
+
+export const agentInitiators = new Map<string, AgentInitiator>();
+
+export const agentRegistry = new Map<string, AgentType>();
 
 export function getRegisteredAgents(): AgentType[] {
     return Array.from(agentRegistry.values());
 }
 
-export class Agent {
-    private resolvedAgent: ResolvedAgent;
+// Component export
+class Agent {
+    readonly resolvedAgent: ResolvedAgent;
 
     constructor(name: string, params: bindings.guest.WitValue[]) {
         console.log("Agent constructor called", name, params);
 
-
         const initiator = agentInitiators.get(name);
 
-        let entries = Array.from(agentInitiators.keys());
-
-
         if (!initiator) {
+            const entries = Array.from(agentInitiators.keys());
+
             throw new Error(`No implementation found for agent: ${name}. Valid entries are ${entries.join(", ")}`);
         }
-        this.resolvedAgent = initiator.initiate(name, params);
+
+        const resolvedAgent = initiator.initiate(name, params);
+
+        this.resolvedAgent = resolvedAgent;
+
+        agents.set(resolvedAgent.getId(), this)
 
     }
 
     async getId(): Promise<string> {
-        return this.resolvedAgent.getId()
+        return this.resolvedAgent.getId().toString()
     }
 
     async invoke(methodName: string, args: bindings.guest.WitValue[]): Promise<bindings.guest.StatusUpdate> {
@@ -53,6 +68,7 @@ export class Agent {
 
 async function getAgent(agentId: string): Promise<bindings.guest.AgentRef> {
     console.log("getAgent called", agentId);
+
     return {
         agentId: agentId,
         agentName: "dummy-agent",
@@ -62,6 +78,7 @@ async function getAgent(agentId: string): Promise<bindings.guest.AgentRef> {
 
 async function discoverAgents(): Promise<bindings.guest.AgentRef[]> {
     console.log("discoverAgents called");
+
     return [
         {
             agentId: "dummy-agent-id",
@@ -73,6 +90,7 @@ async function discoverAgents(): Promise<bindings.guest.AgentRef[]> {
 
 async function discoverAgentTypes(): Promise<bindings.guest.AgentType[]> {
     console.log("discoverAgentTypes called");
+
     return getRegisteredAgents();
 }
 
