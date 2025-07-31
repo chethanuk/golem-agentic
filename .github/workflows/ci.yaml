@@ -43,6 +43,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
+        working-directory: ./golem-ts-sdk
         run: |
           npm install
 
