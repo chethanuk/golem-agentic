@@ -8,12 +8,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "useDefineForClassFields": false,
+    "useDefineForClassFields": false
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    ".generated/**/*",
+    ".metadata/**/*"
   ]
 }

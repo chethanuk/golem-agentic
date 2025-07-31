@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc --noEmit && ts-node bootstrap/prebuild.ts &&  tsup"
+    "prebuild": "ts-node bootstrap/prebuild.ts",
+    "build": "npm run prebuild && tsc --noEmit && rollup -c"
   },
   "type": "module",
   "keywords": [],
@@ -11,13 +12,19 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.4",
     "@swc/core": "^1.13.1",
+    "rollup": "^4.46.2",
     "ts-node": "^10.9.2",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@afsalthaj/golem-ts-sdk": "file:../golem-ts-sdk",
-    "rttist": "^1.0.0-rc.4"
+    "@afsalthaj/golem-ts-sdk": "^0.0.1-dev.2",
+    "rttist": "^1.0.0-rc.4",
+    "tslib": "^2.0.0"
   }
 }

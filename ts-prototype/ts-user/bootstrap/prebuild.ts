@@ -22,28 +22,24 @@ const outputDir = path.resolve(__dirname, '../.generated');
 fs.mkdirSync(outputDir, { recursive: true });
 
 const wrapperPath = path.join(outputDir, 'index.ts');
-const wrapperContent = `
-// DO NOT EDIT THIS CONFIGURATION
-import '../.metadata/metadata.index';
-import { BaseMetadataLibrary, GlobalMetadata } from "rttist";
 
+const userEntryModule  = config.entry.replace(/\.ts$/, '');
+
+const wrapperContent = `
+import '../.metadata/metadata.index';
 import { Metadata } from '@afsalthaj/golem-ts-sdk';
 import { metadataCollection } from '../.metadata/metadata.index';
 
-// Since user code already depends on RTTIST's metadata, 
-// we hvave to clear the SDK metadata that is already pre-loaded.
+// Clear preloaded metadata
 Metadata.clearMetadata("@afsalthaj/golem-ts-sdk");
-
-// Generated metadata is loaded into SDK's shared metadata 
+// Load generated metadata
 metadataCollection.forEach(mod => mod.add(Metadata, false));
 
-// Import the user module - in a way that should be always imported after the metadata is loaded
-let userModulePromise = import("../${config.entry}");
-
+// Import the user module *after* metadata is ready
 export default (async () => {
-  const mod = await userModulePromise;
-  return mod;
+  return await import("../src/index");
 })();
+
 `;
 
 fs.writeFileSync(wrapperPath, wrapperContent);
