@@ -1,6 +1,6 @@
 {
   "name": "@afsalthaj/golem-ts-sdk",
-  "version": "0.0.1-dev.3",
+  "version": "0.0.1-dev.4",
   "files": [
     "types",
     "dist"
