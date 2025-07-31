@@ -4,6 +4,7 @@ import {WitValue} from "golem:rpc/types@0.2.1";
 /**
  * AgentInitiator is the canonical interface for instantiating agents.
  * The exported component uses AgentInitiator, and so is remoteClients and localClients.
+ * AgentInitiator is internal to the SDK, and is not meant to be used by the user directly.
  *
  * Any agent creation in SDK goes through `AgentInitiator`
  *
