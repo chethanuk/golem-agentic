@@ -23,7 +23,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@afsalthaj/golem-ts-sdk": "^0.0.1-dev.2",
+    "@afsalthaj/golem-ts-sdk": "^0.0.1-dev.4",
     "rttist": "^1.0.0-rc.4",
     "tslib": "^2.0.0"
   }
