@@ -150,9 +150,24 @@ var require_dist = __commonJS({
 
 // src/base-agent.ts
 var BaseAgent = class {
+  /**
+   * Returns the unique `AgentId` for this agent instance.
+   *
+   * This is automatically populated by the `@Agent()` decorator at runtime.
+   *
+   * @throws Will throw if accessed before the agent is initialized.
+   */
   getId() {
     throw new Error("An agent ID will be created at runtime");
   }
+  /**
+   * Returns the `AgentType` metadata registered for this agent.
+   *
+   * This information is retrieved from the runtime agent registry and reflects
+   * metadata defined via decorators like `@Agent()`, `@Prompt()`, etc.
+   *
+   * @throws Will throw if metadata is missing or the agent is not properly registered.
+   */
   getAgentType() {
     const type = agentRegistry.get(this.constructor.name);
     if (!type) {
@@ -160,9 +175,35 @@ var BaseAgent = class {
     }
     return type;
   }
+  /**
+   * Creates a remote client instance of this agent type.
+   *
+   * This remote client will communicate with an agent instance running
+   * in a separate container, effectively offloading computation to that remote context.
+   *
+   * @param args - Constructor arguments for the agent
+   * @returns A remote proxy instance of the agent
+   *
+   * @example
+   * const remoteClient = MyAgent.createRemote("arg1", "arg2") where `arg1`, `arg2` are the constructor arguments
+   * validated at compile time.
+   */
   static createRemote(...args) {
     throw new Error("A remote client will be created at runtime");
   }
+  /**
+   * Creates a local instance of the agent within the current container.
+   *
+   * This method is preferred over directly calling `new MyAgent(arg1, arg2)` as it ensures
+   * correct initialization, agent ID assignment, etc.
+   *
+   * @param args - Constructor arguments for the agent
+   * @returns A locally instantiated agent
+   *
+   * @example
+   * const localClient = MyAgent.createLocal("arg1", "arg2") where `arg1`, `arg2` are the constructor arguments
+   * validated at compile time.;
+   */
   static createLocal(...args) {
     throw new Error("A local client will be created at runtime");
   }
@@ -2583,11 +2624,11 @@ function getWorkerName(value, componentId) {
 
 // src/agent-instance-counter.ts
 import { getSelfMetadata as getSelfMetadata2 } from "golem:api/host@1.1.7";
-var agentInstanceCounters = /* @__PURE__ */ new Map();
+var agentInstanceSequence = /* @__PURE__ */ new Map();
 function createUniqueAgentId(agentName) {
-  const current = agentInstanceCounters.get(agentName) ?? 0;
-  agentInstanceCounters.set(agentName, current + 1);
-  const count = agentInstanceCounters.get(agentName);
+  const current = agentInstanceSequence.get(agentName) ?? 0;
+  agentInstanceSequence.set(agentName, current + 1);
+  const count = agentInstanceSequence.get(agentName);
   const workerName = getSelfMetadata2().workerId.workerName;
   return new AgentId(workerName, agentName, count);
 }

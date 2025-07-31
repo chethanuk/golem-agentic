@@ -1,15 +1,23 @@
 import {ResolvedAgent} from "./resolved-agent";
 import {WitValue} from "golem:rpc/types@0.2.1";
 
-// Creating an instance of an agent always goes through AgentInitiator,
-// regardless of whether it is local or remote agent resource creation.
-// See `client-generation.ts` for local agent client creation where it
-// internally invokes `initiate`.
-
-// Creating an agent resource from outside (example: golem REPL), also
-// go through `AgentInitiator`. This is the only way to create a `ResolvedAgent`
-// which holds the original instance of the agent, along with an instance of `AgentInternal`
-// that is useful to invoking dynamic methods on the agent.
+/**
+ * AgentInitiator is the canonical interface for instantiating agents.
+ * The exported component uses AgentInitiator, and so is remoteClients and localClients.
+ *
+ * Any agent creation in SDK goes through `AgentInitiator`
+ *
+ * An AgentInitiator returns is `ResolvedAgent`, which encapsulates:
+ * - The original instance of the agent
+ * - But most importantly, an instance of `AgentInternal`, useful for invoking dynamic methods on the agent
+ */
 export type AgentInitiator = {
+  /**
+   * Initiates the creation of an agent.
+   *
+   * @param agentName - The name of the agent to instantiate.
+   * @param constructorParams - Constructor arguments for the agent, encoded as `WitValue`s.
+   * @returns A `ResolvedAgent` containing the created agent and its internal handler.
+   */
   initiate(agentName: string, constructorParams: WitValue[]): ResolvedAgent;
 };

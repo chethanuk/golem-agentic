@@ -1,7 +1,7 @@
 import {Metadata}  from "./type_metadata";
-import {ClassType, ObjectType, Type, TypeKind} from "rttist";
+import {ClassType} from "rttist";
 import {WasmRpc, WitValue, WorkerId} from "golem:rpc/types@0.2.1";
-import {ComponentId, getAgentComponent, getSelfMetadata} from "golem:api/host@1.1.7";
+import {ComponentId, getAgentComponent} from "golem:api/host@1.1.7";
 import {agentInitiators, agentRegistry} from "./index";
 import {
     constructTsValueFromWitValue,
