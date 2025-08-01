@@ -19,6 +19,9 @@ jobs:
 
       - name: Setup Rust
         run: rustup update stable --no-self-update && rustup default stable
+     
+      - name: Install wasm-rquickjs
+        run: cargo install wasm-rquickjs-cli   
         
       - uses: useblacksmith/rust-cache@v3
         with:
@@ -61,6 +64,9 @@ jobs:
           shared-key: debug
           cache-all-crates: true
           save-if: true     
+
+      - name: Install wasm-rquickjs
+        run: cargo install wasm-rquickjs-cli
 
       - name: Install dependencies
         working-directory: ./golem-ts-sdk
