@@ -173,7 +173,7 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                     values.push(fieldVal);
                 }
 
-                return { kind: "record", value: values };  // Wrap the values in an object type
+                return { kind: "record", value: values };
             } else {
                 throw new Error(`Expected object, got ${arg} which is ${typeof arg}`);
             }
@@ -287,7 +287,7 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                     values.push(fieldVal);
                 }
 
-                return { kind: "record", value: values };  // Wrap the values in an object type
+                return { kind: "record", value: values };
             } else {
                 throw new Error(`Expected object, got ${typeof arg}`);
             }
@@ -366,7 +366,7 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                     values.push(fieldVal);
                 }
 
-                return { kind: "record", value: values };  // Wrap the values in an object type
+                return { kind: "record", value: values }; 
             } else {
                 throw new Error(`Expected object, got ${typeof arg}`);
             }

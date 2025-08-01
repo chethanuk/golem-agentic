@@ -70,7 +70,6 @@ export function getRemoteClient<T extends new (...args: any[]) => any>(ctor: T) 
 
         const resourceValue = constructValueFromWitValue(resourceWitValues);
 
-        // Unwrap tuple
         const resourceVal = (() => {
             switch (resourceValue.kind) {
                 case "tuple":

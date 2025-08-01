@@ -8,7 +8,6 @@ export interface NameOptionTypePair {
   typ?: AnalysedType;
 }
 
-// Core types
 export type AnalysedType =
     | { kind: 'variant'; value: TypeVariant }
     | { kind: 'result'; value: TypeResult }
@@ -33,7 +32,6 @@ export type AnalysedType =
     | { kind: 'bool' }
     | { kind: 'handle'; value: TypeHandle };
 
-// Struct-like definitions
 export interface TypeResult {
   ok?: AnalysedType;
   err?: AnalysedType;
