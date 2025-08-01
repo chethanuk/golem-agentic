@@ -3,6 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// May be instead of a separate bootstrap/prebuild.ts file,
+// we can make it generate directly with rollup - I don't know - the idea
+// is we have to have this prebuild step to generate the metadata of user module
+// There is no need of transformer because we are not transforming any code/imports
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename)
 
@@ -36,7 +40,7 @@ metadataCollection.forEach(mod => mod.add(Metadata, false));
 
 // Import the user module *after* metadata is ready
 export default (async () => {
-  return await import("../src/index");
+  return await import("../${userEntryModule}");
 })();
 
 `;
