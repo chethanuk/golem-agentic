@@ -366,7 +366,7 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                     values.push(fieldVal);
                 }
 
-                return { kind: "record", value: values }; 
+                return { kind: "record", value: values };
             } else {
                 throw new Error(`Expected object, got ${typeof arg}`);
             }

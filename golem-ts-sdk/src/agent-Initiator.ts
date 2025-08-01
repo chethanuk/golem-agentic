@@ -9,7 +9,7 @@ import {WitValue} from "golem:rpc/types@0.2.1";
  * Any agent creation in SDK goes through `AgentInitiator`
  *
  * An AgentInitiator returns is `ResolvedAgent`, which encapsulates:
- * - The original instance of the agent
+ * - The original instance of the user's agent (not the agent resource instance. agent-resource instance map is in `agents` dictionary in `src/index.ts`)
  * - But most importantly, an instance of `AgentInternal`, useful for invoking dynamic methods on the agent
  */
 export type AgentInitiator = {
