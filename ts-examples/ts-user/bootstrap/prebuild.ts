@@ -30,6 +30,7 @@ const wrapperPath = path.join(outputDir, 'index.ts');
 
 const userEntryModule  = config.entry.replace(/\.ts$/, '');
 
+// FIXME: Remove irrelevant comments
 const wrapperContent = `
 import '../.metadata/metadata.index';
 import { Metadata } from '@afsalthaj/golem-ts-sdk';
