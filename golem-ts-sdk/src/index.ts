@@ -3,6 +3,8 @@ import {ResolvedAgent} from "./resolved-agent";
 import { AgentId } from "./agent-id";
 import {getRegisteredAgents} from "./agent-registry";
 import {agentInitiators} from "./agent-Initiator";
+import {Result, WitValue} from "golem:rpc/types@0.2.2";
+import {AgentError, DataValue} from "golem:agent/common";
 
 export { BaseAgent } from './base-agent';
 export { AgentId, } from './agent-id';
@@ -14,71 +16,73 @@ export const agents = new Map<AgentId, Agent>();
 
 // Component export
 class Agent {
-    readonly resolvedAgent: ResolvedAgent;
-
-    constructor(name: string, params: bindings.guest.WitValue[]) {
-        console.log("Agent constructor called", name, params);
-
-        const initiator = agentInitiators.get(name);
-
-        if (!initiator) {
-            const entries = Array.from(agentInitiators.keys());
-
-            throw new Error(`No implementation found for agent: ${name}. Valid entries are ${entries.join(", ")}`);
-        }
-
-        const resolvedAgent = initiator.initiate(name, params);
-
-        this.resolvedAgent = resolvedAgent;
-
-        agents.set(resolvedAgent.getId(), this)
-
-    }
+    resolvedAgent!: ResolvedAgent;
 
     async getId(): Promise<string> {
         return this.resolvedAgent.getId().toString()
     }
 
-    async invoke(methodName: string, args: bindings.guest.WitValue[]): Promise<bindings.guest.StatusUpdate> {
-        return this.resolvedAgent.invoke(methodName, args).then(result => {
-            if (result.nodes[0].tag == "prim-string") {
-                return {
-                    tag: "emit",
-                    val: result.nodes[0].val as string // only for testing
-                }
-            } else {
-                throw new Error("Unrecognized method");
-            }
-        });
+    async invoke(methodName: string, input: DataValue): Promise<Result<DataValue, AgentError>> {
+        return this.resolvedAgent.invoke(methodName, input)
     }
 
     async getDefinition(): Promise<any> {
        this.resolvedAgent.getDefinition()
     }
+
+    static async create(agentType: string, input: DataValue): Promise<Result<Agent, AgentError>> {
+        console.log("Agent constructor called", agentType, input);
+
+        const initiator = agentInitiators.get(agentType);
+
+        if (!initiator) {
+            const entries = Array.from(agentInitiators.keys());
+
+            throw new Error(`No implementation found for agent: ${agentType}. Valid entries are ${entries.join(", ")}`);
+        }
+
+        const initiateResult = initiator.initiate(agentType, input);
+
+        if (initiateResult.tag == "ok") {
+            const agent = new Agent();
+            agent.resolvedAgent = initiateResult.val;
+
+            agents.set(initiateResult.val.getId(), agent)
+
+            return {
+                tag: "ok",
+                val: agent
+            };
+        } else {
+            return {
+                tag: "err",
+                val: initiateResult.val
+            };
+        }
+    }
 }
 
-
-async function getAgent(agentId: string): Promise<bindings.guest.AgentRef> {
+async function getAgent(agentType: string, agentId: string): Promise<Agent> {
     console.log("getAgent called", agentId);
 
-    return {
-        agentId: agentId,
-        agentName: "dummy-agent",
-        agentHandle: 1
-    };
+    const typedAgentId = AgentId.fromString(agentId);
+
+    const agent = agents.get(typedAgentId)
+
+    if (!agent) {
+        // FIXME: Fix WIT to return a Promise<Result<Agent, AgentError>>
+        throw new Error(`Agent with ID ${agentId} not found`);
+    }
+
+    return agent;
 }
 
-async function discoverAgents(): Promise<bindings.guest.AgentRef[]> {
+async function discoverAgents(): Promise<Agent[]> {
     console.log("discoverAgents called");
 
-    return [
-        {
-            agentId: "dummy-agent-id",
-            agentName: "dummy-agent",
-            agentHandle: 1
-        }
-    ];
+    return Array.from(agents.values());
 }
+
 
 async function discoverAgentTypes(): Promise<bindings.guest.AgentType[]> {
     console.log("discoverAgentTypes called");

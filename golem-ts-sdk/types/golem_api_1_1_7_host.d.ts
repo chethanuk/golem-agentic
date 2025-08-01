@@ -1,6 +1,5 @@
 declare module 'golem:api/host@1.1.7' {
-  import * as golemAgentCommon from 'golem:agent/common';
-  import * as golemRpc021Types from 'golem:rpc/types@0.2.1';
+  import * as golemRpc022Types from 'golem:rpc/types@0.2.2';
   import * as wasiClocks023MonotonicClock from 'wasi:clocks/monotonic-clock@0.2.3';
   export function createPromise(): PromiseId;
   export function awaitPromise(promiseId: PromiseId): number[];
@@ -28,25 +27,25 @@ declare module 'golem:api/host@1.1.7' {
   export function resolveWorkerId(componentReference: string, workerName: string): WorkerId | undefined;
   export function resolveWorkerIdStrict(componentReference: string, workerName: string): WorkerId | undefined;
   export function fork(newName: string): ForkResult;
-  export function discoverAgentTypes(): AgentType[];
-  export function getAgentComponent(agentType: string): ComponentId | undefined;
   export class GetWorkers {
     constructor(componentId: ComponentId, filter: WorkerAnyFilter | undefined, precise: boolean);
     getNext(): WorkerMetadata[] | undefined;
   }
   export type Duration = wasiClocks023MonotonicClock.Duration;
-  export type ComponentId = golemRpc021Types.ComponentId;
-  export type Uuid = golemRpc021Types.Uuid;
-  export type WorkerId = golemRpc021Types.WorkerId;
-  export type AgentType = golemAgentCommon.AgentType;
-  export type OplogIndex = number;
+  export type ComponentId = golemRpc022Types.ComponentId;
+  export type Uuid = golemRpc022Types.Uuid;
+  export type WorkerId = golemRpc022Types.WorkerId;
+  export type OplogIndex = bigint;
   export type PromiseId = {
     workerId: WorkerId;
     oplogIdx: OplogIndex;
   };
-  export type ComponentVersion = number;
+  export type ComponentVersion = bigint;
   export type AccountId = {
     value: string;
+  };
+  export type ProjectId = {
+    uuid: Uuid;
   };
   export type RetryPolicy = {
     maxAttempts: number;
@@ -78,11 +77,11 @@ declare module 'golem:api/host@1.1.7' {
   };
   export type WorkerVersionFilter = {
     comparator: FilterComparator;
-    value: number;
+    value: bigint;
   };
   export type WorkerCreatedAtFilter = {
     comparator: FilterComparator;
-    value: number;
+    value: bigint;
   };
   export type WorkerEnvFilter = {
     name: string;
@@ -120,8 +119,8 @@ declare module 'golem:api/host@1.1.7' {
     args: string[];
     env: [string, string][];
     status: WorkerStatus;
-    componentVersion: number;
-    retryCount: number;
+    componentVersion: bigint;
+    retryCount: bigint;
   };
   export type RevertWorkerTarget = {
     tag: 'revert-to-oplog-index'
@@ -129,7 +128,7 @@ declare module 'golem:api/host@1.1.7' {
   } |
   {
     tag: 'revert-last-invocations'
-    val: number
+    val: bigint
   };
   export type ForkResult = "original" | "forked";
 }

@@ -5,6 +5,6 @@ declare module 'wasi:clocks/monotonic-clock@0.2.3' {
   export function subscribeInstant(when: Instant): Pollable;
   export function subscribeDuration(when: Duration): Pollable;
   export type Pollable = wasiIo023Poll.Pollable;
-  export type Instant = number;
-  export type Duration = number;
+  export type Instant = bigint;
+  export type Duration = bigint;
 }

@@ -1,4 +1,4 @@
-declare module 'golem:rpc/types@0.2.1' {
+declare module 'golem:rpc/types@0.2.2' {
   import * as wasiClocks023WallClock from 'wasi:clocks/wall-clock@0.2.3';
   import * as wasiIo023Poll from 'wasi:io/poll@0.2.3';
   export function parseUuid(uuid: string): Result<Uuid, string>;
@@ -24,8 +24,8 @@ declare module 'golem:rpc/types@0.2.1' {
   export type Datetime = wasiClocks023WallClock.Datetime;
   export type Pollable = wasiIo023Poll.Pollable;
   export type Uuid = {
-    highBits: number;
-    lowBits: number;
+    highBits: bigint;
+    lowBits: bigint;
   };
   export type ComponentId = {
     uuid: Uuid;
@@ -35,7 +35,7 @@ declare module 'golem:rpc/types@0.2.1' {
     workerName: string;
   };
   export type NodeIndex = number;
-  export type ResourceId = number;
+  export type ResourceId = bigint;
   export type ResourceMode = "owned" | "borrowed";
   export type WitTypeNode = {
     tag: 'record-type'
@@ -112,8 +112,12 @@ declare module 'golem:rpc/types@0.2.1' {
     tag: 'handle-type'
     val: [ResourceId, ResourceMode]
   };
+  export type NamedWitTypeNode = {
+    name: string | undefined;
+    type: WitTypeNode;
+  };
   export type WitType = {
-    nodes: WitTypeNode[];
+    nodes: NamedWitTypeNode[];
   };
   export type Uri = {
     value: string;
@@ -164,7 +168,7 @@ declare module 'golem:rpc/types@0.2.1' {
   } |
   {
     tag: 'prim-u64'
-    val: number
+    val: bigint
   } |
   {
     tag: 'prim-s8'
@@ -180,7 +184,7 @@ declare module 'golem:rpc/types@0.2.1' {
   } |
   {
     tag: 'prim-s64'
-    val: number
+    val: bigint
   } |
   {
     tag: 'prim-float32'
@@ -204,7 +208,7 @@ declare module 'golem:rpc/types@0.2.1' {
   } |
   {
     tag: 'handle'
-    val: [Uri, number]
+    val: [Uri, bigint]
   };
   export type WitValue = {
     nodes: WitNode[];
