@@ -17,6 +17,16 @@ jobs:
         with:
           node-version: "20.x"
 
+      - name: Setup Rust
+        run: rustup update stable --no-self-update && rustup default stable
+        
+      - uses: useblacksmith/rust-cache@v3
+        with:
+          prefix-key: v3-rust
+          shared-key: debug
+          cache-all-crates: true
+          save-if: true          
+
       - name: Install dependencies
         working-directory: ./golem-ts-sdk
         run: |
@@ -41,6 +51,16 @@ jobs:
         with:
           node-version: "20.x"
           registry-url: "https://registry.npmjs.org"
+
+      - name: Setup Rust
+        run: rustup update stable --no-self-update && rustup default stable
+
+      - uses: useblacksmith/rust-cache@v3
+        with:
+          prefix-key: v3-rust
+          shared-key: debug
+          cache-all-crates: true
+          save-if: true     
 
       - name: Install dependencies
         working-directory: ./golem-ts-sdk
