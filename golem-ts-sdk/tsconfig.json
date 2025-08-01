@@ -10,6 +10,9 @@
     "rootDir": "./src",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "declaration": true,
+    "declarationMap": false,
+    "emitDeclarationOnly": false
   },
   "include": [
     "src/**/*",

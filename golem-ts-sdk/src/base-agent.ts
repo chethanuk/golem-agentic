@@ -1,6 +1,6 @@
-import {agentRegistry} from "./index";
 import {AgentType} from "golem:agent/common";
 import {AgentId} from "./agent-id";
+import {agentRegistry} from "./agent-registry";
 
 /**
  * BaseAgent is the foundational class for defining agent implementations.

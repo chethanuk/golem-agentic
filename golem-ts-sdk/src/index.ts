@@ -1,8 +1,8 @@
 import type * as bindings from 'agentic-guest';
-import {  AgentType } from 'golem:agent/common';
 import {ResolvedAgent} from "./resolved-agent";
 import { AgentId } from "./agent-id";
-import {AgentInitiator} from "./agent-Initiator";
+import {getRegisteredAgents} from "./agent-registry";
+import {agentInitiators} from "./agent-Initiator";
 
 export { BaseAgent } from './base-agent';
 export { AgentId, } from './agent-id';
@@ -11,14 +11,6 @@ export { Metadata } from "./type_metadata";
 
 /// Registry
 export const agents = new Map<AgentId, Agent>();
-
-export const agentInitiators = new Map<string, AgentInitiator>();
-
-export const agentRegistry = new Map<string, AgentType>();
-
-export function getRegisteredAgents(): AgentType[] {
-    return Array.from(agentRegistry.values());
-}
 
 // Component export
 class Agent {

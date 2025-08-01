@@ -2,12 +2,13 @@ import {Metadata}  from "./type_metadata";
 import {ClassType} from "rttist";
 import {WasmRpc, WitValue, WorkerId} from "golem:rpc/types@0.2.1";
 import {ComponentId, getAgentComponent} from "golem:api/host@1.1.7";
-import {agentInitiators, agentRegistry} from "./index";
+import {agentInitiators} from "./agent-Initiator";
 import {
     constructTsValueFromWitValue,
     constructValueFromWitValue,
     constructWitValueFromTsValue, constructWitValueFromValue, Value
 } from "./mapping/value-mapping";
+import {agentRegistry} from "./agent-registry";
 
 export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     return (...args: any[]) => {

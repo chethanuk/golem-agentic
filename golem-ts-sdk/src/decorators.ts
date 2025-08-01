@@ -7,10 +7,11 @@ import {ClassType, ParameterInfo, Type} from "rttist";
 import {constructWitTypeFromTsType} from "./mapping/type-mapping";
 import {getLocalClient, getRemoteClient} from "./client-generation";
 import {BaseAgent} from "./base-agent";
-import {agentInitiators, agentRegistry} from "./index";
+import {agentInitiators} from "./agent-Initiator";
 import {createUniqueAgentId} from "./agent-instance-counter";
 import {createAgentName} from "./agent-name";
 import {constructTsValueFromWitValue, constructWitValueFromTsValue} from "./mapping/value-mapping";
+import {agentRegistry} from "./agent-registry";
 
 
 const methodMetadata = new Map<string, Map<string, { prompt?: string; description?: string }>>();

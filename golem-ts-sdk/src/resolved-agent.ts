@@ -1,8 +1,8 @@
 import { AgentType } from 'golem:agent/common';
 import {WitValue} from 'golem:rpc/types@0.2.1';
-import {agentRegistry} from "./index";
 import {AgentInternal} from "./agent-internal";
 import {AgentId} from "./agent-id";
+import {agentRegistry} from "./agent-registry";
 
 export class ResolvedAgent {
     readonly classInstance: any;

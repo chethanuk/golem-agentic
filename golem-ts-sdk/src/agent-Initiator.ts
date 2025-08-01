@@ -22,3 +22,6 @@ export type AgentInitiator = {
    */
   initiate(agentName: string, constructorParams: WitValue[]): ResolvedAgent;
 };
+
+
+export const agentInitiators = new Map<string, AgentInitiator>();
