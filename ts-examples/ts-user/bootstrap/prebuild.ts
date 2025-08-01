@@ -10,6 +10,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename)
 
+// Entry point of user may be referred in multiple places.
+// and hence buildrc.json.
+// The entry point referred in rollup.config.js is always the generated module
 const configPath = path.resolve(__dirname, '../.buildrc.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
