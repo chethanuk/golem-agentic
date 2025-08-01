@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// May be instead of a separate bootstrap/prebuild.ts file,
+// !!! May be instead of a separate bootstrap/prebuild.ts file,
 // we can make it generate directly with rollup - I don't know - the idea
 // is we have to have this prebuild step to generate the metadata of user module
 // There is no need of transformer because we are not transforming any code/imports
@@ -14,6 +14,8 @@ const configPath = path.resolve(__dirname, '../.buildrc.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 
 try {
+    // !!! npx should come in as part of node js- that's what I found
+    // so this may not be needed.
     execSync('npx --version', { stdio: 'ignore' });
     execSync('npx @rttist/typegen@0.2.0 generate', { stdio: 'inherit' });
 } catch (e) {
