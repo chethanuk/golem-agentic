@@ -1,4 +1,4 @@
-declare module 'agentic-guest' {
+declare module 'agent-guest' {
   import * as golemAgentCommon from 'golem:agent/common';
   export namespace guest {
     export function getAgent(agentType: string, agentId: string): Promise<Agent>;

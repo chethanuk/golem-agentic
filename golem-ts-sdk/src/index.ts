@@ -1,4 +1,4 @@
-import type * as bindings from 'agentic-guest';
+import type * as bindings from 'agent-guest';
 import {ResolvedAgent} from "./resolved-agent";
 import { AgentId } from "./agent-id";
 import {getRegisteredAgents} from "./agent-registry";
