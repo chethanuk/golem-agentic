@@ -1,8 +1,6 @@
 # This is only a reference as manual steps involved
 
-cd ts-user
-npm install
-npm run build
+cd ts-user && npm install && npm run build
 
 cd ..
 
@@ -19,8 +17,7 @@ cd generated_rust
 # vec![("user-module", Box::new(|| { include_str!("user-module.js").to_string() }))]
 golem app build
 
-cd ../wrapper-agent
-cargo component build
+cd ../wrapper-agent && cargo component build
 wac plug target/wasm32-wasip1/debug/wrapper_agent.wasm --plug ../generated_rust/target/wasm32-wasip1/debug/agent_guest.wasm  -o agent_guest.wasm
 
 # Move agent_guest.wasm to code_first_agent (a few improvements with REPL) branch's test-components directory
