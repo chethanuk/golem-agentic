@@ -1,9 +1,9 @@
 import {
-    AnalysedType,
+    AnalysedType, getNameFromAnalysedType,
     NameOptionTypePair,
     NameTypePair,
 } from './analysed-type';
-import {NodeIndex, ResourceMode, WitTypeNode} from "golem:rpc/types@0.2.1";
+import {NamedWitTypeNode, NodeIndex, ResourceMode, WitTypeNode} from "golem:rpc/types@0.2.2";
 import {WitType} from "golem:agent/common";
 import {Type} from "rttist";
 import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
@@ -22,7 +22,7 @@ function constructFromAnalysedType(typ: AnalysedType): WitType {
 
 // Copied from wasm-rpc rust implementation
 class WitTypeBuilder {
-    private nodes: WitTypeNode[] = [];
+    private nodes: NamedWitTypeNode[] = [];
     private mapping = new Map<string, number>();
 
     add(typ: AnalysedType): NodeIndex {
@@ -32,10 +32,12 @@ class WitTypeBuilder {
         }
 
         const idx = this.nodes.length;
-        this.nodes.push({ tag: 'prim-bool-type' });
+        const boolType: WitTypeNode = { tag: 'prim-bool-type' };
+        this.nodes.push({  name: undefined,  type: boolType });
 
         const node: WitTypeNode = this.convert(typ);
-        this.nodes[idx] = node;
+        const name = getNameFromAnalysedType(typ);
+        this.nodes[idx] = { name, type: node };
         this.mapping.set(hash, idx);
         return idx;
     }
@@ -114,11 +116,12 @@ class WitTypeBuilder {
             case 'bool':
                 return { tag: 'prim-bool-type' };
 
+            // FIXME: Why? typ.value.resourceId is a number and the handle-type takes a bigint
             case 'handle': {
                 const resId: number = typ.value.resourceId;
                 const mode: ResourceMode =
                     typ.value.mode === 'owned' ? 'owned' : 'borrowed';
-                return { tag: 'handle-type', val: [resId, mode] };
+                return { tag: 'handle-type', val: [BigInt(resId), mode] };
             }
 
             default:

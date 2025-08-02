@@ -23,7 +23,8 @@
     }
   },
   "scripts": {
-    "build": "tsc --noEmit && rollup -c",
+    "prebuild" : "wasm-rquickjs generate-dts --wit ../wit --output types",
+    "build": "npm run prebuild && tsc --noEmit && rollup -c",
     "dev": "rollup -c -w"
   },
   "keywords": [],

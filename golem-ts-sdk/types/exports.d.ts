@@ -1,23 +1,18 @@
-declare module 'agentic-guest' {
+declare module 'agent-guest' {
   import * as golemAgentCommon from 'golem:agent/common';
-  import * as golemRpc021Types from 'golem:rpc/types@0.2.1';
-  export module guest {
-    export async function getAgent(agentId: string): Promise<AgentRef>;
-    export async function discoverAgents(): Promise<AgentRef[]>;
-    export async function discoverAgentTypes(): Promise<AgentType[]>;
+  export namespace guest {
+    export function getAgent(agentType: string, agentId: string): Promise<Agent>;
+    export function discoverAgents(): Promise<Agent[]>;
+    export function discoverAgentTypes(): Promise<AgentType[]>;
     export class Agent {
-      constructor(agentName: string, params: WitValue[]);
+      static async create(agentType: string, input: DataValue): Promise<Result<Agent, AgentError>>;
       async getId(): Promise<string>;
-      async invoke(methodName: string, input: WitValue[]): Promise<StatusUpdate>;
+      async invoke(methodName: string, input: DataValue): Promise<Result<DataValue, AgentError>>;
       async getDefinition(): Promise<AgentType>;
     }
-    export type StatusUpdate = golemAgentCommon.StatusUpdate;
+    export type AgentError = golemAgentCommon.AgentError;
     export type AgentType = golemAgentCommon.AgentType;
-    export type WitValue = golemRpc021Types.WitValue;
-    export type AgentRef = {
-      agentId: string;
-      agentName: string;
-      agentHandle: number;
-    };
+    export type DataValue = golemAgentCommon.DataValue;
+    export type Result<T, E> = { tag: 'ok', val: T } | { tag: 'err', val: E };
   }
 }

@@ -1,5 +1,5 @@
-import {AgentMethod, DataSchema, AgentType, ParameterType} from 'golem:agent/common';
-import {WitValue} from "golem:rpc/types@0.2.1";
+import {AgentMethod, DataSchema, AgentType, ElementSchema, DataValue} from 'golem:agent/common';
+import {WitValue} from "golem:rpc/types@0.2.2";
 import {AgentInternal} from "./agent-internal";
 import {ResolvedAgent} from "./resolved-agent";
 import {Metadata}  from "./type_metadata";
@@ -44,28 +44,24 @@ export function Description(desc: string) {
 
 function buildInputSchema(paramTypes: readonly ParameterInfo[]): DataSchema {
     return {
-        tag: 'structured',
-        val: {
-            parameters: paramTypes.map((parameterInfo) => mapToParameterType(parameterInfo.type))
-        }
+        tag: 'tuple',
+        val: paramTypes.map((parameterInfo) => [parameterInfo.name, mapToParameterType(parameterInfo.type)])
     };
 }
 
 function buildOutputSchema(returnType: Type): DataSchema {
     return {
-        tag: 'structured',
-        val: {
-            parameters: [mapToParameterType(returnType)]
-        }
+        tag: 'tuple',
+        val: [["return-value", mapToParameterType(returnType)]]
     };
 }
 
 
-function mapToParameterType(type: Type): ParameterType {
+function mapToParameterType(type: Type): ElementSchema {
     const witType = constructWitTypeFromTsType(type)
 
     return {
-        tag: 'wit',
+        tag: 'component-model',
         val: witType
     };
 
@@ -112,14 +108,14 @@ export function Agent() {
         const agentType: AgentType = {
             typeName: className,
             description: className,
-            agentConstructor: {
+            constructor: {
                 name: className,
                 description: `Constructs ${className}`,
                 promptHint: 'Enter something...',
                 inputSchema: defaultStringSchema()
             },
             methods,
-            requires: [],
+            dependencies: [],
         };
 
         agentRegistry.set(className, agentType);
@@ -129,7 +125,7 @@ export function Agent() {
         (ctor as any).createLocal = getLocalClient(ctor);
 
         agentInitiators.set(className, {
-            initiate: (agentName: string, constructorParams: WitValue[]) => {
+            initiate: (agentName: string, constructorParams: DataValue) => {
 
                 // Fix, what if multiple constructors?
                 const methodInfo = (classType as ClassType).getConstructors()[0];
@@ -137,7 +133,9 @@ export function Agent() {
                 const constructorParamTypes: readonly ParameterInfo[] =
                     methodInfo.getParameters();
 
-                const convertedConstructorArgs = constructorParams.map((witVal, idx) => {
+                const constructorParamWitValues = getWitValueFromDataValue(constructorParams);
+
+                const convertedConstructorArgs = constructorParamWitValues.map((witVal, idx) => {
                     return constructTsValueFromWitValue(witVal, constructorParamTypes[idx].type)
                 });
 
@@ -168,10 +166,12 @@ export function Agent() {
                         const paramTypes: readonly ParameterInfo[] =
                             methodSignature.getParameters();
 
+                        const argsWitValues = getWitValueFromDataValue(args);
+
                         const returnType: Type =
                             methodSignature.returnType;
 
-                        const convertedArgs = args.map((witVal, idx) => {
+                        const convertedArgs = argsWitValues.map((witVal, idx) => {
                             return constructTsValueFromWitValue(witVal, paramTypes[idx].type)
                         });
 
@@ -187,25 +187,58 @@ export function Agent() {
                             throw new Error(`Method ${method} not found in agent definition for ${className} ${def} ${def?.methods}. Available: ${ entriesAsStrings.join(", ")}`);
                         }
 
-                        return constructWitValueFromTsValue(result, returnType);
+                        // Why is return value a tuple with a single element?
+                        // why should it have a name?
+                        // FIXME
+                        return { tag: 'ok', val: getDataValueFromWitValueReturned(constructWitValueFromTsValue(result, returnType))};
                     }
                 };
 
-                return new ResolvedAgent(className, agentInternal, instance);
+                return {
+                    tag: 'ok',
+                    val: new ResolvedAgent(className, agentInternal, instance)
+                };
             }
         });
     };
 }
 
+// FIXME: in the next verison, handle all dataValues
+function getWitValueFromDataValue(dataValue: DataValue): WitValue[] {
+    if (dataValue.tag === 'tuple') {
+        return dataValue.val.map((elem) => {
+            if (elem.tag === 'component-model') {
+                return elem.val;
+            } else {
+                throw new Error(`Unsupported element type: ${elem.tag}`);
+            }
+        })
+
+    } else {
+        throw new Error(`Unsupported DataValue type: ${dataValue.tag}`);
+    }
+}
+
+// Why is return value a tuple with a single element?
+// why should it have a name?
+function getDataValueFromWitValueReturned(witValues: WitValue): DataValue {
+   return {
+        tag: 'tuple',
+        val: [{
+            tag: 'component-model',
+            val: witValues
+        }]
+    }
+}
+
 
 function defaultStringSchema(): DataSchema {
     return {
-        tag: 'structured',
-        val: {
-            parameters: [{
-                tag: 'text',
-                val: { languageCode: 'en' }
-            }]
+        tag: 'tuple',
+        val: [
+            ["test-name", {
+                tag: 'unstructured-text',
+                val: { restrictions: [{languageCode: 'en'}] }
+            }]]
         }
-    };
-}
+    }

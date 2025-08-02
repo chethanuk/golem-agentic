@@ -1,5 +1,39 @@
-import { WasmRpc } from 'golem:rpc/types@0.2.1';
-import { getAgentComponent, getSelfMetadata } from 'golem:api/host@1.1.7';
+import { WasmRpc } from 'golem:rpc/types@0.2.2';
+import { getSelfMetadata } from 'golem:api/host@1.1.7';
+
+/**
+ * Represents a globally unique identifier for an agent instance.
+ */
+class AgentId {
+    /**
+     * Creates a new `AgentId` instance.
+     *
+     * @param agentContainerName - The name of the container (e.g., worker or module) in which the agent lives.
+     * @param agentName - The name of the agent.
+     *   This is typically a unique identifier for the agent type,
+     *   and is used in coordination with the container name and
+     *   sequence number to form a globally unique `AgentId`.
+     * @param localAgentSeqNum - A numeric sequence number to distinguish multiple instances.
+     */
+    constructor(agentContainerName, agentName, localAgentSeqNum) {
+        this.agentContainerName = agentContainerName;
+        this.agentName = agentName;
+        this.localAgentSeqNum = localAgentSeqNum;
+    }
+    toString() {
+        return `${this.agentContainerName}--${this.agentName}--${this.localAgentSeqNum}`;
+    }
+    static fromString(s) {
+        const parts = s.split("--");
+        if (parts.length < 3) {
+            throw new Error(`Invalid AgentId format: ${s}`);
+        }
+        const count = parseInt(parts.pop(), 10);
+        const agentName = parts.pop();
+        const workerName = parts.join("--");
+        return new AgentId(workerName, agentName, count);
+    }
+}
 
 const agentRegistry = new Map();
 function getRegisteredAgents() {
@@ -85,40 +119,6 @@ class BaseAgent {
      */
     static createLocal(...args) {
         throw new Error("A local client will be created at runtime");
-    }
-}
-
-/**
- * Represents a globally unique identifier for an agent instance.
- */
-class AgentId {
-    /**
-     * Creates a new `AgentId` instance.
-     *
-     * @param agentContainerName - The name of the container (e.g., worker or module) in which the agent lives.
-     * @param agentName - The name of the agent.
-     *   This is typically a unique identifier for the agent type,
-     *   and is used in coordination with the container name and
-     *   sequence number to form a globally unique `AgentId`.
-     * @param localAgentSeqNum - A numeric sequence number to distinguish multiple instances.
-     */
-    constructor(agentContainerName, agentName, localAgentSeqNum) {
-        this.agentContainerName = agentContainerName;
-        this.agentName = agentName;
-        this.localAgentSeqNum = localAgentSeqNum;
-    }
-    toString() {
-        return `${this.agentContainerName}--${this.agentName}--${this.localAgentSeqNum}`;
-    }
-    static fromString(s) {
-        const parts = s.split("--");
-        if (parts.length < 3) {
-            throw new Error(`Invalid AgentId format: ${s}`);
-        }
-        const count = parseInt(parts.pop(), 10);
-        const agentName = parts.pop();
-        const workerName = parts.join("--");
-        return new AgentId(workerName, agentName, count);
     }
 }
 
@@ -294,6 +294,30 @@ const Metadata = new _e({
     nullability: false,
 }, "@afsalthaj/golem-ts-sdk", B);
 
+function getNameFromAnalysedType(typ) {
+    switch (typ.kind) {
+        case 'variant':
+            return typ.value.name;
+        case 'result':
+            return typ.value.name;
+        case 'option':
+            return typ.value.name;
+        case 'enum':
+            return typ.value.name;
+        case 'flags':
+            return typ.value.name;
+        case 'record':
+            return typ.value.name;
+        case 'tuple':
+            return typ.value.name;
+        case 'list':
+            return typ.value.name;
+        case 'handle':
+            return typ.value.name;
+        default:
+            return undefined;
+    }
+}
 const analysedType = {
     field: (name, typ) => ({ name, typ }),
     case: (name, typ) => ({ name, typ }),
@@ -312,17 +336,17 @@ const analysedType = {
     s16: () => ({ kind: 's16' }),
     u8: () => ({ kind: 'u8' }),
     s8: () => ({ kind: 's8' }),
-    list: (inner) => ({ kind: 'list', value: { inner } }),
-    option: (inner) => ({ kind: 'option', value: { inner } }),
-    tuple: (items) => ({ kind: 'tuple', value: { items } }),
-    record: (fields) => ({ kind: 'record', value: { fields } }),
-    flags: (names) => ({ kind: 'flags', value: { names } }),
-    enum: (cases) => ({ kind: 'enum', value: { cases } }),
-    variant: (cases) => ({ kind: 'variant', value: { cases } }),
-    resultOk: (ok) => ({ kind: 'result', value: { ok } }),
-    resultErr: (err) => ({ kind: 'result', value: { err } }),
-    result: (ok, err) => ({ kind: 'result', value: { ok, err } }),
-    handle: (resourceId, mode) => ({ kind: 'handle', value: { resourceId, mode } }),
+    list: (inner) => ({ kind: 'list', value: { name: undefined, inner } }),
+    option: (inner) => ({ kind: 'option', value: { name: undefined, inner } }),
+    tuple: (items) => ({ kind: 'tuple', value: { name: undefined, items } }),
+    record: (fields) => ({ kind: 'record', value: { name: undefined, fields } }),
+    flags: (names) => ({ kind: 'flags', value: { name: undefined, names } }),
+    enum: (cases) => ({ kind: 'enum', value: { name: undefined, cases } }),
+    variant: (cases) => ({ kind: 'variant', value: { name: undefined, cases } }),
+    resultOk: (ok) => ({ kind: 'result', value: { name: undefined, ok } }),
+    resultErr: (err) => ({ kind: 'result', value: { name: undefined, err } }),
+    result: (ok, err) => ({ kind: 'result', value: { name: undefined, ok, err } }),
+    handle: (resourceId, mode) => ({ kind: 'handle', value: { name: undefined, resourceId, mode } }),
 };
 
 function constructWitTypeFromTsType(type) {
@@ -346,9 +370,11 @@ class WitTypeBuilder {
             return this.mapping.get(hash);
         }
         const idx = this.nodes.length;
-        this.nodes.push({ tag: 'prim-bool-type' });
+        const boolType = { tag: 'prim-bool-type' };
+        this.nodes.push({ name: undefined, type: boolType });
         const node = this.convert(typ);
-        this.nodes[idx] = node;
+        const name = getNameFromAnalysedType(typ);
+        this.nodes[idx] = { name, type: node };
         this.mapping.set(hash, idx);
         return idx;
     }
@@ -412,10 +438,11 @@ class WitTypeBuilder {
                 return { tag: 'prim-s8-type' };
             case 'bool':
                 return { tag: 'prim-bool-type' };
+            // FIXME: Why? typ.value.resourceId is a number and the handle-type takes a bigint
             case 'handle': {
                 const resId = typ.value.resourceId;
                 const mode = typ.value.mode === 'owned' ? 'owned' : 'borrowed';
-                return { tag: 'handle-type', val: [resId, mode] };
+                return { tag: 'handle-type', val: [BigInt(resId), mode] };
             }
             default:
                 throw new Error(`Unhandled AnalysedType kind: ${typ.kind}`);
@@ -913,14 +940,14 @@ function constructValueFromTsValue(arg, type) {
             }
         case u.BigInt64Array:
             if (Array.isArray(arg) && arg.every(item => typeof item === "bigint")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "s64", value: Number(item) })) };
+                return { kind: "list", value: arg.map(item => ({ kind: "s64", value: item })) };
             }
             else {
                 throw new Error(`Expected BigInt64Array, got ${typeof arg}`);
             }
         case u.BigUint64Array:
             if (Array.isArray(arg) && arg.every(item => typeof item === "bigint")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "u64", value: Number(item) })) };
+                return { kind: "list", value: arg.map(item => ({ kind: "u64", value: item })) };
             }
             else {
                 throw new Error(`Expected BigUint64Array, got ${typeof arg}`);
@@ -1506,29 +1533,47 @@ function getLocalClient(ctor) {
             const typ = parameters[index].type;
             return constructWitValueFromTsValue(fnArg, typ);
         });
+        // Currently handling only wit value
+        const dataValue = {
+            tag: "tuple",
+            val: parameterWitValues.map((param) => {
+                return {
+                    tag: "component-model",
+                    val: param
+                };
+            })
+        };
         // We ensure to create every agent using agentInitiator
-        const resolvedAgent = agentInitiator.initiate(agentName, parameterWitValues); // convert args to wit value
-        const instance = resolvedAgent.classInstance;
-        return new Proxy(instance, {
-            get(target, prop) {
-                const val = target[prop];
-                if (typeof val === "function") {
-                    return (...fnArgs) => {
-                        console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
-                        return val.apply(target, fnArgs);
-                    };
+        const resolvedAgent = agentInitiator.initiate(agentName, dataValue);
+        if (resolvedAgent.tag === "err") {
+            // FIXME: LocalClient shouldn't fail
+            throw new Error("Failed to create agent: " + JSON.stringify(resolvedAgent.val));
+        }
+        else {
+            const instance = resolvedAgent.val.classInstance;
+            return new Proxy(instance, {
+                get(target, prop) {
+                    const val = target[prop];
+                    if (typeof val === "function") {
+                        return (...fnArgs) => {
+                            console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
+                            return val.apply(target, fnArgs);
+                        };
+                    }
+                    return val;
                 }
-                return val;
-            }
-        });
+            });
+        }
     };
 }
 function getRemoteClient(ctor) {
     return (...args) => {
         const instance = new ctor(...args);
         const metadata = Metadata.getTypes().filter((type) => type.isClass() && type.name === ctor.name)[0];
-        const agentType = agentRegistry.get(ctor.name);
-        const componentId = getAgentComponent(agentType.typeName);
+        agentRegistry.get(ctor.name);
+        // getAgentComponent in code_first branch to be implemented
+        // until then using self metadata
+        const componentId = getSelfMetadata().workerId.componentId;
         const rpc = WasmRpc.ephemeral(componentId);
         const result = rpc.invokeAndAwait("golem:simulated-agentic-typescript/simulated-agent-ts.{weather-agent.new}", []);
         const resourceWitValues = result.tag === "err"
@@ -1631,24 +1676,20 @@ function Description(desc) {
 }
 function buildInputSchema(paramTypes) {
     return {
-        tag: 'structured',
-        val: {
-            parameters: paramTypes.map((parameterInfo) => mapToParameterType(parameterInfo.type))
-        }
+        tag: 'tuple',
+        val: paramTypes.map((parameterInfo) => [parameterInfo.name, mapToParameterType(parameterInfo.type)])
     };
 }
 function buildOutputSchema(returnType) {
     return {
-        tag: 'structured',
-        val: {
-            parameters: [mapToParameterType(returnType)]
-        }
+        tag: 'tuple',
+        val: [["return-value", mapToParameterType(returnType)]]
     };
 }
 function mapToParameterType(type) {
     const witType = constructWitTypeFromTsType(type);
     return {
-        tag: 'wit',
+        tag: 'component-model',
         val: witType
     };
 }
@@ -1679,14 +1720,14 @@ function Agent$1() {
         const agentType = {
             typeName: className,
             description: className,
-            agentConstructor: {
+            constructor: {
                 name: className,
                 description: `Constructs ${className}`,
                 promptHint: 'Enter something...',
                 inputSchema: defaultStringSchema()
             },
             methods,
-            requires: [],
+            dependencies: [],
         };
         agentRegistry.set(className, agentType);
         ctor.createRemote = getRemoteClient(ctor);
@@ -1696,7 +1737,8 @@ function Agent$1() {
                 // Fix, what if multiple constructors?
                 const methodInfo = classType.getConstructors()[0];
                 const constructorParamTypes = methodInfo.getParameters();
-                const convertedConstructorArgs = constructorParams.map((witVal, idx) => {
+                const constructorParamWitValues = getWitValueFromDataValue(constructorParams);
+                const convertedConstructorArgs = constructorParamWitValues.map((witVal, idx) => {
                     return constructTsValueFromWitValue(witVal, constructorParamTypes[idx].type);
                 });
                 const instance = new ctor(...convertedConstructorArgs);
@@ -1720,8 +1762,9 @@ function Agent$1() {
                         const methodInfo = classType.getMethod(method);
                         const methodSignature = methodInfo.getSignatures()[0];
                         const paramTypes = methodSignature.getParameters();
+                        const argsWitValues = getWitValueFromDataValue(args);
                         const returnType = methodSignature.returnType;
-                        const convertedArgs = args.map((witVal, idx) => {
+                        const convertedArgs = argsWitValues.map((witVal, idx) => {
                             return constructTsValueFromWitValue(witVal, paramTypes[idx].type);
                         });
                         const result = await fn.apply(instance, convertedArgs);
@@ -1730,23 +1773,56 @@ function Agent$1() {
                             const entriesAsStrings = Array.from(agentRegistry.entries()).map(([key, value]) => `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`);
                             throw new Error(`Method ${method} not found in agent definition for ${className} ${def} ${def?.methods}. Available: ${entriesAsStrings.join(", ")}`);
                         }
-                        return constructWitValueFromTsValue(result, returnType);
+                        // Why is return value a tuple with a single element?
+                        // why should it have a name?
+                        // FIXME
+                        return { tag: 'ok', val: getDataValueFromWitValueReturned(constructWitValueFromTsValue(result, returnType)) };
                     }
                 };
-                return new ResolvedAgent(className, agentInternal, instance);
+                return {
+                    tag: 'ok',
+                    val: new ResolvedAgent(className, agentInternal, instance)
+                };
             }
         });
     };
 }
+// FIXME: in the next verison, handle all dataValues
+function getWitValueFromDataValue(dataValue) {
+    if (dataValue.tag === 'tuple') {
+        return dataValue.val.map((elem) => {
+            if (elem.tag === 'component-model') {
+                return elem.val;
+            }
+            else {
+                throw new Error(`Unsupported element type: ${elem.tag}`);
+            }
+        });
+    }
+    else {
+        throw new Error(`Unsupported DataValue type: ${dataValue.tag}`);
+    }
+}
+// Why is return value a tuple with a single element?
+// why should it have a name?
+function getDataValueFromWitValueReturned(witValues) {
+    return {
+        tag: 'tuple',
+        val: [{
+                tag: 'component-model',
+                val: witValues
+            }]
+    };
+}
 function defaultStringSchema() {
     return {
-        tag: 'structured',
-        val: {
-            parameters: [{
-                    tag: 'text',
-                    val: { languageCode: 'en' }
+        tag: 'tuple',
+        val: [
+            ["test-name", {
+                    tag: 'unstructured-text',
+                    val: { restrictions: [{ languageCode: 'en' }] }
                 }]
-        }
+        ]
     };
 }
 
@@ -1754,54 +1830,53 @@ function defaultStringSchema() {
 const agents = new Map();
 // Component export
 class Agent {
-    constructor(name, params) {
-        console.log("Agent constructor called", name, params);
-        const initiator = agentInitiators.get(name);
-        if (!initiator) {
-            const entries = Array.from(agentInitiators.keys());
-            throw new Error(`No implementation found for agent: ${name}. Valid entries are ${entries.join(", ")}`);
-        }
-        const resolvedAgent = initiator.initiate(name, params);
-        this.resolvedAgent = resolvedAgent;
-        agents.set(resolvedAgent.getId(), this);
-    }
     async getId() {
         return this.resolvedAgent.getId().toString();
     }
-    async invoke(methodName, args) {
-        return this.resolvedAgent.invoke(methodName, args).then(result => {
-            if (result.nodes[0].tag == "prim-string") {
-                return {
-                    tag: "emit",
-                    val: result.nodes[0].val // only for testing
-                };
-            }
-            else {
-                throw new Error("Unrecognized method");
-            }
-        });
+    async invoke(methodName, input) {
+        return this.resolvedAgent.invoke(methodName, input);
     }
     async getDefinition() {
         this.resolvedAgent.getDefinition();
     }
+    static async create(agentType, input) {
+        console.log("Agent constructor called", agentType, input);
+        const initiator = agentInitiators.get(agentType);
+        if (!initiator) {
+            const entries = Array.from(agentInitiators.keys());
+            throw new Error(`No implementation found for agent: ${agentType}. Valid entries are ${entries.join(", ")}`);
+        }
+        const initiateResult = initiator.initiate(agentType, input);
+        if (initiateResult.tag == "ok") {
+            const agent = new Agent();
+            agent.resolvedAgent = initiateResult.val;
+            agents.set(initiateResult.val.getId(), agent);
+            return {
+                tag: "ok",
+                val: agent
+            };
+        }
+        else {
+            return {
+                tag: "err",
+                val: initiateResult.val
+            };
+        }
+    }
 }
-async function getAgent(agentId) {
+async function getAgent(agentType, agentId) {
     console.log("getAgent called", agentId);
-    return {
-        agentId: agentId,
-        agentName: "dummy-agent",
-        agentHandle: 1
-    };
+    const typedAgentId = AgentId.fromString(agentId);
+    const agent = agents.get(typedAgentId);
+    if (!agent) {
+        // FIXME: Fix WIT to return a Promise<Result<Agent, AgentError>>
+        throw new Error(`Agent with ID ${agentId} not found`);
+    }
+    return agent;
 }
 async function discoverAgents() {
     console.log("discoverAgents called");
-    return [
-        {
-            agentId: "dummy-agent-id",
-            agentName: "dummy-agent",
-            agentHandle: 1
-        }
-    ];
+    return Array.from(agents.values());
 }
 async function discoverAgentTypes() {
     console.log("discoverAgentTypes called");

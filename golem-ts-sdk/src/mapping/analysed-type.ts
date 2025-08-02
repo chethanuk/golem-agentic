@@ -32,40 +32,74 @@ export type AnalysedType =
     | { kind: 'bool' }
     | { kind: 'handle'; value: TypeHandle };
 
+export function getNameFromAnalysedType(typ: AnalysedType): string | undefined {
+  switch (typ.kind) {
+    case 'variant':
+      return typ.value.name;
+    case 'result':
+      return typ.value.name;
+    case 'option':
+      return typ.value.name;
+    case 'enum':
+      return typ.value.name;
+    case 'flags':
+      return typ.value.name;
+    case 'record':
+      return typ.value.name;
+    case 'tuple':
+      return typ.value.name;
+    case 'list':
+      return typ.value.name;
+    case 'handle':
+      return typ.value.name;
+    default:
+      return undefined;
+  }
+}
+
 export interface TypeResult {
+  name: string | undefined;
   ok?: AnalysedType;
   err?: AnalysedType;
 }
 
 export interface TypeVariant {
+  name: string | undefined;
   cases: NameOptionTypePair[];
 }
 
 export interface TypeOption {
+  name: string | undefined;
   inner: AnalysedType;
 }
 
 export interface TypeEnum {
+  name: string | undefined;
   cases: string[];
 }
 
 export interface TypeFlags {
+  name: string | undefined;
   names: string[];
 }
 
 export interface TypeRecord {
+  name: string | undefined;
   fields: NameTypePair[];
 }
 
 export interface TypeTuple {
+  name: string | undefined;
   items: AnalysedType[];
 }
 
 export interface TypeList {
+  name: string | undefined;
   inner: AnalysedType;
 }
 
 export interface TypeHandle {
+  name: string | undefined;
   resourceId: AnalysedResourceId;
   mode: AnalysedResourceMode;
 }
@@ -96,23 +130,23 @@ export const analysedType = {
   u8: (): AnalysedType => ({ kind: 'u8' }),
   s8: (): AnalysedType => ({ kind: 's8' }),
 
-  list: (inner: AnalysedType): AnalysedType => ({ kind: 'list', value: { inner } }),
-  option: (inner: AnalysedType): AnalysedType => ({ kind: 'option', value: { inner } }),
-  tuple: (items: AnalysedType[]): AnalysedType => ({ kind: 'tuple', value: { items } }),
-  record: (fields: NameTypePair[]): AnalysedType => ({ kind: 'record', value: { fields } }),
-  flags: (names: string[]): AnalysedType => ({ kind: 'flags', value: { names } }),
-  enum: (cases: string[]): AnalysedType => ({ kind: 'enum', value: { cases } }),
-  variant: (cases: NameOptionTypePair[]): AnalysedType => ({ kind: 'variant', value: { cases } }),
+  list: (inner: AnalysedType): AnalysedType => ({ kind: 'list', value: { name: undefined, inner } }),
+  option: (inner: AnalysedType): AnalysedType => ({ kind: 'option', value: { name: undefined, inner } }),
+  tuple: (items: AnalysedType[]): AnalysedType => ({ kind: 'tuple', value: { name: undefined, items } }),
+  record: (fields: NameTypePair[]): AnalysedType => ({ kind: 'record', value: { name: undefined, fields } }),
+  flags: (names: string[]): AnalysedType => ({ kind: 'flags', value: { name: undefined, names } }),
+  enum: (cases: string[]): AnalysedType => ({ kind: 'enum', value: { name: undefined, cases } }),
+  variant: (cases: NameOptionTypePair[]): AnalysedType => ({ kind: 'variant', value: { name: undefined, cases } }),
 
   resultOk: (ok: AnalysedType): AnalysedType =>
-      ({ kind: 'result', value: { ok } }),
+      ({ kind: 'result', value: { name: undefined, ok } }),
   resultErr: (err: AnalysedType): AnalysedType =>
-      ({ kind: 'result', value: { err } }),
+      ({ kind: 'result', value: { name: undefined, err } }),
 
   result: (ok: AnalysedType, err: AnalysedType): AnalysedType =>
-      ({ kind: 'result', value: { ok, err } }),
+      ({ kind: 'result', value: { name: undefined, ok, err } }),
 
 
   handle: (resourceId: AnalysedResourceId, mode: AnalysedResourceMode): AnalysedType =>
-      ({ kind: 'handle', value: { resourceId, mode } }),
+      ({ kind: 'handle', value: { name: undefined, resourceId, mode } }),
 };

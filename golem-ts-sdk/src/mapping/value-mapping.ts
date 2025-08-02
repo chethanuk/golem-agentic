@@ -1,6 +1,6 @@
 import {InterfaceType, ObjectType, PromiseType, PropertyInfo, Type, TypeKind} from "rttist";
-import {WitValue} from "golem:rpc/types@0.2.1";
-import {WitNode} from "golem:rpc/types@0.2.1";
+import {WitValue} from "golem:rpc/types@0.2.2";
+import {WitNode} from "golem:rpc/types@0.2.2";
 
 export function constructWitValueFromTsValue(tsValue: any, tsType: Type): WitValue {
     const value = constructValueFromTsValue(tsValue, tsType);
@@ -341,13 +341,13 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
             }
         case TypeKind.BigInt64Array:
             if (Array.isArray(arg) && arg.every(item => typeof item === "bigint")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "s64", value: Number(item) })) };
+                return { kind: "list", value: arg.map(item => ({ kind: "s64", value: item })) };
             } else {
                 throw new Error(`Expected BigInt64Array, got ${typeof arg}`);
             }
         case TypeKind.BigUint64Array:
             if (Array.isArray(arg) && arg.every(item => typeof item === "bigint")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "u64", value: Number(item) })) };
+                return { kind: "list", value: arg.map(item => ({ kind: "u64", value: item })) };
             } else {
                 throw new Error(`Expected BigUint64Array, got ${typeof arg}`);
             }
@@ -736,11 +736,11 @@ export type Value =
     | { kind: 'u8'; value: number }
     | { kind: 'u16'; value: number }
     | { kind: 'u32'; value: number }
-    | { kind: 'u64'; value: number }
+    | { kind: 'u64'; value: bigint }
     | { kind: 's8'; value: number }
     | { kind: 's16'; value: number }
     | { kind: 's32'; value: number }
-    | { kind: 's64'; value: number }
+    | { kind: 's64'; value: bigint }
     | { kind: 'f32'; value: number }
     | { kind: 'f64'; value: number }
     | { kind: 'char'; value: string }
@@ -753,7 +753,7 @@ export type Value =
     | { kind: 'flags'; value: boolean[] }
     | { kind: 'option'; value?: Value }
     | { kind: 'result'; value: { ok?: Value; err?: Value } }
-    | { kind: 'handle'; uri: string; resourceId: number };
+    | { kind: 'handle'; uri: string; resourceId: bigint };
 
 
 export function constructValueFromWitValue(wit: WitValue): Value {

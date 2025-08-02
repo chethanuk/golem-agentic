@@ -1,5 +1,5 @@
-import {WitValue} from "golem:rpc/types@0.2.1";
-import { AgentType } from 'golem:agent/common';
+import {Result} from "golem:rpc/types@0.2.2";
+import {AgentError, AgentType, DataValue} from 'golem:agent/common';
 import {AgentId} from "./agent-id";
 
 /**
@@ -8,6 +8,6 @@ import {AgentId} from "./agent-id";
  */
 export interface AgentInternal {
     getId(): AgentId;
-    invoke(method: string, args: WitValue[]): Promise<WitValue>;
+    invoke(method: string, args: DataValue): Promise<Result<DataValue, AgentError>>
     getAgentType(): AgentType;
 }

@@ -1,7 +1,7 @@
 import {Metadata}  from "./type_metadata";
 import {ClassType} from "rttist";
-import {WasmRpc, WitValue, WorkerId} from "golem:rpc/types@0.2.1";
-import {ComponentId, getAgentComponent} from "golem:api/host@1.1.7";
+import {WasmRpc, WitValue, WorkerId} from "golem:rpc/types@0.2.2";
+import {ComponentId, getSelfMetadata} from "golem:api/host@1.1.7";
 import {agentInitiators} from "./agent-Initiator";
 import {
     constructTsValueFromWitValue,
@@ -9,6 +9,7 @@ import {
     constructWitValueFromTsValue, constructWitValueFromValue, Value
 } from "./mapping/value-mapping";
 import {agentRegistry} from "./agent-registry";
+import {DataValue} from "golem:agent/common";
 
 export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     return (...args: any[]) => {
@@ -29,23 +30,39 @@ export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
             return constructWitValueFromTsValue(fnArg, typ);
         })
 
+        // Currently handling only wit value
+        const dataValue: DataValue = {
+            tag: "tuple",
+            val: parameterWitValues.map((param) => {
+                return {
+                    tag: "component-model",
+                    val: param
+                };
+            })
+        }
+
         // We ensure to create every agent using agentInitiator
-        const resolvedAgent = agentInitiator.initiate(agentName, parameterWitValues) // convert args to wit value
-        const instance = resolvedAgent.classInstance;
+        const resolvedAgent = agentInitiator.initiate(agentName, dataValue);
 
-        return new Proxy(instance, {
-            get(target, prop) {
-                const val = target[prop];
-                if (typeof val === "function") {
-                    return (...fnArgs: any[]) => {
-                        console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
-                        return val.apply(target, fnArgs);
-                    };
+        if (resolvedAgent.tag === "err") {
+            // FIXME: LocalClient shouldn't fail
+            throw new Error("Failed to create agent: " + JSON.stringify(resolvedAgent.val));
+        } else {
+            const instance = resolvedAgent.val.classInstance;
+
+            return new Proxy(instance, {
+                get(target, prop) {
+                    const val = target[prop];
+                    if (typeof val === "function") {
+                        return (...fnArgs: any[]) => {
+                            console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
+                            return val.apply(target, fnArgs);
+                        };
+                    }
+                    return val;
                 }
-                return val;
-            }
-        });
-
+            });
+        }
     }
 }
 
@@ -58,7 +75,9 @@ export function getRemoteClient<T extends new (...args: any[]) => any>(ctor: T) 
 
         const agentType = agentRegistry.get(ctor.name)!;
 
-        const componentId = getAgentComponent(agentType.typeName)!;
+        // getAgentComponent in code_first branch to be implemented
+        // until then using self metadata
+        const componentId: ComponentId = getSelfMetadata().workerId.componentId;
 
         const rpc = WasmRpc.ephemeral(componentId);
 

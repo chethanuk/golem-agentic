@@ -1,48 +1,51 @@
 declare module 'golem:agent/common' {
-  import * as golemRpc021Types from 'golem:rpc/types@0.2.1';
-  export type WitType = golemRpc021Types.WitType;
-  export type ParameterValue = {
-    tag: 'text'
-    val: string
-  };
-  export type DataValue = {
-    tag: 'text'
-    val: string
-  } |
-  {
-    tag: 'structured'
-    val: ParameterValue[]
-  };
+  import * as golemRpc022Types from 'golem:rpc/types@0.2.2';
+  export type WitType = golemRpc022Types.WitType;
+  export type WitValue = golemRpc022Types.WitValue;
+  export type Url = string;
   export type TextType = {
     languageCode: string;
   };
-  export type ParameterType = {
-    tag: 'wit'
+  export type TextSource = {
+    data: string;
+    textType: TextType | undefined;
+  };
+  export type TextReference = {
+    tag: 'url'
+    val: string
+  } |
+  {
+    tag: 'inline'
+    val: TextSource
+  };
+  export type TextDescriptor = {
+    restrictions: TextType[] | undefined;
+  };
+  export type BinaryType = {
+    mimeType: string;
+  };
+  export type BinaryDescriptor = {
+    restrictions: BinaryType[] | undefined;
+  };
+  export type ElementSchema = {
+    tag: 'component-model'
     val: WitType
   } |
   {
-    tag: 'text'
-    val: TextType
-  };
-  export type Structured = {
-    parameters: ParameterType[];
-  };
-  export type Multimodal = {
-    text: TextType[] | undefined;
+    tag: 'unstructured-text'
+    val: TextDescriptor
+  } |
+  {
+    tag: 'unstructured-binary'
+    val: BinaryDescriptor
   };
   export type DataSchema = {
-    tag: 'structured'
-    val: Structured
+    tag: 'tuple'
+    val: [string, ElementSchema][]
   } |
   {
     tag: 'multimodal'
-    val: Multimodal
-  };
-  export type AgentConstructor = {
-    name: string | undefined;
-    description: string;
-    promptHint: string | undefined;
-    inputSchema: DataSchema;
+    val: [string, ElementSchema][]
   };
   export type AgentMethod = {
     name: string;
@@ -51,38 +54,75 @@ declare module 'golem:agent/common' {
     inputSchema: DataSchema;
     outputSchema: DataSchema;
   };
+  export type AgentConstructor = {
+    name: string | undefined;
+    description: string;
+    promptHint: string | undefined;
+    inputSchema: DataSchema;
+  };
   export type AgentDependency = {
-    agentName: string;
+    typeName: string;
+    description: string | undefined;
+    constructor: AgentConstructor;
     methods: AgentMethod[];
   };
   export type AgentType = {
     typeName: string;
     description: string;
-    agentConstructor: AgentConstructor;
+    constructor: AgentConstructor;
     methods: AgentMethod[];
-    requires: AgentDependency[];
+    dependencies: AgentDependency[];
   };
-  export type ProgressCounter = {
-    steps: number;
-    total: number;
+  export type BinarySource = {
+    data: number[];
+    binaryType: BinaryType;
   };
-  export type ProgressReport = {
-    description: string;
-    counter: ProgressCounter | undefined;
-  };
-  export type Error = {
-    tag: 'network-error'
-  };
-  export type StatusUpdate = {
-    tag: 'error'
-    val: Error
+  export type BinaryReference = {
+    tag: 'url'
+    val: Url
   } |
   {
-    tag: 'progress'
-    val: ProgressReport | undefined
+    tag: 'inline'
+    val: BinarySource
+  };
+  export type ElementValue = {
+    tag: 'component-model'
+    val: WitValue
   } |
   {
-    tag: 'emit'
+    tag: 'unstructured-text'
+    val: TextReference
+  } |
+  {
+    tag: 'unstructured-binary'
+    val: BinaryReference
+  };
+  export type DataValue = {
+    tag: 'tuple'
+    val: ElementValue[]
+  } |
+  {
+    tag: 'multimodal'
+    val: [string, ElementValue][]
+  };
+  export type AgentError = {
+    tag: 'invalid-input'
     val: string
+  } |
+  {
+    tag: 'invalid-method'
+    val: string
+  } |
+  {
+    tag: 'invalid-type'
+    val: string
+  } |
+  {
+    tag: 'invalid-agent-id'
+    val: string
+  } |
+  {
+    tag: 'custom-error'
+    val: DataValue
   };
 }
