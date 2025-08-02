@@ -1,5 +1,4 @@
-# This is only a reference as manual steps involved
-
+# This is only a reference to steps I followed to test the script with latest wasm-rquickjs changes
 cd ts-user && npm install && npm run build
 
 cd ..
@@ -21,3 +20,5 @@ cd ../wrapper-agent && cargo component build
 wac plug target/wasm32-wasip1/debug/wrapper_agent.wasm --plug ../generated_rust/target/wasm32-wasip1/debug/agent_guest.wasm  -o agent_guest.wasm
 
 # Move agent_guest.wasm to code_first_agent (a few improvements with REPL) branch's test-components directory
+
+# !!! Things seems to work fine
