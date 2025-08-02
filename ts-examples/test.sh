@@ -1,4 +1,5 @@
-# This is only a reference to steps I followed to test the script with latest wasm-rquickjs changes
+# This is only a reference to steps I followed to test the prototype with latest wasm-rquickjs changes
+# This will disappear soon, and we will use golem template to avoid all these
 cd ts-user && npm install && npm run build
 
 cd ..
