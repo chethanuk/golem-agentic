@@ -6,7 +6,7 @@ import dts from 'rollup-plugin-dts';
 import { defineConfig } from 'rollup';
 
 const external = [
-    'agentic-guest',
+    'agent-guest',
     'golem:api/host@1.1.7',
     'golem:rpc/types@0.2.2',
     'golem:agent/common'

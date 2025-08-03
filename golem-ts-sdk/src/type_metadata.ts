@@ -4,6 +4,6 @@ export const Metadata = new BaseMetadataLibrary(
     {
         nullability: false,
     },
-    "@afsalthaj/golem-ts-sdk",
+    "@golemcloud/golem-ts-sdk",
     GlobalMetadata
 );
