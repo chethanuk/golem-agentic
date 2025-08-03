@@ -36,11 +36,11 @@ const userEntryModule  = config.entry.replace(/\.ts$/, '');
 // FIXME: Remove irrelevant comments
 const wrapperContent = `
 import '../.metadata/metadata.index';
-import { Metadata } from '@afsalthaj/golem-ts-sdk';
+import { Metadata } from '@golemcloud/golem-ts-sdk';
 import { metadataCollection } from '../.metadata/metadata.index';
 
 // Clear preloaded metadata
-Metadata.clearMetadata("@afsalthaj/golem-ts-sdk");
+Metadata.clearMetadata("@golemcloud/golem-ts-sdk");
 // Load generated metadata
 metadataCollection.forEach(mod => mod.add(Metadata, false));
 
