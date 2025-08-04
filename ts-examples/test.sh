@@ -4,11 +4,11 @@ cd ts-user && npm install && npm run build
 
 cd ..
 
-npm pack @afsalthaj/golem-ts-sdk@0.0.1-dev.6
-tar -xzf afsalthaj-golem-ts-sdk-0.0.1-dev.6.tgz
+npm pack @golemcloud/golem-ts-sdk@0.0.1-dev.2
+tar -xzf golemcloud-golem-ts-sdk-0.0.1-dev.2.tgz
 
 wasm-rquickjs generate-wrapper-crate \
---js-modules @afsalthaj/golem-ts-sdk=package/dist/index.mjs \
+--js-modules @golemcloud/golem-ts-sdk=package/dist/index.mjs \
 --js-modules ts-user/dist/index.mjs \
 --wit ../wit --output generated_rust
 
