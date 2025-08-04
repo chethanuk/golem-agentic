@@ -80,6 +80,26 @@ export function Agent() {
         let filteredType = (classType as ClassType);
         let methodNames = filteredType.getMethods();
 
+
+        const constructorSignatureInfo = (classType as ClassType).getConstructors()[0];
+
+        const constructorParamInfos: readonly ParameterInfo[] =
+            constructorSignatureInfo.getParameters();
+
+        const constructorParamTypes =
+            constructorParamInfos.map(paramInfo => constructWitTypeFromTsType(paramInfo.type));
+
+        const constructorDataSchema: DataSchema = {
+            tag: 'tuple',
+            val: constructorParamTypes.map((paramType, idx) => {
+                const paramName = constructorParamInfos[idx].name;
+                return [paramName, {
+                    tag: 'component-model',
+                    val: paramType
+                }];
+            })
+        }
+
         const methods: AgentMethod[] = methodNames.map(methodInfo => {
             const signature = methodInfo.getSignatures()[0];
 
@@ -112,7 +132,7 @@ export function Agent() {
                 name: className,
                 description: `Constructs ${className}`,
                 promptHint: 'Enter something...',
-                inputSchema: defaultStringSchema()
+                inputSchema: constructorDataSchema
             },
             methods,
             dependencies: [],
@@ -128,10 +148,10 @@ export function Agent() {
             initiate: (agentName: string, constructorParams: DataValue) => {
 
                 // Fix, what if multiple constructors?
-                const methodInfo = (classType as ClassType).getConstructors()[0];
+                const constructorInfo = (classType as ClassType).getConstructors()[0];
 
                 const constructorParamTypes: readonly ParameterInfo[] =
-                    methodInfo.getParameters();
+                    constructorInfo.getParameters();
 
                 const constructorParamWitValues = getWitValueFromDataValue(constructorParams);
 
@@ -230,15 +250,3 @@ function getDataValueFromWitValueReturned(witValues: WitValue): DataValue {
         }]
     }
 }
-
-
-function defaultStringSchema(): DataSchema {
-    return {
-        tag: 'tuple',
-        val: [
-            ["test-name", {
-                tag: 'unstructured-text',
-                val: { restrictions: [{languageCode: 'en'}] }
-            }]]
-        }
-    }

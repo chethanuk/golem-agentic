@@ -9,7 +9,7 @@ tar -xzf golemcloud-golem-ts-sdk-0.0.1-dev.2.tgz
 
 wasm-rquickjs generate-wrapper-crate \
 --js-modules @golemcloud/golem-ts-sdk=package/dist/index.mjs \
---js-modules ts-user/dist/index.mjs \
+--js-modules user-module=ts-user/dist/index.mjs \
 --wit ../wit --output generated_rust
 
 cd generated_rust
