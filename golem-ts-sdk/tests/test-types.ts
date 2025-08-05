@@ -42,6 +42,9 @@ interface OptionalPropertyUndefinedInterfaceType {
 //     unionProp: string | number;
 // }
 
+// A union type will become a variant in WIT, and the names will be available in the case.name
+// Example: [{name: 'string', typ: { kind: 'string' }}, {name: 'number', typ: { kind: 's32' }}]
+// This needs to be verified with @vigoo
 export type UnionType = number | string | boolean;
 
 export interface UnionPropertyAliasInterfaceType {
