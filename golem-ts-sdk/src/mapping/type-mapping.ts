@@ -224,6 +224,12 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
         case TypeKind.Interface:
             const objectInterface = type as InterfaceType;
             const interfaceFields = objectInterface.getProperties().map(prop => {
+                const propertyAnalysedType = constructAnalysedTypeFromTsType(prop.type);
+
+                if (prop.optional) {
+                    return analysedType.field(prop.name.toString(), analysedType.option(propertyAnalysedType));
+                }
+
                 return analysedType.field(prop.name.toString(), constructAnalysedTypeFromTsType(prop.type));
             });
             return analysedType.record(interfaceFields);
