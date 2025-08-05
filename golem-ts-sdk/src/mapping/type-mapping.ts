@@ -11,12 +11,9 @@ import {analysedType} from "./analysed-type";
 
 export function constructWitTypeFromTsType(type: Type) : WitType {
     const analysedType = constructAnalysedTypeFromTsType(type)
-    return constructFromAnalysedType(analysedType)
-}
 
-export function constructFromAnalysedType(typ: AnalysedType): WitType {
     const builder = new WitTypeBuilder();
-    builder.add(typ);
+    builder.add(analysedType);
     return builder.build();
 }
 
