@@ -12,6 +12,8 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+import {n} from "vitest/dist/chunks/reporters.d.BFLkQcL6";
+
 interface TestInterfaceType {
     n: number
 }
@@ -67,4 +69,23 @@ interface AllPrimitivesInterfaceType {
     bigint: bigint,
 }
 
+// FIXME: Wait for RTTIST to support object types inlined in interfaces
+// interface ObjectPropertyInterfaceType {
+//     n: number,
+//     t: TestInterfaceType,
+//     objectProp: {
+//         a: string,
+//         b: number,
+//         c: boolean
+//     }
+// }
+
+
+type ObjectType = {a: string, b: number, c: boolean}
+
+interface ObjectPropertyAliasInterfaceType {
+    n: number,
+    t: TestInterfaceType,
+    objectProp: ObjectType
+}
 
