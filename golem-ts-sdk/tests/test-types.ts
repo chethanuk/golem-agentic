@@ -5,6 +5,11 @@
 // These interfaces define the set of TypeScript types that are officially
 // supported and guaranteed by the SDK’s type mapping layer.
 
+// Whatever you add here will be tested automatically in the unit test with no further change.
+// This will at least ensure the mapping layer does not break for these types.
+// However, you can/should explicitly test the behavior of a specific type by adding necessary utility
+// functions in type-utils.ts in tests module.
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface TestInterfaceType {
@@ -51,4 +56,13 @@ export interface UnionPropertyAliasInterfaceType {
     n: number,
     t: TestInterfaceType,
     unionProp: UnionType;
+}
+
+export interface AllPrimitivesInterfaceType {
+    number: number,
+    text: string,
+    bool: boolean,
+    null: null,
+    undefinedProperty: undefined,
+    bigint: bigint,
 }
