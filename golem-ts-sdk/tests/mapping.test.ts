@@ -237,35 +237,5 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
             }
         });
     });
-
-    it.skip('interface with enum property as alias should be a valid analysed type', () => {
-        const interfaceWithUnionProperty = getInterfaceWithEnumPropertyAlias();
-        console.log(interfaceWithUnionProperty);
-        const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
-
-        expect(analysed).toBeDefined();
-
-        console.log(analysed);
-
-        expect(analysed.kind).toBe('record');
-
-        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
-
-        const objectFields = recordFields.filter((field) =>
-            field.name.startsWith('enumProp')
-        );
-
-        objectFields.forEach((nameTypePair) => {
-            expect(nameTypePair.typ.kind).toBe('enum');
-
-            if (nameTypePair.typ.kind === 'enum') {
-                const fields = nameTypePair.typ.value.cases;
-
-                expect(fields).toEqual([
-                    'A', 'B', 'C'
-                ]);
-            }
-        });
-    });
 })
 
