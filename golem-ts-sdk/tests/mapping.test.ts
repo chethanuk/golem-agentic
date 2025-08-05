@@ -8,7 +8,7 @@ import {
     getRecordFieldsFromAnalysedType,
     getInterfaceWithOptionalUndefinedProperty,
     getInterfaceWithUndefinedProperty,
-    expectTupleTypeWithNoItems
+    expectTupleTypeWithNoItems, getInterfaceWithUnionProperty
 } from "./type-utils";
 
 describe('TypeScript interface to AnalysedType/WitType mapping', () => {
@@ -76,6 +76,27 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
 
             const innerType = field.typ.kind === 'option' ? field.typ.value.inner : null;
             expectTupleTypeWithNoItems(innerType!);
+        });
+    })
+
+    it("handles union properties by wrapping them in variant types", () => {
+        const interfaceWithUnionProperty = getInterfaceWithUnionProperty();
+        const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
+
+        expect(analysed).toBeDefined();
+        expect(analysed.kind).toBe('record');
+
+        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
+        const unionFields = recordFields.filter((field) => field.name.startsWith('union'));
+
+        unionFields.forEach((field) => {
+            expect(field.typ.kind).toBe('variant');
+            if (field.typ.kind === 'variant') {
+                field.typ.value.cases.forEach((caseItem) => {
+                    expect(caseItem.name).toBeDefined();
+                    expect(caseItem.typ).toBeDefined();
+                });
+            }
         });
     })
 })

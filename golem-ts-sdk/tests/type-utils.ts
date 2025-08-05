@@ -30,6 +30,10 @@ export function getInterfaceWithOptionalUndefinedProperty(): Type {
     return getAll().filter((type) => type.name == 'OptionalPropertyUndefinedInterfaceType')[0];
 }
 
+export function getInterfaceWithUnionProperty(): Type {
+    return getAll().filter((type) => type.name == 'UnionPropertyInterfaceType')[0];
+}
+
 
 export function getInterfaceWithNestedProperty(): Type {
     return getAll().filter((type) => type.name == 'NestedPropertyInterfaceType')[0];

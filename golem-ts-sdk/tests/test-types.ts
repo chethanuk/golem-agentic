@@ -33,3 +33,10 @@ interface OptionalPropertyUndefinedInterfaceType {
     t: TestInterfaceType,
     optionalUndefinedProp?: undefined
 }
+
+// Currently only type alias will work
+export type UnionType = string | number;
+
+interface UnionPropertyInterfaceType {
+    unionProp: UnionType;
+}

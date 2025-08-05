@@ -5,7 +5,7 @@ import {
 } from './analysed-type';
 import {NamedWitTypeNode, NodeIndex, ResourceMode, WitTypeNode} from "golem:rpc/types@0.2.2";
 import {WitType} from "golem:agent/common";
-import {Type} from "rttist";
+import {Type, TypeAliasType, UnionType} from "rttist";
 import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
 import {analysedType} from "./analysed-type";
 
@@ -236,12 +236,22 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
 
         case TypeKind.Class:
         case TypeKind.Union:
+            const unionType = type as UnionType;
+            const possibleTypes: NameOptionTypePair[] = unionType.types.map((type) =>  {
+               return {
+                   name: type.name,
+                   typ: constructAnalysedTypeFromTsType(type)
+               }
+            });
+            return analysedType.variant(possibleTypes)
         case TypeKind.TemplateLiteral:
         case TypeKind.Intersection:
         case TypeKind.ConditionalType:
         case TypeKind.IndexedAccess:
         case TypeKind.TypeParameter:
         case TypeKind.Alias:
+            const typeAlias = type as TypeAliasType;
+            return constructAnalysedTypeFromTsType(typeAlias.target)
         case TypeKind.Method:
         case TypeKind.Function:
         case TypeKind.GeneratorFunction:
