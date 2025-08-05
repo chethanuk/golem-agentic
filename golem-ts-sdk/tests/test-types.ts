@@ -1,6 +1,12 @@
-// DON'T CHANGE THE INTERFACE NAME OR PROPERTY NAME AS THEY ARE USED IN RTTIST-REFLECTION-BASED TESTS
+// DO NOT RENAME INTERFACES OR PROPERTIES.
+// These names are introspected using RTTIST metadata reflection
+// and are used in unit tests.
 
-// These types represent the types that we guaranteed to support in the SDK.
+// These interfaces define the set of TypeScript types that are officially
+// supported and guaranteed by the SDK’s type mapping layer.
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 
 /// Interface types with various _types_ of properties
 interface TestInterfaceType {
