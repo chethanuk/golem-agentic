@@ -27,8 +27,8 @@ type ObjectType = {a: string, b: number, c: boolean}
 
 
 interface TestInterfaceType {
-    n: number;
-    t: SimpleInterfaceType;
+    number: number;
+    nested: SimpleInterfaceType;
     bool: boolean,
     null: null,
     undefinedProperty: undefined,
@@ -56,11 +56,3 @@ interface TestInterfaceType {
 //         c: boolean
 //     }
 // }
-
-
-
-interface ObjectPropertyAliasInterfaceType {
-    n: number,
-    t: TestInterfaceType,
-    objectProp: ObjectType
-}

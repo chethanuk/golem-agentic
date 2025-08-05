@@ -27,3 +27,7 @@ export function expectTupleTypeWithNoItems(typ: AnalysedType) {
     const itemsLength = typ?.kind === 'tuple' ? typ.value.items.length : -1;
     expect(itemsLength).toBe(0);
 }
+
+export function getRecordFieldsFromAnalysedType(analysedType: AnalysedType): NameTypePair[] | undefined {
+    return analysedType.kind === 'record' ? analysedType.value.fields : undefined;
+}

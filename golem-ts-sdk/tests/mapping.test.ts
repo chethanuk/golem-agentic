@@ -3,15 +3,8 @@ import {constructWitTypeFromTsType} from "../src/mapping/type-mapping";
 import {constructAnalysedTypeFromTsType} from "../src/mapping/type-mapping";
 import {
     getInterfaces,
-    getInterfaceWithOptionalProperty,
     getAll,
-    getRecordFieldsFromAnalysedType,
-    getInterfaceWithOptionalUndefinedProperty,
-    getInterfaceWithUndefinedProperty,
-    expectTupleTypeWithNoItems,
-    getInterfaceWithUnionProperty,
-    getInterfaceWithUnionPropertyAlias,
-    getInterfaceWithObjectPropertyAlias
+    expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType,
 } from "./type-utils";
 import {Type, TypeKind} from "rttist";
 import {analysedType} from "../src/mapping/analysed-type";
@@ -71,7 +64,7 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
     })
 
     it('treats interface properties explicitly typed as "undefined" as empty tuple types', () => {
-        const interfaceWithUndefinedProperty = getInterfaceWithUndefinedProperty();
+        const interfaceWithUndefinedProperty = getTestInterfaceType();
         const analysed = constructAnalysedTypeFromTsType(interfaceWithUndefinedProperty);
 
         expect(analysed).toBeDefined();
@@ -86,7 +79,7 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
     })
 
     it('wraps optional non-undefined properties in option types', () => {
-        const interfaceWithOptionalProperty = getInterfaceWithOptionalProperty();
+        const interfaceWithOptionalProperty = getTestInterfaceType();
         const analysed = constructAnalysedTypeFromTsType(interfaceWithOptionalProperty);
 
         expect(analysed).toBeDefined();
@@ -101,7 +94,7 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
     })
 
     it('wraps optional "undefined" properties in option types containing empty tuples', () => {
-        const interfaceWithOptionalProperty = getInterfaceWithOptionalUndefinedProperty();
+        const interfaceWithOptionalProperty = getTestInterfaceType();
         const analysed = constructAnalysedTypeFromTsType(interfaceWithOptionalProperty);
 
         expect(analysed).toBeDefined();
@@ -118,46 +111,8 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
         });
     })
 
-    // FIXME: Wait for RTTIST to support union types without aliases
-    it.skip('interface with union property is analysed as variant with exact cases', () => {
-        const interfaceWithUnionProperty = getInterfaceWithUnionProperty();
-        const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
-
-        expect(analysed).toBeDefined();
-        expect(analysed.kind).toBe('record');
-
-        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
-
-        const unionFields = recordFields.filter((field) =>
-            field.name.startsWith('unionProp')
-        );
-
-        expect(unionFields.length).toBeGreaterThan(0);
-
-        console.log(unionFields);
-
-        unionFields.forEach((field) => {
-            expect(field.typ.kind).toBe('variant');
-
-            if (field.typ.kind === 'variant') {
-                const cases = field.typ.value.cases;
-
-                expect(cases).toEqual([
-                    {
-                        name: 'string',
-                        typ: { kind: 'string' },
-                    },
-                    {
-                        name: 'number',
-                        typ: { kind: 's32' },
-                    },
-                ]);
-            }
-        });
-    });
-
     it('interface with union property as alias is analysed as variant with exact cases', () => {
-        const interfaceWithUnionProperty = getInterfaceWithUnionPropertyAlias();
+        const interfaceWithUnionProperty = getTestInterfaceType();
         const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
 
         expect(analysed).toBeDefined();
@@ -200,7 +155,7 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
     });
 
     it('interface with object property as alias should be a valid analysed type', () => {
-        const interfaceWithUnionProperty = getInterfaceWithObjectPropertyAlias();
+        const interfaceWithUnionProperty = getTestInterfaceType();
         const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
 
         expect(analysed).toBeDefined();
