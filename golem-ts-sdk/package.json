@@ -27,6 +27,7 @@
     }
   },
   "scripts": {
+    "test": "npx @rttist/typegen@0.2.0 generate --force && vitest run",
     "prebuild": "wasm-rquickjs generate-dts --wit ../wit --output types",
     "build": "npm run prebuild && tsc --noEmit && rollup -c",
     "dev": "rollup -c -w"
@@ -46,7 +47,8 @@
     "rollup-plugin-dts": "^6.2.1",
     "rollup-plugin-typescript2": "^0.36.0",
     "rttist": "^1.0.0-rc.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   },
   "private": false
 }
