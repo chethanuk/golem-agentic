@@ -267,7 +267,19 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             throw new TypeError("unsupported type in Golem " + type.kind);
 
         case TypeKind.Undefined:
-            throw new TypeError("undefined type is not supported in Golem");
+            // Why empty tuple for undefined?
+            //
+            // Undefined types can exist
+            // a: undefined;
+            // In this case a should exist but just that it can be undefined. The best analysed_type
+            // for this situation is tuple[]
+            // If value is tuple, and the type is undefined, we convert the wit-value of empty to ts value of "undefined"
+            // This will also help in situations such as
+            // a: string| undefined;
+            // This is different to `a?: string`. In this case type of `a` is just option<string>
+            // and if there is `a?: undefined`, then it is option<undefined>, and we have no loss of information
+            // if we make it an empty tuple
+            return analysedType.tuple([]);
 
         case TypeKind.Null:
             return analysedType.option(analysedType.str());

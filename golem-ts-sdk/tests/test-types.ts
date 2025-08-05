@@ -13,3 +13,8 @@ interface OptionalPropertyInterfaceType {
     optionalProp?: string
 }
 
+interface OptionalPropertyUndefinedInterfaceType {
+    n: number,
+    t: TestInterfaceType,
+    optionalUndefinedProp?: undefined
+}
