@@ -14,60 +14,37 @@
 
 import {n} from "vitest/dist/chunks/reporters.d.BFLkQcL6";
 
-interface TestInterfaceType {
-    n: number
-}
-
-interface NestedPropertyInterfaceType {
-    n: number;
-    nested: TestInterfaceType;
-}
-
-interface UndefinedPropertyInterfaceType {
-    n: number;
-    t: TestInterfaceType;
-    undefinedProp: undefined;
-}
-
-interface OptionalPropertyInterfaceType {
+interface SimpleInterfaceType {
     n: number,
-    t: TestInterfaceType,
-    optionalProp?: string
 }
-
-interface OptionalPropertyUndefinedInterfaceType {
-    n: number,
-    t: TestInterfaceType,
-    optionalUndefinedProp?: undefined
-}
-
-
-// FIXME: Wait for RTTIST to support union types in interfaces.
-// interface UnionPropertyInterfaceType {
-//     n: number,
-//     t: TestInterfaceType,
-//     unionProp: string | number;
-// }
 
 // A union type will become a variant in WIT, and the names will be available in the case.name
 // Example: [{name: 'string', typ: { kind: 'string' }}, {name: 'number', typ: { kind: 's32' }}]
 // This needs to be verified with @vigoo
 type UnionType = number | string | boolean;
 
-interface UnionPropertyAliasInterfaceType {
-    n: number,
-    t: TestInterfaceType,
-    unionProp: UnionType;
-}
+type ObjectType = {a: string, b: number, c: boolean}
 
-interface AllPrimitivesInterfaceType {
-    number: number,
-    text: string,
+
+interface TestInterfaceType {
+    n: number;
+    t: SimpleInterfaceType;
     bool: boolean,
     null: null,
     undefinedProperty: undefined,
     bigint: bigint,
+    undefinedProp: undefined
+    optionalUndefinedProp?: undefined,
+    unionProp: UnionType,
+    objectProp: ObjectType,
+    // unionProp: string | number; //FIXME, RTTIST bug
+    // objectProp: { // FIXME, RTTIST bug
+    //     a: string,
+    //     b: number,
+    //     c: boolean
+    // }
 }
+
 
 // FIXME: Wait for RTTIST to support object types inlined in interfaces
 // interface ObjectPropertyInterfaceType {
@@ -81,7 +58,6 @@ interface AllPrimitivesInterfaceType {
 // }
 
 
-type ObjectType = {a: string, b: number, c: boolean}
 
 interface ObjectPropertyAliasInterfaceType {
     n: number,

@@ -3,18 +3,25 @@ import {
     NameOptionTypePair,
     NameTypePair,
 } from './analysed-type';
-import {NamedWitTypeNode, NodeIndex, ResourceMode, WitTypeNode} from "golem:rpc/types@0.2.2";
-import {WitType} from "golem:agent/common";
+import {NamedWitTypeNode, NodeIndex, ResourceMode, Result, WitTypeNode} from "golem:rpc/types@0.2.2";
+import {AgentError, WitType} from "golem:agent/common";
 import {EnumType, Type, TypeAliasType, UnionType} from "rttist";
 import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
 import {analysedType} from "./analysed-type";
 
-export function constructWitTypeFromTsType(type: Type) : WitType {
+export function constructWitTypeFromTsType(type: Type) : Result<WitType, AgentError> {
     const analysedType = constructAnalysedTypeFromTsType(type)
 
-    const builder = new WitTypeBuilder();
-    builder.add(analysedType);
-    return builder.build();
+    if (analysedType.tag === "err") {
+        return analysedType;
+    } else  {
+        const builder = new WitTypeBuilder();
+        builder.add(analysedType.val);
+        return {
+            tag: "ok",
+            val: builder.build()
+        };
+    }
 }
 
 // Copied from wasm-rpc rust implementation
@@ -127,87 +134,140 @@ class WitTypeBuilder {
     }
 }
 
-export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
+export function constructAnalysedTypeFromTsType(type: TsType): Result<AnalysedType, AgentError> {
     switch (type.kind) {
         case TypeKind.Intrinsic:
-            throw new Error("unimplemented")
+            return invalidTypeError(type);
         case TypeKind.False:
-            return analysedType.bool()
+            return validType(analysedType.bool());
         case TypeKind.True:
-            return analysedType.bool();
+            return validType(analysedType.bool());
         case TypeKind.DataView:
-            return analysedType.list(analysedType.u8());
+            return validType(analysedType.list(analysedType.u8()));
         case TypeKind.MapDefinition:
             const mapKeyType = type.getTypeArguments?.()[0];
             const mapValueType = type.getTypeArguments?.()[1];
-            const key = constructAnalysedTypeFromTsType(mapKeyType);
-            const value = constructAnalysedTypeFromTsType(mapValueType);
-            return analysedType.list(analysedType.tuple([key, value]));
+
+            return flatMap(constructAnalysedTypeFromTsType(mapKeyType), (key) =>
+                flatMap(constructAnalysedTypeFromTsType(mapValueType), (value) => {
+                    if (!key || !value) return invalidTypeError(type);
+                    return validType(analysedType.list(analysedType.tuple([key, value])));
+                })
+            );
 
         case TypeKind.WeakMapDefinition:
-            const weakMapKeyType = type.getTypeArguments?.()[0];
-            const weakMapValueType = type.getTypeArguments?.()[1];
-            const weakKey = constructAnalysedTypeFromTsType(weakMapKeyType);
-            const weakValue = constructAnalysedTypeFromTsType(weakMapValueType);
-            return analysedType.list(analysedType.tuple([weakKey, weakValue]));
+            const args = type.getTypeArguments?.();
+            if (!args || args.length < 2) {
+                return invalidTypeError(type);
+            }
+
+            const [weakMapKeyType, weakMapValueType] = args;
+
+            return flatMap(constructAnalysedTypeFromTsType(weakMapKeyType), (key) =>
+                flatMap(constructAnalysedTypeFromTsType(weakMapValueType), (value) =>
+                    validType(analysedType.list(analysedType.tuple([key, value])))
+                )
+            );
 
         case TypeKind.SetDefinition:
+            const setElementType = type.getTypeArguments?.()[0];
+            if (!setElementType) {
+                return invalidTypeError(type);
+            }
+
+            return flatMap(constructAnalysedTypeFromTsType(setElementType), (elementType) =>
+                validType(analysedType.list(elementType))
+            );
+
         case TypeKind.WeakSetDefinition:
             const setType = type.getTypeArguments?.()[0];
             if (!setType) {
-                throw new Error("Set must have a type argument");
+                return invalidTypeError(type);
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(setType));
+
+            return flatMap(constructAnalysedTypeFromTsType(setType), (elementType) =>
+                validType(analysedType.list(elementType))
+            );
 
         case TypeKind.GeneratorDefinition:
             const genType = type.getTypeArguments?.()[0];
             if (!genType) {
-                throw new Error("Generator must have a type argument");
+                return invalidTypeError(type); // return an error Result instead of throwing
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(genType));
+
+            return flatMap(constructAnalysedTypeFromTsType(genType), (elemType) =>
+                validType(analysedType.list(elemType))
+            );
+
         case TypeKind.AsyncGeneratorDefinition:
             const generatorType = type.getTypeArguments?.()[0];
             if (!generatorType) {
-                throw new Error("Generator must have a type argument");
+                return invalidTypeError(type); // Return an error Result instead of throwing
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(generatorType));
+
+            return flatMap(constructAnalysedTypeFromTsType(generatorType), (elemType) =>
+                validType(analysedType.list(elemType))
+            );
 
         case TypeKind.IteratorDefinition:
             const iteratorType = type.getTypeArguments?.()[0];
             if (!iteratorType) {
-                throw new Error("Iterator must have a type argument");
+                return invalidTypeError(type);
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(iteratorType));
+
+            return flatMap(constructAnalysedTypeFromTsType(iteratorType), (elemType) =>
+                validType(analysedType.list(elemType))
+            );
+
         case TypeKind.IterableDefinition:
             const iterableType = type.getTypeArguments?.()[0];
             if (!iterableType) {
-                throw new Error("Iterable must have a type argument");
+                return invalidTypeError(type);
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(iterableType));
+
+            return flatMap(constructAnalysedTypeFromTsType(iterableType), (elemType) =>
+                validType(analysedType.list(elemType))
+            );
+
         case TypeKind.IterableIteratorDefinition:
             const iterableIteratorType = type.getTypeArguments?.()[0];
             if (!iterableIteratorType) {
-                throw new Error("IterableIterator must have a type argument");
+                return invalidTypeError(type);
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(iterableIteratorType));
+
+            return flatMap(constructAnalysedTypeFromTsType(iterableIteratorType), (elemType) =>
+                validType(analysedType.list(elemType))
+            );
+
         case TypeKind.AsyncIteratorDefinition:
             const asyncIteratorType = type.getTypeArguments?.()[0];
             if (!asyncIteratorType) {
-                throw new Error("AsyncIterator must have a type argument");
+                return invalidTypeError(type);
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(asyncIteratorType));
+
+            return flatMap(constructAnalysedTypeFromTsType(asyncIteratorType), (elemType) =>
+                validType(analysedType.list(elemType))
+            );
+
         case TypeKind.AsyncIterableDefinition:
             const asyncIterableType = type.getTypeArguments?.()[0];
             if (!asyncIterableType) {
-                throw new Error("AsyncIterable must have a type argument");
+                return invalidTypeError(type);
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(asyncIterableType));
+
+            return flatMap(constructAnalysedTypeFromTsType(asyncIterableType), (elemType) =>
+                validType(analysedType.list(elemType))
+            );
+
         case TypeKind.AsyncIterableIteratorDefinition:
             const asyncIterableIteratorType = type.getTypeArguments?.()[0];
             if (!asyncIterableIteratorType) {
-                throw new Error("AsyncIterableIterator must have a type argument");
+                return invalidTypeError(type);
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(asyncIterableIteratorType));
+
+            return flatMap(constructAnalysedTypeFromTsType(asyncIterableIteratorType), (elemType) =>
+                validType(analysedType.list(elemType))
+            );
 
         case TypeKind.Type:
             const arg = type.getTypeArguments?.()[0];
@@ -217,9 +277,7 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
 
             return constructAnalysedTypeFromTsType(arg);
 
-
-        // To be handled
-        case TypeKind.Module:
+            case TypeKind.Module:
             throw new Error("unimplemented")
 
         case TypeKind.Namespace:
@@ -227,23 +285,37 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
 
         case TypeKind.Object:
             const object = type as ObjectType;
-            const objectFields = object.getProperties().map(prop => {
-                return analysedType.field(prop.name.toString(), constructAnalysedTypeFromTsType(prop.type));
-            });
-            return analysedType.record(objectFields);
+
+            const fieldsResult = traverse(object.getProperties(), (prop) =>
+                map(constructAnalysedTypeFromTsType(prop.type), (fieldType) =>
+                    analysedType.field(prop.name.toString(), fieldType)
+                )
+            );
+
+            if (fieldsResult.tag === 'err') {
+                return fieldsResult;
+            }
+
+            return validType(analysedType.record(fieldsResult.val));
 
         case TypeKind.Interface:
             const objectInterface = type as InterfaceType;
-            const interfaceFields = objectInterface.getProperties().map(prop => {
-                const propertyAnalysedType = constructAnalysedTypeFromTsType(prop.type);
 
-                if (prop.optional) {
-                    return analysedType.field(prop.name.toString(), analysedType.option(propertyAnalysedType));
-                }
+            const interfaceFieldsResult = traverse(objectInterface.getProperties(), (prop) =>
+                map(constructAnalysedTypeFromTsType(prop.type), (propertyAnalysedType) => {
+                    const fieldType = prop.optional
+                        ? analysedType.option(propertyAnalysedType)
+                        : propertyAnalysedType;
+                    return analysedType.field(prop.name.toString(), fieldType);
+                })
+            );
 
-                return analysedType.field(prop.name.toString(), constructAnalysedTypeFromTsType(prop.type));
-            });
-            return analysedType.record(interfaceFields);
+            if (interfaceFieldsResult.tag === 'err') {
+                return interfaceFieldsResult;
+            }
+
+            return validType(analysedType.record(interfaceFieldsResult.val));
+
 
         case TypeKind.Class:
         case TypeKind.Union:
@@ -407,17 +479,14 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.list(analysedType.u64());
 
         case TypeKind.Invalid:
-            const typeArgument = type.getTypeArguments?.()[0];
-            if (!typeArgument) {
-                throw new Error("Promise must have a type argument");
-            }
-            return constructAnalysedTypeFromTsType(typeArgument);
-
+            throw new Error("invalid type - cannot be converted to AnalysedType");
 
         case TypeKind.NumberLiteral:
-            return analysedType.f64();
+            return analysedType.s32();
+
         case TypeKind.BigIntLiteral:
-            return analysedType.s64();
+            return analysedType.u64();
+
         case TypeKind.StringLiteral:
             return analysedType.str();
 
@@ -458,3 +527,55 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.list(constructAnalysedTypeFromTsType(elementType));
     }
 }
+
+
+function invalidTypeError(type: TsType): Result<AnalysedType, AgentError> {
+    return {
+        tag: "err",
+        val: {
+            tag: "invalid-type",
+            val: `${type.name}`
+        }
+    }
+}
+
+function validType(analysedType: AnalysedType): Result<AnalysedType, AgentError> {
+    return {
+        tag: "ok",
+        val: analysedType
+    }
+}
+
+
+export function map<T, E, U>(
+    result: Result<T, E>,
+    fn: (val: T) => U
+): Result<U, E> {
+    return result.tag === 'ok' ? { tag: 'ok', val: fn(result.val) } : result;
+}
+
+
+export function flatMap<T, E, U>(
+    result: Result<T, E>,
+    fn: (val: T) => Result<U, E>
+): Result<U, E> {
+    return result.tag === 'ok' ? fn(result.val) : result;
+}
+
+
+function traverse<T, E, U>(
+    arr: readonly  T[],
+    fn: (item: T) => Result<U, E>
+): Result<U[], E> {
+    const results: U[] = [];
+    for (const item of arr) {
+        const res = fn(item);
+        if (res.tag === 'err') {
+            return res;
+        }
+        results.push(res.val);
+    }
+    return { tag: 'ok', val: results };
+}
+
+
