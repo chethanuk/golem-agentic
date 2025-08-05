@@ -7,8 +7,6 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-
-/// Interface types with various _types_ of properties
 interface TestInterfaceType {
     n: number
 }
