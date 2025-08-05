@@ -34,9 +34,18 @@ interface OptionalPropertyUndefinedInterfaceType {
     optionalUndefinedProp?: undefined
 }
 
-// Currently only type alias will work
-export type UnionType = string | number;
 
-interface UnionPropertyInterfaceType {
+// FIXME: Wait for RTTIST to support union types in interfaces.
+// interface UnionPropertyInterfaceType {
+//     n: number,
+//     t: TestInterfaceType,
+//     unionProp: string | number;
+// }
+
+export type UnionType = number | string | boolean;
+
+export interface UnionPropertyAliasInterfaceType {
+    n: number,
+    t: TestInterfaceType,
     unionProp: UnionType;
 }

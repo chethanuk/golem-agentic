@@ -86,7 +86,7 @@ class WitTypeBuilder {
                 return { tag: 'list-type', val: inner };
             }
 
-            case 'str':
+            case 'string':
                 return { tag: 'prim-string-type' };
             case 'chr':
                 return { tag: 'prim-char-type' };
@@ -239,7 +239,7 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             const unionType = type as UnionType;
             const possibleTypes: NameOptionTypePair[] = unionType.types.map((type) =>  {
                return {
-                   name: type.name,
+                   name: type.name.toLowerCase(),
                    typ: constructAnalysedTypeFromTsType(type)
                }
             });
@@ -298,6 +298,8 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.bool();
 
         case TypeKind.BigInt:
+            return analysedType.u64();
+
         case TypeKind.Float64Array:
             return analysedType.f64();
 

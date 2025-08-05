@@ -8,7 +8,7 @@ import {
     getRecordFieldsFromAnalysedType,
     getInterfaceWithOptionalUndefinedProperty,
     getInterfaceWithUndefinedProperty,
-    expectTupleTypeWithNoItems, getInterfaceWithUnionProperty
+    expectTupleTypeWithNoItems, getInterfaceWithUnionProperty, getInterfaceWithUnionPropertyAlias
 } from "./type-utils";
 
 describe('TypeScript interface to AnalysedType/WitType mapping', () => {
@@ -79,7 +79,8 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
         });
     })
 
-    it("handles union properties by wrapping them in variant types", () => {
+    // FIXME: Wait for RTTIST to support union types without aliases
+    it.skip('interface with union property is analysed as variant with exact cases', () => {
         const interfaceWithUnionProperty = getInterfaceWithUnionProperty();
         const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
 
@@ -87,17 +88,76 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
         expect(analysed.kind).toBe('record');
 
         const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
-        const unionFields = recordFields.filter((field) => field.name.startsWith('union'));
+
+        const unionFields = recordFields.filter((field) =>
+            field.name.startsWith('unionProp')
+        );
+
+        expect(unionFields.length).toBeGreaterThan(0);
+
+        console.log(unionFields);
 
         unionFields.forEach((field) => {
             expect(field.typ.kind).toBe('variant');
+
             if (field.typ.kind === 'variant') {
-                field.typ.value.cases.forEach((caseItem) => {
-                    expect(caseItem.name).toBeDefined();
-                    expect(caseItem.typ).toBeDefined();
-                });
+                const cases = field.typ.value.cases;
+
+                expect(cases).toEqual([
+                    {
+                        name: 'string',
+                        typ: { kind: 'string' },
+                    },
+                    {
+                        name: 'number',
+                        typ: { kind: 's32' },
+                    },
+                ]);
             }
         });
-    })
+    });
+
+    it('interface with union property as alias is analysed as variant with exact cases', () => {
+        const interfaceWithUnionProperty = getInterfaceWithUnionPropertyAlias();
+        const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
+
+        expect(analysed).toBeDefined();
+        expect(analysed.kind).toBe('record');
+
+        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
+
+        const unionFields = recordFields.filter((field) =>
+            field.name.startsWith('unionProp')
+        );
+
+        expect(unionFields.length).toBeGreaterThan(0);
+
+        unionFields.forEach((field) => {
+            expect(field.typ.kind).toBe('variant');
+
+            if (field.typ.kind === 'variant') {
+                const cases = field.typ.value.cases;
+
+                expect(cases).toEqual([
+                    {
+                        name: 'string',
+                        typ: { kind: 'string' },
+                    },
+                    {
+                        name: 'number',
+                        typ: { kind: 's32' },
+                    },
+                    {
+                        name: 'false',
+                        typ: { kind: 'bool' },
+                    },
+                    {
+                        name: 'true',
+                        typ: { kind: 'bool' },
+                    },
+                ]);
+            }
+        });
+    });
 })
 
