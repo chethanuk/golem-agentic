@@ -8,7 +8,10 @@ import {
     getRecordFieldsFromAnalysedType,
     getInterfaceWithOptionalUndefinedProperty,
     getInterfaceWithUndefinedProperty,
-    expectTupleTypeWithNoItems, getInterfaceWithUnionProperty, getInterfaceWithUnionPropertyAlias
+    expectTupleTypeWithNoItems,
+    getInterfaceWithUnionProperty,
+    getInterfaceWithUnionPropertyAlias,
+    getInterfaceWithObjectPropertyAlias
 } from "./type-utils";
 import {Type, TypeKind} from "rttist";
 import {analysedType} from "../src/mapping/analysed-type";
@@ -191,6 +194,45 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
                         name: 'true',
                         typ: { kind: 'bool' },
                     },
+                ]);
+            }
+        });
+    });
+
+    it('interface with object property as alias should be a valid analysed type', () => {
+        const interfaceWithUnionProperty = getInterfaceWithObjectPropertyAlias();
+        const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
+
+        expect(analysed).toBeDefined();
+        expect(analysed.kind).toBe('record');
+
+        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
+
+        const objectFields = recordFields.filter((field) =>
+            field.name.startsWith('objectProp')
+        );
+
+        expect(objectFields.length).toBeGreaterThan(0);
+
+        objectFields.forEach((nameTypePair) => {
+            expect(nameTypePair.typ.kind).toBe('record');
+
+            if (nameTypePair.typ.kind === 'record') {
+                const fields = nameTypePair.typ.value.fields;
+
+                expect(fields).toEqual([
+                    {
+                        name: 'a',
+                        typ: { kind: 'string' },
+                    },
+                    {
+                        name: 'b',
+                        typ: { kind: 's32' },
+                    },
+                    {
+                        name: 'c',
+                        typ: { kind: 'bool' },
+                    }
                 ]);
             }
         });
