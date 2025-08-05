@@ -4,10 +4,6 @@ import {constructAnalysedTypeFromTsType} from "../src/mapping/type-mapping";
 import {getInterfaceTestTypes, getInterfaceTypesWithOptionalProperty, getSupportedTestTypes, loadMetadata} from "./utils";
 
 describe('Type Mapping for Interface Types in Typescript', () => {
-    // Load metadata is simulating the idea of user code updating the base type metadata library
-    // of SDK
-    loadMetadata();
-
     // A more general test case that every type defined in test-types can be converted to WitType
     it('every type in supported test types can be successfully converted to Wit Type', () => {
         const testTypes = getSupportedTestTypes();

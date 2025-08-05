@@ -1,7 +1,8 @@
 import {PackageName, updateMetadata} from "../src/type_metadata";
 import {metadataCollection} from "../.metadata/metadata.index";
 import {Metadata} from "../src";
-import {InterfaceType, TypeKind} from "rttist";
+import {TypeKind} from "rttist";
+import './test-setup';
 
 export function loadMetadata() {
     updateMetadata(metadataCollection)
