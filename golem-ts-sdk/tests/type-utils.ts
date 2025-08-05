@@ -30,10 +30,5 @@ export function getInterfaceWithNestedProperty(): Type {
 }
 
 export function getRecordFieldsFromAnalysedType(analysedType: AnalysedType): NameTypePair[] | undefined {
-    if (analysedType.kind === 'record') {
-        const fields = analysedType.value;
-        return fields.fields;
-    } else {
-        return undefined;
-    }
+    return analysedType.kind === 'record' ? analysedType.value.fields : undefined;
 }
