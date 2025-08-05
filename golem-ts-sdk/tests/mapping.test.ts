@@ -5,13 +5,14 @@ import {
     getInterfaces,
     getInterfaceWithOptionalProperty,
     getAll,
-    loadMetadata,
-    getRecordFieldsFromAnalysedType, getInterfaceWithOptionalUndefinedProperty
+    getRecordFieldsFromAnalysedType,
+    getInterfaceWithOptionalUndefinedProperty,
+    getInterfaceWithUndefinedProperty,
+    expectTupleTypeWithNoItems
 } from "./type-utils";
 
-describe('Type Mapping for Interface Types in Typescript', () => {
-    // A more general test case that every type defined in test-types can be converted to WitType
-    it('every type in supported test types can be successfully converted to Wit Type', () => {
+describe('TypeScript interface to AnalysedType/WitType mapping', () => {
+    it('converts all supported types to WitTyp', () => {
         const testTypes = getAll();
 
         testTypes.forEach((type) => {
@@ -20,8 +21,7 @@ describe('Type Mapping for Interface Types in Typescript', () => {
         });
     })
 
-    // A more general tests that every interface types defined in test-types is handled
-    it('every interface type in supported test types can be successfully converted to AnalysedType.record', () => {
+    it('converts all interfaces to AnalysedType with kind "record"\'', () => {
         const testTypes = getInterfaces();
 
         testTypes.forEach((type) => {
@@ -31,7 +31,22 @@ describe('Type Mapping for Interface Types in Typescript', () => {
         });
     })
 
-    it('every optional defined property in interface has optional type in AnalysedType.record', () => {
+    it('treats interface properties explicitly typed as "undefined" as empty tuple types', () => {
+        const interfaceWithUndefinedProperty = getInterfaceWithUndefinedProperty();
+        const analysed = constructAnalysedTypeFromTsType(interfaceWithUndefinedProperty);
+
+        expect(analysed).toBeDefined();
+        expect(analysed.kind).toBe('record');
+
+        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
+        const undefinedProperty = recordFields.filter((field) => field.name.startsWith('undefinedProp'));
+
+        undefinedProperty.forEach((field) => {
+            expectTupleTypeWithNoItems(field.typ)
+        });
+    })
+
+    it('wraps optional non-undefined properties in option types', () => {
         const interfaceWithOptionalProperty = getInterfaceWithOptionalProperty();
         const analysed = constructAnalysedTypeFromTsType(interfaceWithOptionalProperty);
 
@@ -46,7 +61,7 @@ describe('Type Mapping for Interface Types in Typescript', () => {
         });
     })
 
-    it('every optional undefined property in interface has optional type in AnalysedType.record', () => {
+    it('wraps optional "undefined" properties in option types containing empty tuples', () => {
         const interfaceWithOptionalProperty = getInterfaceWithOptionalUndefinedProperty();
         const analysed = constructAnalysedTypeFromTsType(interfaceWithOptionalProperty);
 
@@ -60,10 +75,7 @@ describe('Type Mapping for Interface Types in Typescript', () => {
             expect(field.typ.kind).toBe('option');
 
             const innerType = field.typ.kind === 'option' ? field.typ.value.inner : null;
-            expect(innerType?.kind).toBe('tuple');
-
-            const itemsLength = innerType?.kind === 'tuple' ? innerType.value.items.length : -1;
-            expect(itemsLength).toBe(0);
+            expectTupleTypeWithNoItems(innerType!);
         });
     })
 })
