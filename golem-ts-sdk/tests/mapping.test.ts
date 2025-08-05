@@ -11,7 +11,7 @@ import {
     expectTupleTypeWithNoItems,
     getInterfaceWithUnionProperty,
     getInterfaceWithUnionPropertyAlias,
-    getInterfaceWithObjectPropertyAlias, getInterfaceWithEnumPropertyAlias
+    getInterfaceWithObjectPropertyAlias
 } from "./type-utils";
 import {Type, TypeKind} from "rttist";
 import {analysedType} from "../src/mapping/analysed-type";
@@ -254,8 +254,6 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
         const objectFields = recordFields.filter((field) =>
             field.name.startsWith('enumProp')
         );
-
-        console.log(objectFields);
 
         objectFields.forEach((nameTypePair) => {
             expect(nameTypePair.typ.kind).toBe('enum');

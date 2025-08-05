@@ -40,6 +40,11 @@ jobs:
         run: |
           npm run build
 
+      - name: Run tests
+        working-directory: ./golem-ts-sdk
+        run: |
+          npm run test    
+
   publish:
     needs: build
     runs-on: blacksmith
