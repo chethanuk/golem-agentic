@@ -1,15 +1,15 @@
-interface TestType {
+interface TestInterfaceType {
     n: number
 }
 
-interface NestedTestType {
+interface NestedPropertyInterfaceType {
     n: number;
-    nested: TestType;
+    nested: TestInterfaceType;
 }
 
-interface OptionalPropertyTestType {
+interface OptionalPropertyInterfaceType {
     n: number,
-    t: TestType,
+    t: TestInterfaceType,
     optionalProp?: string
 }
 
