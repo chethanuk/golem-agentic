@@ -25,20 +25,24 @@ type UnionType = number | string | boolean;
 
 type ObjectType = {a: string, b: number, c: boolean}
 
-
 interface TestInterfaceType {
-    number: number;
-    nested: SimpleInterfaceType;
-    bool: boolean,
-    null: null,
-    undefinedProperty: undefined,
-    bigint: bigint,
+    numberProp: number;
+    stringProp: string;
+    booleanProp: boolean;
+    bigintProp: bigint;
+    nullProp: null;
     undefinedProp: undefined
+    trueProp: true;
+    falseProp: false;
+    unknownProp: unknown;
+    voidProp: void;
+    optionalProp?: number;
     optionalUndefinedProp?: undefined,
+    nestedProp: SimpleInterfaceType;
     unionProp: UnionType,
+    //unionPropInlined: string | number; //FIXME, RTTIST bug
     objectProp: ObjectType,
-    // unionProp: string | number; //FIXME, RTTIST bug
-    // objectProp: { // FIXME, RTTIST bug
+    // objectPropInlined: { // FIXME, RTTIST bug
     //     a: string,
     //     b: number,
     //     c: boolean
@@ -46,13 +50,3 @@ interface TestInterfaceType {
 }
 
 
-// FIXME: Wait for RTTIST to support object types inlined in interfaces
-// interface ObjectPropertyInterfaceType {
-//     n: number,
-//     t: TestInterfaceType,
-//     objectProp: {
-//         a: string,
-//         b: number,
-//         c: boolean
-//     }
-// }

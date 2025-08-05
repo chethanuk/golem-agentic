@@ -131,6 +131,8 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
     switch (type.kind) {
         case TypeKind.Intrinsic:
             throw new Error("unimplemented")
+        case TypeKind.Boolean:
+            return analysedType.bool();
         case TypeKind.False:
             return analysedType.bool()
         case TypeKind.True:
@@ -333,9 +335,6 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
 
         case TypeKind.Null:
             return analysedType.tuple([])
-
-        case TypeKind.Boolean:
-            return analysedType.bool();
 
         case TypeKind.BigInt:
             return analysedType.u64();

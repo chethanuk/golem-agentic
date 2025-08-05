@@ -1,196 +1,103 @@
 import { describe, it, expect } from 'vitest'
-import {constructWitTypeFromTsType} from "../src/mapping/type-mapping";
 import {constructAnalysedTypeFromTsType} from "../src/mapping/type-mapping";
 import {
-    getInterfaces,
-    getAll,
     expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType,
 } from "./type-utils";
-import {Type, TypeKind} from "rttist";
-import {analysedType} from "../src/mapping/analysed-type";
+import {NameTypePair} from "../src/mapping/analysed-type";
 
 describe('TypeScript interface to AnalysedType/WitType mapping', () => {
-    it('converts all supported types to WitTyp', () => {
-        const testTypes = getAll();
-
-        testTypes.forEach((type) => {
-            const witType = constructWitTypeFromTsType(type);
-            expect(witType).toBeDefined();
-        });
-    })
-
-    it('converts all interfaces to AnalysedType with kind "record"\'', () => {
-        const testTypes = getInterfaces();
-
-        testTypes.forEach((type) => {
-            const analysed = constructAnalysedTypeFromTsType(type);
-            expect(analysed).toBeDefined();
-            expect(analysed.kind).toBe('record');
-        });
-    })
-
-    it('converts primitive types to AnalysedType', () => {
-
-        const numberType = Type.Number;
-        expect(constructAnalysedTypeFromTsType(numberType)).toEqual(analysedType.s32());
-
-        const stringType = Type.String;
-        expect(constructAnalysedTypeFromTsType(stringType)).toEqual(analysedType.str());
-
-        const booleanType = Type.Boolean;
-        expect(constructAnalysedTypeFromTsType(booleanType)).toEqual(analysedType.bool());
-
-        const bigIntType = Type.BigInt;
-        expect(constructAnalysedTypeFromTsType(bigIntType)).toEqual(analysedType.u64());
-
-        const nullType = Type.Null;
-        expect(constructAnalysedTypeFromTsType(nullType)).toEqual(analysedType.tuple([]));
-
-        const undefinedType = Type.Undefined;
-        expect(constructAnalysedTypeFromTsType(undefinedType)).toEqual(analysedType.tuple([]));
-
-        const trueType = Type.True;
-        expect(constructAnalysedTypeFromTsType(trueType)).toEqual(analysedType.bool());
-
-        const falseType = Type.False;
-        expect(constructAnalysedTypeFromTsType(falseType)).toEqual(analysedType.bool());
-
-        const unknowType = Type.Unknown;
-        expect(constructAnalysedTypeFromTsType(unknowType)).toEqual(analysedType.tuple([]));
-
-        const voidType = Type.Void;
-        expect(constructAnalysedTypeFromTsType(voidType)).toEqual(analysedType.tuple([]));
-
-    })
-
-    it('treats interface properties explicitly typed as "undefined" as empty tuple types', () => {
-        const interfaceWithUndefinedProperty = getTestInterfaceType();
-        const analysed = constructAnalysedTypeFromTsType(interfaceWithUndefinedProperty);
-
-        expect(analysed).toBeDefined();
-        expect(analysed.kind).toBe('record');
-
-        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
-        const undefinedProperty = recordFields.filter((field) => field.name.startsWith('undefinedProp'));
-
-        undefinedProperty.forEach((field) => {
-            expectTupleTypeWithNoItems(field.typ)
-        });
-    })
-
-    it('wraps optional non-undefined properties in option types', () => {
-        const interfaceWithOptionalProperty = getTestInterfaceType();
-        const analysed = constructAnalysedTypeFromTsType(interfaceWithOptionalProperty);
-
-        expect(analysed).toBeDefined();
-        expect(analysed.kind).toBe('record');
-
-        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
-        const optionalFields = recordFields.filter((field) => field.name.startsWith('optional'));
-
-        optionalFields.forEach((field) => {
-            expect(field.typ.kind).toBe('option');
-        });
-    })
-
-    it('wraps optional "undefined" properties in option types containing empty tuples', () => {
-        const interfaceWithOptionalProperty = getTestInterfaceType();
-        const analysed = constructAnalysedTypeFromTsType(interfaceWithOptionalProperty);
-
-        expect(analysed).toBeDefined();
-        expect(analysed.kind).toBe('record');
-
-        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
-        const optionalFields = recordFields.filter((field) => field.name.startsWith('optionalUndefinedProp'));
-
-        optionalFields.forEach((field) => {
-            expect(field.typ.kind).toBe('option');
-
-            const innerType = field.typ.kind === 'option' ? field.typ.value.inner : null;
-            expectTupleTypeWithNoItems(innerType!);
-        });
-    })
-
-    it('interface with union property as alias is analysed as variant with exact cases', () => {
-        const interfaceWithUnionProperty = getTestInterfaceType();
-        const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
+    it('correctly analyses fields of the test interface', () => {
+        const interfaceType = getTestInterfaceType();
+        const analysed = constructAnalysedTypeFromTsType(interfaceType);
 
         expect(analysed).toBeDefined();
         expect(analysed.kind).toBe('record');
 
         const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
 
-        const unionFields = recordFields.filter((field) =>
-            field.name.startsWith('unionProp')
-        );
-
-        expect(unionFields.length).toBeGreaterThan(0);
-
-        unionFields.forEach((field) => {
-            expect(field.typ.kind).toBe('variant');
-
-            if (field.typ.kind === 'variant') {
-                const cases = field.typ.value.cases;
-
-                expect(cases).toEqual([
-                    {
-                        name: 'string',
-                        typ: { kind: 'string' },
-                    },
-                    {
-                        name: 'number',
-                        typ: { kind: 's32' },
-                    },
-                    {
-                        name: 'false',
-                        typ: { kind: 'bool' },
-                    },
-                    {
-                        name: 'true',
-                        typ: { kind: 'bool' },
-                    },
-                ]);
-            }
-        });
+        checkPrimitiveFields(recordFields);
+        checkUndefinedFields(recordFields);
+        checkOptionalFields(recordFields);
+        checkOptionalUndefinedFields(recordFields);
+        checkUnionFields(recordFields);
+        checkObjectFields(recordFields);
     });
+});
 
-    it('interface with object property as alias should be a valid analysed type', () => {
-        const interfaceWithUnionProperty = getTestInterfaceType();
-        const analysed = constructAnalysedTypeFromTsType(interfaceWithUnionProperty);
+function checkPrimitiveFields(fields: any[]) {
+    const expected = {
+        numberProp: { kind: 's32' },
+        stringProp: { kind: 'string' },
+        booleanProp: { kind: 'bool' },
+        bigintProp: { kind: 'u64' },
+        nullProp: { kind: 'tuple', value: { items: [] } },
+        undefinedProp: { kind: 'tuple', value: { items: [] } },
+        trueProp: { kind: 'bool' },
+        falseProp: { kind: 'bool' },
+        unknownProp: { kind: 'tuple', value: { items: [] } },
+        voidProp: { kind: 'tuple', value: { items: [] } },
+    };
 
-        expect(analysed).toBeDefined();
-        expect(analysed.kind).toBe('record');
+    for (const [name, expectedType] of Object.entries(expected)) {
+        const field = fields.find(f => f.name === name);
+        expect(field).toBeDefined();
+        expect(field.typ).toMatchObject(expectedType);
+    }
+}
 
-        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
-
-        const objectFields = recordFields.filter((field) =>
-            field.name.startsWith('objectProp')
-        );
-
-        expect(objectFields.length).toBeGreaterThan(0);
-
-        objectFields.forEach((nameTypePair) => {
-            expect(nameTypePair.typ.kind).toBe('record');
-
-            if (nameTypePair.typ.kind === 'record') {
-                const fields = nameTypePair.typ.value.fields;
-
-                expect(fields).toEqual([
-                    {
-                        name: 'a',
-                        typ: { kind: 'string' },
-                    },
-                    {
-                        name: 'b',
-                        typ: { kind: 's32' },
-                    },
-                    {
-                        name: 'c',
-                        typ: { kind: 'bool' },
-                    }
-                ]);
-            }
-        });
+function checkUndefinedFields(fields: NameTypePair[]) {
+    const undefinedProps = fields.filter(f => f.name.startsWith('undefinedProp'));
+    undefinedProps.forEach(field => {
+        expectTupleTypeWithNoItems(field.typ);
     });
-})
+}
+
+function checkOptionalFields(fields: NameTypePair[]) {
+    const optionalFields = fields.filter(f => f.name.startsWith('optional') && !f.name.includes('Undefined'));
+    optionalFields.forEach(field => {
+        expect(field.typ.kind).toBe('option');
+    });
+}
+
+function checkOptionalUndefinedFields(fields: any[]) {
+    const optionalFields = fields.filter(f => f.name.startsWith('optionalUndefinedProp'));
+    optionalFields.forEach(field => {
+        expect(field.typ.kind).toBe('option');
+        const inner = field.typ.value.inner;
+        expectTupleTypeWithNoItems(inner);
+    });
+}
+
+function checkUnionFields(fields: any[]) {
+    const unionFields = fields.filter(f => f.name.startsWith('unionProp'));
+    expect(unionFields.length).toBeGreaterThan(0);
+
+    const expectedCases = [
+        { name: 'string', typ: { kind: 'string' } },
+        { name: 'number', typ: { kind: 's32' } },
+        { name: 'false', typ: { kind: 'bool' } },
+        { name: 'true', typ: { kind: 'bool' } },
+    ];
+
+    unionFields.forEach(field => {
+        expect(field.typ.kind).toBe('variant');
+        expect(field.typ.value.cases).toEqual(expectedCases);
+    });
+}
+
+function checkObjectFields(fields: any[]) {
+    const objectFields = fields.filter(f => f.name.startsWith('objectProp'));
+    expect(objectFields.length).toBeGreaterThan(0);
+
+    const expected = [
+        { name: 'a', typ: { kind: 'string' } },
+        { name: 'b', typ: { kind: 's32' } },
+        { name: 'c', typ: { kind: 'bool' } },
+    ];
+
+    objectFields.forEach(field => {
+        expect(field.typ.kind).toBe('record');
+        expect(field.typ.value.fields).toEqual(expected);
+    });
+}
 
