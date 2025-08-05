@@ -88,4 +88,3 @@ interface ObjectPropertyAliasInterfaceType {
     t: TestInterfaceType,
     objectProp: ObjectType
 }
-

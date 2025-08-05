@@ -5,7 +5,7 @@ import {
 } from './analysed-type';
 import {NamedWitTypeNode, NodeIndex, ResourceMode, WitTypeNode} from "golem:rpc/types@0.2.2";
 import {WitType} from "golem:agent/common";
-import {Type, TypeAliasType, UnionType} from "rttist";
+import {EnumType, Type, TypeAliasType, UnionType} from "rttist";
 import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
 import {analysedType} from "./analysed-type";
 
@@ -130,6 +130,7 @@ class WitTypeBuilder {
 export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
     switch (type.kind) {
         case TypeKind.Intrinsic:
+            throw new Error("unimplemented")
         case TypeKind.False:
             return analysedType.bool()
         case TypeKind.True:
@@ -219,8 +220,18 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
 
         // To be handled
         case TypeKind.Module:
+            throw new Error("unimplemented")
+
         case TypeKind.Namespace:
+            throw new Error("unimplemented")
+
         case TypeKind.Object:
+            const object = type as ObjectType;
+            const objectFields = object.getProperties().map(prop => {
+                return analysedType.field(prop.name.toString(), constructAnalysedTypeFromTsType(prop.type));
+            });
+            return analysedType.record(objectFields);
+
         case TypeKind.Interface:
             const objectInterface = type as InterfaceType;
             const interfaceFields = objectInterface.getProperties().map(prop => {
@@ -245,35 +256,63 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             });
             return analysedType.variant(possibleTypes)
         case TypeKind.TemplateLiteral:
+            throw new Error("unimplemented")
         case TypeKind.Intersection:
+            throw new Error("unimplemented")
         case TypeKind.ConditionalType:
+            throw new Error("unimplemented")
         case TypeKind.IndexedAccess:
+            throw new Error("unimplemented")
         case TypeKind.TypeParameter:
+            throw new Error("unimplemented")
         case TypeKind.Alias:
             const typeAlias = type as TypeAliasType;
             return constructAnalysedTypeFromTsType(typeAlias.target)
         case TypeKind.Method:
+            throw new Error("unimplemented")
         case TypeKind.Function:
+            throw new Error("unimplemented")
         case TypeKind.GeneratorFunction:
+            throw new Error("unimplemented")
         case TypeKind.EnumLiteral:
+            throw new Error("unimplemented")
         case TypeKind.RegExpLiteral:
+            throw new Error("unimplemented")
         case TypeKind.Enum:
+            const enumType = type as EnumType;
+            const cases = enumType.getEntries().map((entry) => entry[0])
+            return analysedType.enum(cases);
+
         case TypeKind.UniqueSymbol:
+            throw new Error("unimplemented")
         case TypeKind.ESSymbol:
+            throw new Error("unimplemented")
         case TypeKind.Generator:
+            throw new Error("unimplemented")
         case TypeKind.AsyncGenerator:
+            throw new Error("unimplemented")
         case TypeKind.Iterator:
+            throw new Error("unimplemented")
         case TypeKind.Iterable:
+            throw new Error("unimplemented")
         case TypeKind.IterableIterator:
+            throw new Error("unimplemented")
         case TypeKind.AsyncIterator:
+            throw new Error("unimplemented")
         case TypeKind.AsyncIterable:
+            throw new Error("unimplemented")
         case TypeKind.AsyncIterableIterator:
+            throw new Error("unimplemented")
         case TypeKind.Jsx:
+            throw new Error("unimplemented")
         case TypeKind.TypeCtor:
+            throw new Error("unimplemented")
         case TypeKind.Unknown:
             return analysedType.tuple([]); // FIXME: Maybe we can disallow
         case TypeKind.Any:
+            throw new Error("unimplemented")
         case TypeKind.Never:
+            throw new Error("unimplemented")
         case TypeKind.Void:
             return analysedType.tuple([]); // FIXME: Maybe we can disallow
 
@@ -311,12 +350,20 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.str();
 
         case TypeKind.Symbol:
+            throw new Error("unimplemented")
+
         case TypeKind.NonPrimitiveObject:
+            throw new Error("unimplemented")
+
         case TypeKind.FunctionType:
+            throw new Error("unimplemented")
+
         case TypeKind.Atomics:
             throw new TypeError("type is not supported in Golem");
 
         case TypeKind.Date:
+            throw new Error("unimplemented")
+
         case TypeKind.RegExp:
             return analysedType.str();
 
@@ -327,8 +374,14 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.list(analysedType.s8());
 
         case TypeKind.Uint8Array:
+            throw new Error("unimplemented")
+
         case TypeKind.Uint8ClampedArray:
+            throw new Error("unimplemented")
+
         case TypeKind.ArrayBuffer:
+            throw new Error("unimplemented")
+
         case TypeKind.SharedArrayBuffer:
             return analysedType.list(analysedType.u8());
 

@@ -42,6 +42,7 @@ export function getInterfaceWithObjectPropertyAlias(): Type {
     return getAll().filter((type) => type.name == 'ObjectPropertyAliasInterfaceType')[0];
 }
 
+
 export function getInterfaceWithNestedProperty(): Type {
     return getAll().filter((type) => type.name == 'NestedPropertyInterfaceType')[0];
 }
