@@ -10,6 +10,8 @@ import {
     getInterfaceWithUndefinedProperty,
     expectTupleTypeWithNoItems, getInterfaceWithUnionProperty, getInterfaceWithUnionPropertyAlias
 } from "./type-utils";
+import {Type, TypeKind} from "rttist";
+import {analysedType} from "../src/mapping/analysed-type";
 
 describe('TypeScript interface to AnalysedType/WitType mapping', () => {
     it('converts all supported types to WitTyp', () => {
@@ -29,6 +31,40 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
             expect(analysed).toBeDefined();
             expect(analysed.kind).toBe('record');
         });
+    })
+
+    it('converts primitive types to AnalysedType', () => {
+
+        const numberType = Type.Number;
+        expect(constructAnalysedTypeFromTsType(numberType)).toEqual(analysedType.s32());
+
+        const stringType = Type.String;
+        expect(constructAnalysedTypeFromTsType(stringType)).toEqual(analysedType.str());
+
+        const booleanType = Type.Boolean;
+        expect(constructAnalysedTypeFromTsType(booleanType)).toEqual(analysedType.bool());
+
+        const bigIntType = Type.BigInt;
+        expect(constructAnalysedTypeFromTsType(bigIntType)).toEqual(analysedType.u64());
+
+        const nullType = Type.Null;
+        expect(constructAnalysedTypeFromTsType(nullType)).toEqual(analysedType.tuple([]));
+
+        const undefinedType = Type.Undefined;
+        expect(constructAnalysedTypeFromTsType(undefinedType)).toEqual(analysedType.tuple([]));
+
+        const trueType = Type.True;
+        expect(constructAnalysedTypeFromTsType(trueType)).toEqual(analysedType.bool());
+
+        const falseType = Type.False;
+        expect(constructAnalysedTypeFromTsType(falseType)).toEqual(analysedType.bool());
+
+        const unknowType = Type.Unknown;
+        expect(constructAnalysedTypeFromTsType(unknowType)).toEqual(analysedType.tuple([]));
+
+        const voidType = Type.Void;
+        expect(constructAnalysedTypeFromTsType(voidType)).toEqual(analysedType.tuple([]));
+
     })
 
     it('treats interface properties explicitly typed as "undefined" as empty tuple types', () => {

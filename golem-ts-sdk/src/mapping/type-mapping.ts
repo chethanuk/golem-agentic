@@ -271,10 +271,11 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
         case TypeKind.Jsx:
         case TypeKind.TypeCtor:
         case TypeKind.Unknown:
+            return analysedType.tuple([]); // FIXME: Maybe we can disallow
         case TypeKind.Any:
         case TypeKind.Never:
         case TypeKind.Void:
-            throw new TypeError("unsupported type in Golem " + type.kind);
+            return analysedType.tuple([]); // FIXME: Maybe we can disallow
 
         case TypeKind.Undefined:
             // Why empty tuple for undefined?
@@ -292,7 +293,7 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.tuple([]);
 
         case TypeKind.Null:
-            return analysedType.option(analysedType.str());
+            return analysedType.tuple([])
 
         case TypeKind.Boolean:
             return analysedType.bool();
