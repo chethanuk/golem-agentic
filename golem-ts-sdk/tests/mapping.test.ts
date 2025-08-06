@@ -5,9 +5,42 @@ import {
 } from "./utils";
 import {NameTypePair} from "../src/mapping/analysed-type";
 
-describe('TypeScript Interface to AnalysedType/WitType mapping', () => {
-    it('correctly analyses fields of the test interface', () => {
-        const interfaceType = getTestInterfaceType();
+describe('TypeScript Interface to AnalysedType', () => {
+    const interfaceType = getTestInterfaceType();
+    const analysed = constructAnalysedTypeFromTsType(interfaceType);
+    const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
+
+
+    it('Interface should be AnalysedType.Record', () => {
+        expect(analysed).toBeDefined();
+        expect(analysed.kind).toBe('record');
+    })
+
+    it('Primitive types within an interface', () => {
+        checkPrimitiveFields(recordFields);
+    });
+
+    it('Undefined types within an interface', () => {
+        checkUndefinedFields(recordFields);
+    })
+
+    it('Optional fields within an interface', () => {
+        checkOptionalFields(recordFields);
+        checkOptionalUndefinedFields(recordFields);
+    })
+
+    it('Union types (aliased) within an interface', () => {
+        checkUnionFields(recordFields);
+    })
+
+    it('Object types within an interface', () => {
+        checkObjectFields(recordFields);
+    })
+});
+
+describe('TypeScript Object to AnalysedType', () => {
+    it('transforms object with different properties successfully to analysed type', () => {
+        const interfaceType = getTestObjectType();
         const analysed = constructAnalysedTypeFromTsType(interfaceType);
 
         expect(analysed).toBeDefined();
@@ -15,12 +48,22 @@ describe('TypeScript Interface to AnalysedType/WitType mapping', () => {
 
         const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
 
-        checkPrimitiveFields(recordFields);
-        checkUndefinedFields(recordFields);
-        checkOptionalFields(recordFields);
-        checkOptionalUndefinedFields(recordFields);
-        checkUnionFields(recordFields);
-        checkObjectFields(recordFields);
+        const expected: NameTypePair[] = [
+            {
+                name: "a",
+                typ: { kind: 'string' }
+            },
+            {
+                name: "b",
+                typ: { kind: 's32' }
+            },
+            {
+                name: "c",
+                typ: { kind: 'bool'}
+            }
+        ]
+
+        expect(recordFields).toEqual(expected);
     });
 });
 

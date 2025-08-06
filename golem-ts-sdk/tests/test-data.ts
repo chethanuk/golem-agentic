@@ -30,7 +30,7 @@ type ObjectType = {a: string, b: number, c: boolean}
 //
 // type EnumTypeAlias = EnumType;
 
-interface TestInterfaceType {
+export interface TestInterfaceType {
     numberProp: number;
     stringProp: string;
     booleanProp: boolean;
