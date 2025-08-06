@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {constructAnalysedTypeFromTsType} from "../src/mapping/type-mapping";
-import {
-    expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType, getTestObjectType, getUnionType,
-} from "./utils";
-import {AnalysedType, NameTypePair} from "../src/mapping/analysed-type";
+import {getTestInterfaceType} from "./utils";
 import {SampleInterfaceDataDefault} from "./test-data";
 import {
     constructValueFromWitValue,
