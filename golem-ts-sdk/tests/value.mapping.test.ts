@@ -12,8 +12,9 @@ describe('TypeScript Values to Wit Value', () => {
     it('should return an empty object', () => {
         const interfaceType = getTestInterfaceType();
         const witValue = constructWitValueFromTsValue(SampleInterfaceDataDefault, interfaceType);
-        const result = constructValueFromWitValue(witValue);
-        console.log(result);
+        const value = constructValueFromWitValue(witValue);
+        console.log(witValue);
+        //console.log(value);
         expect(1).toBe(1);
     })
 })

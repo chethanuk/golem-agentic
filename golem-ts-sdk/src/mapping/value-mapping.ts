@@ -4,6 +4,7 @@ import {WitNode} from "golem:rpc/types@0.2.2";
 
 export function constructWitValueFromTsValue(tsValue: any, tsType: Type): WitValue {
     const value = constructValueFromTsValue(tsValue, tsType);
+    console.log(value);
     return constructWitValueFromValue(value);
 }
 
