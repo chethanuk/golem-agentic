@@ -12,8 +12,6 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-import {n} from "vitest/dist/chunks/reporters.d.BFLkQcL6";
-
 interface SimpleInterfaceType {
     n: number,
 }
