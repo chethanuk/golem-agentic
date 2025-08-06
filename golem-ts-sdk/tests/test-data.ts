@@ -79,3 +79,27 @@ export interface TestInterfaceType {
 // }
 //
 // type EnumTypeAlias = EnumType;
+
+// Just default values and see if we can successfully convert all of them to WIT value
+export const SampleInterfaceDataDefault: TestInterfaceType = {
+    bigintProp: 0n,
+    booleanProp: false,
+    falseProp: false,
+    listObjectProp: [],
+    listProp: [],
+    mapProp: new Map<string, number>(),
+    nestedProp: {n: 0},
+    nullProp: null,
+    numberProp: 0,
+    objectProp: {a: "", b: 0, c: false},
+    stringProp: "",
+    trueProp: true,
+    tupleObjectProp: ["", 0, {a: "", b: 0, c: false}],
+    tupleProp: ["", 0, false],
+    undefinedProp: undefined,
+    unionProp: 1,
+    unknownProp: undefined,
+    voidProp: undefined
+
+
+}

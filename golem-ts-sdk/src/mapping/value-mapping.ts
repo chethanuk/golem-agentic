@@ -1,4 +1,4 @@
-import {InterfaceType, ObjectType, PromiseType, PropertyInfo, Type, TypeKind} from "rttist";
+import {InterfaceType, ObjectType, PromiseType, PropertyInfo, Type, TypeAliasType, TypeKind, UnionType} from "rttist";
 import {WitValue} from "golem:rpc/types@0.2.2";
 import {WitNode} from "golem:rpc/types@0.2.2";
 
@@ -17,7 +17,7 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
         case TypeKind.Invalid:
             throw new Error(`Unimplemented type invalid: ${type.kind}`);
         case TypeKind.Unknown:
-            throw new Error(`Unimplemented type unknwn: ${type.kind}`);
+            return { kind: "tuple", value: [] };
         case TypeKind.Any:
             throw new Error(`Unimplemented type 3: ${type.kind}`);
 
@@ -25,13 +25,13 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
             throw new Error(`Unimplemented type 4: ${type.kind}`);
 
         case TypeKind.Void:
-            throw new Error(`Unimplemented type 5: ${type.kind}`);
+            return { kind: "tuple", value: [] };
 
         case TypeKind.Undefined:
-            throw new Error(`Unimplemented type 6: ${type.kind}`);
+            return { kind: "tuple", value: [] };
 
         case TypeKind.Null:
-            throw new Error(`Unimplemented type 7: ${type.kind}`);
+            return { kind: "tuple", value: [] };
 
         case TypeKind.Intrinsic:
             throw new Error(`Unimplemented type 8: ${type.kind}`);
@@ -55,20 +55,14 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                 throw new Error(`Expected boolean, got ${typeof arg}`);
             }
         case TypeKind.Number:
-            if (typeof arg === "number") {
-                return { kind: "f64", value: arg };
-            } else {
-                throw new Error(`Expected number, got ${typeof arg}`);
-            }
+            return { kind: "s32", value: arg };
+
         case TypeKind.BigInt:
-            throw new Error(`Unimplemented type: ${type.kind}`);
+            return { kind: "u64", value: arg };
 
         case TypeKind.String:
-            if (typeof arg === "string") {
-                return { kind: "string", value: arg };
-            } else {
-                throw new Error(`Expected string, got ${typeof arg}`);
-            }
+            return { kind: "string", value: arg };
+
         case TypeKind.Symbol:
             throw new Error(`Unimplemented type 9: ${type.kind}`);
 
@@ -166,11 +160,15 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                 for (const prop of innerProperties) {
                     const key = prop.name.toString();
                     if (!Object.prototype.hasOwnProperty.call(arg, key)) {
-                        throw new Error(`Missing property '${key}' in value`);
+                        if (prop.optional) {
+                            values.push({ kind: "option"});
+                        } else {
+                            throw new Error(`Missing property '${key}' in value`);
+                        }
+                    } else {
+                        const fieldVal = constructValueFromTsValue(arg[key], prop.type);
+                        values.push(fieldVal);
                     }
-
-                    const fieldVal = constructValueFromTsValue(arg[key], prop.type);
-                    values.push(fieldVal);
                 }
 
                 return { kind: "record", value: values };
@@ -181,8 +179,17 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
         case TypeKind.Class:
             throw new Error(`Unimplemented type 36: ${type.kind}`);
 
+        // This should return a variant
         case TypeKind.Union:
-            throw new Error(`Unimplemented type 37: ${type.kind}`);
+            const unionType = type as UnionType;
+            const lowered = (typeof arg).toLowerCase();
+            const idx = unionType.types.findIndex((x) => x.name.toLowerCase() == lowered);
+            const innerType = unionType.types[idx];
+            if (idx < 0) {
+                throw new Error(`No matching type found for ${lowered} in union type`);
+            }
+
+            return {kind: "variant", caseIdx: idx,  caseValue: constructValueFromTsValue(arg, innerType) }
 
         case TypeKind.Intersection:
             throw new Error(`Unimplemented type 38: ${type.kind}`);
@@ -197,7 +204,9 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
             throw new Error(`Unimplemented type 41: ${type.kind}`);
 
         case TypeKind.Alias:
-            throw new Error(`Unimplemented type 42: ${type.kind}`);
+            const aliasType = type as TypeAliasType;
+            const targetType = aliasType.target;
+            return constructValueFromTsValue(arg, targetType);
 
         case TypeKind.Method:
             throw new Error(`Unimplemented type 43: ${type.kind}`);
@@ -280,11 +289,33 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                 for (const prop of innerProperties) {
                     const key = prop.name.toString();
                     if (!Object.prototype.hasOwnProperty.call(arg, key)) {
-                        throw new Error(`Missing property '${key}' in value`);
+                        if (prop.type.isString()) {
+                            if (arg == "") {
+                                values.push({kind: "string", value: ""});
+                            } else {
+                                throw new Error(`Missing property '${key}' in value`);
+                            }
+                        } else if (prop.type.isNumber()) {
+                            if (arg == 0) {
+                                values.push({kind: "s32", value: 0});
+                            } else {
+                                throw new Error(`Missing property '${key}' in value`);
+                            }
+                        } else if (prop.type.isBoolean()) {
+                            if (arg == false) {
+                                values.push({kind: "bool", value: false});
+                            } else {
+                                throw new Error(`Missing property '${key}' in value`);
+                            }
+                        } else if (prop.optional) {
+                            values.push({ kind: "option" });
+                        } else {
+                            throw new Error(`Missing property '${key}' in value`);
+                        }
+                    } else {
+                        const fieldVal = constructValueFromTsValue(arg[key], prop.type);
+                        values.push(fieldVal);
                     }
-
-                    const fieldVal = constructValueFromTsValue(arg[key], prop.type);
-                    values.push(fieldVal);
                 }
 
                 return { kind: "record", value: values };
@@ -359,11 +390,33 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                 for (const prop of innerProperties) {
                     const key = prop.name.toString();
                     if (!Object.prototype.hasOwnProperty.call(arg, key)) {
-                        throw new Error(`Missing property '${key}' in value`);
+                        if (prop.type.isString()) {
+                            if (arg == "") {
+                                values.push({kind: "string", value: ""});
+                            } else {
+                                throw new Error(`Missing property '${key}' in value`);
+                            }
+                        } else if (prop.type.isNumber()) {
+                            if (arg == 0) {
+                                values.push({kind: "s32", value: 0});
+                            } else {
+                                throw new Error(`Missing property '${key}' in value`);
+                            }
+                        } else if (prop.type.isBoolean()) {
+                            if (arg == false) {
+                                values.push({kind: "bool", value: false});
+                            } else {
+                                throw new Error(`Missing property '${key}' in value`);
+                            }
+                        } else if (prop.optional) {
+                            values.push({ kind: "option" });
+                        } else {
+                            throw new Error(`Missing property '${key}' in value`);
+                        }
+                    } else {
+                        const fieldVal = constructValueFromTsValue(arg[key], prop.type);
+                        values.push(fieldVal);
                     }
-
-                    const fieldVal = constructValueFromTsValue(arg[key], prop.type);
-                    values.push(fieldVal);
                 }
 
                 return { kind: "record", value: values };
@@ -758,25 +811,33 @@ export type Value =
 
 export function constructValueFromWitValue(wit: WitValue): Value {
     if (!wit.nodes.length) throw new Error("Empty nodes in WitValue");
-    return buildTree(wit.nodes[0], wit.nodes);
-}
 
+    return buildTree(wit.nodes[wit.nodes.length - 1], wit.nodes);
+}
 
 function buildTree(node: WitNode, nodes: WitNode[]): Value {
     switch (node.tag) {
         case 'record-value':
             return {
                 kind: 'record',
-                value: node.val.map(i => buildTree(nodes[i], nodes)),
+                value: node.val.map(idx => buildTree(nodes[idx], nodes)),
             };
 
         case 'variant-value': {
             const [caseIdx, maybeIndex] = node.val;
-            return {
-                kind: 'variant',
-                caseIdx,
-                caseValue: maybeIndex !== undefined ? buildTree(nodes[maybeIndex], nodes) : undefined,
-            };
+            if (maybeIndex !== undefined) {
+                return {
+                    kind: 'variant',
+                    caseIdx,
+                    caseValue: buildTree(nodes[maybeIndex], nodes),
+                };
+            } else {
+                return {
+                    kind: 'variant',
+                    caseIdx,
+                    caseValue: undefined,
+                };
+            }
         }
 
         case 'enum-value':
@@ -788,34 +849,36 @@ function buildTree(node: WitNode, nodes: WitNode[]): Value {
         case 'tuple-value':
             return {
                 kind: 'tuple',
-                value: node.val.map(i => buildTree(nodes[i], nodes)),
+                value: node.val.map(idx => buildTree(nodes[idx], nodes)),
             };
 
         case 'list-value':
             return {
                 kind: 'list',
-                value: node.val.map(i => buildTree(nodes[i], nodes)),
+                value: node.val.map(idx => buildTree(nodes[idx], nodes)),
             };
 
         case 'option-value':
+            if (node.val === undefined) {
+                return { kind: 'option', value: undefined };
+            }
             return {
                 kind: 'option',
-                value: node.val !== undefined ? buildTree(nodes[node.val], nodes) : undefined,
+                value: buildTree(nodes[node.val], nodes),
             };
 
         case 'result-value': {
-            const res: { tag: "ok"; val: number | undefined } | { tag: "err"; val: number | undefined } = node.val;
-
-            if (res.tag === "ok") {
+            const res = node.val;
+            if (res.tag === 'ok') {
                 return {
-                    kind: "result",
+                    kind: 'result',
                     value: {
                         ok: res.val !== undefined ? buildTree(nodes[res.val], nodes) : undefined,
                     },
                 };
             } else {
                 return {
-                    kind: "result",
+                    kind: 'result',
                     value: {
                         err: res.val !== undefined ? buildTree(nodes[res.val], nodes) : undefined,
                     },
@@ -850,7 +913,6 @@ function buildTree(node: WitNode, nodes: WitNode[]): Value {
             throw new Error(`Unhandled tag: ${(node as any).tag}`);
     }
 }
-
 
 export function constructWitValueFromValue(value: Value): WitValue {
     const nodes: WitNode[] = [];
