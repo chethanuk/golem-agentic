@@ -23,14 +23,17 @@ type UnionType = number | string | boolean;
 
 type ObjectType = {a: string, b: number, c: boolean}
 
-// enum EnumType {
-//     First = 'First',
-//     Second = 1,
-// }
-//
-// type EnumTypeAlias = EnumType;
+type ListType = Array<string>;
 
-interface TestInterfaceType {
+type ListObjectType = Array<ObjectType>;
+
+type TupleType = [string, number, boolean];
+
+type TupleWithObjectType = [string, number, ObjectType];
+
+type MapType = Map<string, number>;
+
+export interface TestInterfaceType {
     numberProp: number;
     stringProp: string;
     booleanProp: boolean;
@@ -45,15 +48,34 @@ interface TestInterfaceType {
     optionalUndefinedProp?: undefined,
     nestedProp: SimpleInterfaceType;
     unionProp: UnionType,
-    //unionPropInlined: string | number; //FIXME, RTTIST bug
     objectProp: ObjectType,
-    // enumType: EnumTypeAlias; // FIXME, RTTIST bug
-    //enumTypeInlined: EnumType, // FIXME, RTTIST bug
-    // objectPropInlined: { // FIXME, RTTIST bug
+    listProp: ListType,
+    listObjectProp: ListObjectType,
+    tupleProp: TupleType,
+    tupleObjectProp: TupleWithObjectType,
+    mapProp: MapType,
+    //FIXME, RTTIST bug or not supported yet
+    // mapAlternativeProp: MapTypeAlternative,
+    //unionPropInlined: string | number;
+    // recordProp: RecordType;
+    // enumType: EnumTypeAlias;
+    //enumTypeInlined: EnumType,
+    // objectPropInlined: {
     //     a: string,
     //     b: number,
     //     c: boolean
     // }
     //enumProp: EnumTypeAlias,
-    // enumPropInlined: EnumTypeAlias, // FIXME, RTTIST bug
+    // enumPropInlined: EnumTypeAlias,
 }
+
+// FIXME: RTTIST don't support these yet
+// type MapTypeAlternative = { [key: string]: number };
+// type RecordType = Record<number, string>;
+
+// enum EnumType {
+//     First = 'First',
+//     Second = 1,
+// }
+//
+// type EnumTypeAlias = EnumType;
