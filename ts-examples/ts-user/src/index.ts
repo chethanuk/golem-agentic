@@ -5,11 +5,13 @@ import {
     Description,
 } from '@golemcloud/golem-ts-sdk';
 
+type AliasedType = {a: string, b: number};
+
 @Agent()
 class AssistantAgent extends BaseAgent {
     @Prompt("Ask your question")
     @Description("This method allows the agent to answer your question")
-    async ask(name: string): Promise<string> {
+    async ask(name: string, b: AliasedType): Promise<string> {
         const customData = { data: "Sample data", value: 42 };
 
         // Can be used after solving https://github.com/golemcloud/wasm-rquickjs/issues/2
