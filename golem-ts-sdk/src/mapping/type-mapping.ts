@@ -130,7 +130,7 @@ class WitTypeBuilder {
 export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
     switch (type.kind) {
         case TypeKind.Intrinsic:
-            throw new Error("unimplemented")
+            throw new Error("intrinsic types are not supported in Golem");
         case TypeKind.Boolean:
             return analysedType.bool();
         case TypeKind.False:
@@ -222,10 +222,10 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
 
         // To be handled
         case TypeKind.Module:
-            throw new Error("unimplemented")
+            throw new Error("module type is not supported in Golem");
 
         case TypeKind.Namespace:
-            throw new Error("unimplemented")
+            throw new Error("namespace type is not supported in Golem");
 
         case TypeKind.Object:
             const object = type as ObjectType;
@@ -258,63 +258,63 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             });
             return analysedType.variant(possibleTypes)
         case TypeKind.TemplateLiteral:
-            throw new Error("unimplemented")
+            throw new Error("template literal is not supported in Golem");
         case TypeKind.Intersection:
-            throw new Error("unimplemented")
+            throw new Error("intersection type is not supported in Golem");
         case TypeKind.ConditionalType:
-            throw new Error("unimplemented")
+            throw new Error("conditional type is not supported in Golem");
         case TypeKind.IndexedAccess:
-            throw new Error("unimplemented")
+            throw new Error("indexed access is not supported in Golem");
         case TypeKind.TypeParameter:
-            throw new Error("unimplemented")
+            throw new Error("type parameter is not supported in Golem");
         case TypeKind.Alias:
             const typeAlias = type as TypeAliasType;
             return constructAnalysedTypeFromTsType(typeAlias.target)
         case TypeKind.Method:
-            throw new Error("unimplemented")
+            throw new Error("method type is not supported in Golem");
         case TypeKind.Function:
-            throw new Error("unimplemented")
+            throw new Error("function type is not supported in Golem");
         case TypeKind.GeneratorFunction:
-            throw new Error("unimplemented")
+            throw new Error("generator function is not supported in Golem");
         case TypeKind.EnumLiteral:
-            throw new Error("unimplemented")
+            throw new Error("enum literal is not supported in Golem");
         case TypeKind.RegExpLiteral:
-            throw new Error("unimplemented")
+            throw new Error("regexp literal is not supported in Golem");
         case TypeKind.Enum:
             const enumType = type as EnumType;
             const cases = enumType.getEntries().map((entry) => entry[0])
             return analysedType.enum(cases);
 
         case TypeKind.UniqueSymbol:
-            throw new Error("unimplemented")
+            throw new Error("unique symbol is not supported in Golem");
         case TypeKind.ESSymbol:
-            throw new Error("unimplemented")
+            throw new Error("esymbol is not supported in Golem");
         case TypeKind.Generator:
-            throw new Error("unimplemented")
+            throw new Error("generator is not supported in Golem");
         case TypeKind.AsyncGenerator:
-            throw new Error("unimplemented")
+            throw new Error("async generator is not supported in Golem");
         case TypeKind.Iterator:
-            throw new Error("unimplemented")
+            throw new Error("iterator is not supported in Golem");
         case TypeKind.Iterable:
-            throw new Error("unimplemented")
+            throw new Error("iterable is not supported in Golem");
         case TypeKind.IterableIterator:
-            throw new Error("unimplemented")
+            throw new Error("iterable iterator is not supported in Golem");
         case TypeKind.AsyncIterator:
-            throw new Error("unimplemented")
+            throw new Error("async iterator is not supported in Golem");
         case TypeKind.AsyncIterable:
-            throw new Error("unimplemented")
+            throw new Error("async iterable is not supported in Golem");
         case TypeKind.AsyncIterableIterator:
-            throw new Error("unimplemented")
+            throw new Error("async iterable iterator is not supported in Golem");
         case TypeKind.Jsx:
-            throw new Error("unimplemented")
+            throw new Error("jsx is not supported in Golem");
         case TypeKind.TypeCtor:
-            throw new Error("unimplemented")
+            throw new Error("type constructor is not supported in Golem");
         case TypeKind.Unknown:
             return analysedType.tuple([]); // FIXME: Maybe we can disallow
         case TypeKind.Any:
-            throw new Error("unimplemented")
+            throw new Error("any type is not supported in Golem");
         case TypeKind.Never:
-            throw new Error("unimplemented")
+            throw new Error("never type is not supported in Golem");
         case TypeKind.Void:
             return analysedType.tuple([]); // FIXME: Maybe we can disallow
 
@@ -349,19 +349,19 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.str();
 
         case TypeKind.Symbol:
-            throw new Error("unimplemented")
+            throw new Error("symbol is not supported in Golem");
 
         case TypeKind.NonPrimitiveObject:
-            throw new Error("unimplemented")
+            throw new Error("non-primitive object is not supported in Golem");
 
         case TypeKind.FunctionType:
-            throw new Error("unimplemented")
+            throw new Error("function type is not supported in Golem");
 
         case TypeKind.Atomics:
             throw new TypeError("type is not supported in Golem");
 
         case TypeKind.Date:
-            throw new Error("unimplemented")
+            throw new Error("date is not supported in Golem");
 
         case TypeKind.RegExp:
             return analysedType.str();
@@ -373,13 +373,13 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.list(analysedType.s8());
 
         case TypeKind.Uint8Array:
-            throw new Error("unimplemented")
+            return analysedType.list(analysedType.u8());
 
         case TypeKind.Uint8ClampedArray:
-            throw new Error("unimplemented")
+            return analysedType.list(analysedType.u8());
 
         case TypeKind.ArrayBuffer:
-            throw new Error("unimplemented")
+            return analysedType.list(analysedType.u8());
 
         case TypeKind.SharedArrayBuffer:
             return analysedType.list(analysedType.u8());
@@ -406,12 +406,7 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.list(analysedType.u64());
 
         case TypeKind.Invalid:
-            const typeArgument = type.getTypeArguments?.()[0];
-            if (!typeArgument) {
-                throw new Error("Promise must have a type argument");
-            }
-            return constructAnalysedTypeFromTsType(typeArgument);
-
+           throw new Error("invalid type is not supported in Golem");
 
         case TypeKind.NumberLiteral:
             return analysedType.f64();

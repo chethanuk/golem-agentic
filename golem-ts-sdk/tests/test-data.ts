@@ -23,6 +23,13 @@ type UnionType = number | string | boolean;
 
 type ObjectType = {a: string, b: number, c: boolean}
 
+// enum EnumType {
+//     First = 'First',
+//     Second = 1,
+// }
+//
+// type EnumTypeAlias = EnumType;
+
 interface TestInterfaceType {
     numberProp: number;
     stringProp: string;
@@ -40,11 +47,13 @@ interface TestInterfaceType {
     unionProp: UnionType,
     //unionPropInlined: string | number; //FIXME, RTTIST bug
     objectProp: ObjectType,
+    // enumType: EnumTypeAlias; // FIXME, RTTIST bug
+    //enumTypeInlined: EnumType, // FIXME, RTTIST bug
     // objectPropInlined: { // FIXME, RTTIST bug
     //     a: string,
     //     b: number,
     //     c: boolean
     // }
+    //enumProp: EnumTypeAlias,
+    // enumPropInlined: EnumTypeAlias, // FIXME, RTTIST bug
 }
-
-
