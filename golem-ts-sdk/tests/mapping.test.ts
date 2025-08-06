@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {constructAnalysedTypeFromTsType} from "../src/mapping/type-mapping";
 import {
-    expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType,
+    expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType, getTestObjectType,
 } from "./utils";
 import {NameTypePair} from "../src/mapping/analysed-type";
 
-describe('TypeScript interface to AnalysedType/WitType mapping', () => {
+describe('TypeScript Interface to AnalysedType/WitType mapping', () => {
     it('correctly analyses fields of the test interface', () => {
         const interfaceType = getTestInterfaceType();
         const analysed = constructAnalysedTypeFromTsType(interfaceType);
@@ -21,6 +21,35 @@ describe('TypeScript interface to AnalysedType/WitType mapping', () => {
         checkOptionalUndefinedFields(recordFields);
         checkUnionFields(recordFields);
         checkObjectFields(recordFields);
+    });
+});
+
+describe('TypeScript Object to AnalysedType/WitType mapping', () => {
+    it('correctly analyses fields of the test interface', () => {
+        const interfaceType = getTestObjectType();
+        const analysed = constructAnalysedTypeFromTsType(interfaceType);
+
+        expect(analysed).toBeDefined();
+        expect(analysed.kind).toBe('record');
+
+        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
+
+        const expected: NameTypePair[] = [
+            {
+                name: "a",
+                typ: { kind: 'string' }
+            },
+            {
+                name: "b",
+                typ: { kind: 's32' }
+            },
+            {
+                name: "c",
+                typ: { kind: 'bool'}
+            }
+        ]
+
+        expect(recordFields).toEqual(expected);
     });
 });
 

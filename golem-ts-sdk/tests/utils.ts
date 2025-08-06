@@ -13,6 +13,10 @@ export function getTestInterfaceType(): Type {
     return getAll().filter((type) => type.name == 'TestInterfaceType')[0];
 }
 
+export function getTestObjectType(): Type {
+    return getAll().filter((type) => type.name == 'ObjectType')[0];
+}
+
 export function expectTupleTypeWithNoItems(typ: AnalysedType) {
     expect(typ.kind).toBe('tuple');
     const itemsLength = typ?.kind === 'tuple' ? typ.value.items.length : -1;
