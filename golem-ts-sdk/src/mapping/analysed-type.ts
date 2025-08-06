@@ -17,7 +17,7 @@ export type AnalysedType =
     | { kind: 'record'; value: TypeRecord }
     | { kind: 'tuple'; value: TypeTuple }
     | { kind: 'list'; value: TypeList }
-    | { kind: 'str' }
+    | { kind: 'string' }
     | { kind: 'chr' }
     | { kind: 'f64' }
     | { kind: 'f32' }
@@ -117,7 +117,7 @@ export const analysedType = {
   unitCase: (name: string): NameOptionTypePair => ({ name }),
 
   bool: (): AnalysedType => ({ kind: 'bool' }),
-  str: (): AnalysedType => ({ kind: 'str' }),
+  str: (): AnalysedType => ({ kind: 'string' }),
   chr: (): AnalysedType => ({ kind: 'chr' }),
   f64: (): AnalysedType => ({ kind: 'f64' }),
   f32: (): AnalysedType => ({ kind: 'f32' }),
