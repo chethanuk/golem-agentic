@@ -6,7 +6,7 @@
 			"src/**/*.tsx",
 			"src/**/*.mts",
 			"src/**/*.cts",
-			"tests/test-types.ts"
+			"tests/test-data.ts"
 		],
 		"encode": false,
 		"exclude": []

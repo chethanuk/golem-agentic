@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {constructAnalysedTypeFromTsType} from "../src/mapping/type-mapping";
 import {
     expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType,
-} from "./type-utils";
+} from "./utils";
 import {NameTypePair} from "../src/mapping/analysed-type";
 
 describe('TypeScript interface to AnalysedType/WitType mapping', () => {

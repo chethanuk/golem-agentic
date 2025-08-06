@@ -1,21 +1,12 @@
-import {PackageName, updateMetadata} from "../src/type_metadata";
-import {metadataCollection} from "../.metadata/metadata.index";
+import {PackageName} from "../src/type_metadata";
 import {Metadata} from "../src";
-import {Type, TypeKind} from "rttist";
-import './test-setup';
+import {Type} from "rttist";
+import './setup';
 import {AnalysedType, NameTypePair} from "../src/mapping/analysed-type";
 import {expect} from "vitest";
 
-export function loadMetadata() {
-    updateMetadata(metadataCollection)
-}
-
 export function getAll() {
-    return Metadata.getTypes().filter((type) => type.module.id == `@${PackageName}/tests/test-types`);
-}
-
-export function getInterfaces() {
-    return getAll().filter((type) => type.kind === TypeKind.Interface);
+    return Metadata.getTypes().filter((type) => type.module.id == `@${PackageName}/tests/test-data`);
 }
 
 export function getTestInterfaceType(): Type {
