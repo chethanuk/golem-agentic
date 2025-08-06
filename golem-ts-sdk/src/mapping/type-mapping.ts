@@ -5,9 +5,10 @@ import {
 } from './analysed-type';
 import {NamedWitTypeNode, NodeIndex, ResourceMode, WitTypeNode} from "golem:rpc/types@0.2.2";
 import {WitType} from "golem:agent/common";
-import {EnumType, Type, TypeAliasType, UnionType} from "rttist";
+import {ArrayType, EnumType, GenericType, MapType, Type, TypeAliasType, UnionType} from "rttist";
 import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
 import {analysedType} from "./analysed-type";
+import {cons} from "effect/List";
 
 export function constructWitTypeFromTsType(type: Type) : WitType {
     const analysedType = constructAnalysedTypeFromTsType(type)
@@ -213,17 +214,39 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.list(constructAnalysedTypeFromTsType(asyncIterableIteratorType));
 
         case TypeKind.Type:
-            const typeArg = type.getTypeArguments?.()[0];
-            if (!typeArg) {
-                throw new Error("Array must have a type argument");
-            }
-
             if (type.isArray()) {
+                const typeArg = type.getTypeArguments?.()[0];
+
+                if (!typeArg) {
+                    throw new Error("Array must have a type argument");
+                }
+
                 return analysedType.list(constructAnalysedTypeFromTsType(typeArg));
             }  else if (type.isTuple()) {
+
                 const tupleTypes = type.getTypeArguments?.().map(constructAnalysedTypeFromTsType) || [];
                 return analysedType.tuple(tupleTypes);
+            } else if (type.isGenericType()) {
+                const genericType: GenericType<typeof type> = (type as GenericType<typeof type>);
+                const genericTypeDefinition = genericType.genericTypeDefinition;
+                if (genericTypeDefinition.name == 'Map') {
+                    const typeArgs = type.getTypeArguments?.();
+                    if (!typeArgs || typeArgs.length !== 2) {
+                        throw new Error("Map must have two type arguments");
+                    }
+                    const keyType = constructAnalysedTypeFromTsType(typeArgs[0]);
+                    const valueType = constructAnalysedTypeFromTsType(typeArgs[1]);
+                    return analysedType.list(analysedType.tuple([keyType, valueType]));
+                } else {
+                    throw new Error("Type must have a type argument");
+                }
             } else {
+                const typeArg = type.getTypeArguments?.()[0];
+
+                if (!typeArg) {
+                    throw new Error("Array must have a type argument");
+                }
+
                 return constructAnalysedTypeFromTsType(typeArg);
             }
 
@@ -451,7 +474,11 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.tuple(tupleTypes);
 
         case TypeKind.ArrayDefinition:
-            throw new Error("type is not supported in Golem");
+            const arrayType = type.getTypeArguments?.()[0];
+            if (!arrayType) {
+                throw new Error("Array must have a type argument");
+            }
+            return analysedType.list(constructAnalysedTypeFromTsType(arrayType));
 
         case TypeKind.ReadonlyArrayDefinition:
             const elementType = type.getTypeArguments?.()[0];

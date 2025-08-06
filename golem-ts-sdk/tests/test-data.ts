@@ -31,6 +31,8 @@ type TupleType = [string, number, boolean];
 
 type TupleWithObjectType = [string, number, ObjectType];
 
+type MapType = Map<string, number>;
+
 // enum EnumType {
 //     First = 'First',
 //     Second = 1,
@@ -59,6 +61,7 @@ export interface TestInterfaceType {
     listObjectProp: ListObjectType,
     tupleProp: TupleType,
     tupleObjectProp: TupleWithObjectType,
+    mapProp: MapType,
     // enumType: EnumTypeAlias; // FIXME, RTTIST bug
     //enumTypeInlined: EnumType, // FIXME, RTTIST bug
     // objectPropInlined: { // FIXME, RTTIST bug

@@ -53,6 +53,10 @@ describe('TypeScript Interface to AnalysedType', () => {
     it ('Tuple with object type within an interface', () => {
         checkTupleWithObjectFields(recordFields);
     })
+
+    it('Map type within an interface', () => {
+        checkMapFields(recordFields);
+    })
 });
 
 describe('TypeScript Object to AnalysedType', () => {
@@ -84,7 +88,7 @@ describe('TypeScript Object to AnalysedType', () => {
     });
 });
 
-// To be confirmed. 
+// To be confirmed.
 describe('TypeScript Union to AnalysedType.Variant', () => {
     it('Union is converted to Variant with the name of the type as case name', () => {
         const enumType = getUnionType();
@@ -236,6 +240,23 @@ function checkTupleWithObjectFields(fields: any[]) {
                 ], name: undefined } }
             ];
             expect(field.typ.value.items).toEqual(expected);
+        }
+    });
+}
+
+function checkMapFields(fields: any[]) {
+    const mapFields = fields.filter(f => f.name.startsWith('mapProp'));
+    expect(mapFields.length).toBeGreaterThan(0);
+
+    // list of tuples, where each tuple is a key-value pair
+    mapFields.forEach(field => {
+        expect(field.typ.kind).toBe('list');
+        if (field.typ.kind == 'list') {
+            expect(field.typ.value.inner.kind).toBe('tuple');
+            const inner = field.typ.value.inner;
+            expect(inner.value.items.length).toBe(2);
+            expect(inner.value.items[0].kind).toBe('string');
+            expect(inner.value.items[1].kind).toBe('s32');
         }
     });
 }
