@@ -212,7 +212,6 @@ function checkListObjectFields(fields: any[]) {
 
 function checkTupleFields(fields: any[]) {
     const tupleFields = fields.filter(f => f.name.startsWith('tupleProp'));
-    console.log(tupleFields)
 
     tupleFields.forEach(field => {
         expect(field.typ.kind).toBe('tuple');

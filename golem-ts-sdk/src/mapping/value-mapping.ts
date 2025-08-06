@@ -1,5 +1,15 @@
-import {InterfaceType, ObjectType, PromiseType, PropertyInfo, Type, TypeAliasType, TypeKind, UnionType} from "rttist";
-import {WitValue} from "golem:rpc/types@0.2.2";
+import {
+    GenericType,
+    InterfaceType,
+    ObjectType,
+    PromiseType,
+    PropertyInfo,
+    Type,
+    TypeAliasType,
+    TypeKind,
+    UnionType
+} from "rttist";
+import {WasmRpc, WitValue} from "golem:rpc/types@0.2.2";
 import {WitNode} from "golem:rpc/types@0.2.2";
 
 export function constructWitValueFromTsValue(tsValue: any, tsType: Type): WitValue {
@@ -9,7 +19,7 @@ export function constructWitValueFromTsValue(tsValue: any, tsType: Type): WitVal
 
 export function constructTsValueFromWitValue(witValue: WitValue, expectedType: Type): any {
     const wasmRpcValue = constructValueFromWitValue(witValue);
-    return tsValueFromValue(wasmRpcValue, expectedType);
+    return constructTsValueFromValue(wasmRpcValue, expectedType);
 }
 
 function constructValueFromTsValue(arg: any, type: Type): Value {
@@ -432,7 +442,20 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
     }
 }
 
-function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
+function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
+    if (wasmRpcValue == undefined) {
+        return null
+    }
+
+    // There is no option type in type-script, so take analysed type along with expected type.
+    if (wasmRpcValue.kind == 'option') {
+        if (!wasmRpcValue.value) {
+            return null
+        } else {
+            return constructValueFromTsValue(wasmRpcValue.value, expectedType)
+        }
+    }
+
     switch (expectedType.kind)  {
         case TypeKind.Invalid:
             break;
@@ -447,11 +470,8 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
         case TypeKind.Undefined:
             break;
         case TypeKind.Null:
-            if (wasmRpcValue.kind === 'option') {
-                return null;
-            } else {
-                throw new Error(`Unrecognized value for ${wasmRpcValue.kind}`);
-            }
+            return null;
+
         case TypeKind.Intrinsic:
             break;
         case TypeKind.Boolean:
@@ -473,20 +493,25 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
                 throw new Error(`Expected boolean, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.Number:
-            if (wasmRpcValue.kind === 'f64') {
+            if (wasmRpcValue.kind === 'f64' ||
+                wasmRpcValue.kind === 'u8' ||
+                wasmRpcValue.kind === 'u16' ||
+                wasmRpcValue.kind === 'u32' ||
+                wasmRpcValue.kind === 'u64' ||
+                wasmRpcValue.kind === 's8' ||
+                wasmRpcValue.kind === 's16' ||
+                wasmRpcValue.kind === 's32' ||
+                wasmRpcValue.kind === 's64'
+            ) {
                 return wasmRpcValue.value;
-            } else if (wasmRpcValue.kind === 'u8' || wasmRpcValue.kind === 'u16' || wasmRpcValue.kind === 'u32' || wasmRpcValue.kind === 'u64') {
-                return wasmRpcValue.value;
-            } else if (wasmRpcValue.kind === 's8' || wasmRpcValue.kind === 's16' || wasmRpcValue.kind === 's32' || wasmRpcValue.kind === 's64') {
-                return wasmRpcValue.value;
-            } else {
+            }  else {
                 throw new Error(`Expected number, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.BigInt:
             if (wasmRpcValue.kind == 'u64') {
                 return wasmRpcValue.value
             } else {
-                throw new Error(`Expected number, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected bigint, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.String:
             if (wasmRpcValue.kind === 'string')  {
@@ -503,7 +528,7 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
                 return expectedTypeFields.reduce((acc, field, idx) => {
                     const name: string = field.name.toString();
                     const expectedFieldType = field.type;
-                    acc[name] = tsValueFromValue(fieldValues[idx], expectedFieldType);
+                    acc[name] = constructTsValueFromValue(fieldValues[idx], expectedFieldType);
                     return acc;
                 }, {} as Record<string, any>);
             } else {
@@ -516,7 +541,7 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
                 return expectedTypeFields.reduce((acc, field, idx) => {
                     const name: string = field.name.toString();
                     const expectedFieldType = field.type;
-                    acc[name] = tsValueFromValue(fieldValues[idx], expectedFieldType);
+                    acc[name] = constructTsValueFromValue(fieldValues[idx], expectedFieldType);
                     return acc;
                 }, {} as Record<string, any>);
             } else {
@@ -552,74 +577,74 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
             }
         case TypeKind.Int8Array:
             if (wasmRpcValue.kind === 'list') {
-                return new Int8Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.Number)));
+                return new Int8Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
                 throw new Error(`Expected Int8Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.Uint8Array:
             if (wasmRpcValue.kind === 'list') {
-                return new Uint8Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.Number)));
+                return new Uint8Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
                 throw new Error(`Expected Uint8Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.Uint8ClampedArray:
             if (wasmRpcValue.kind === 'list') {
-                return new Uint8ClampedArray(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.Number)));
+                return new Uint8ClampedArray(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
                 throw new Error(`Expected Uint8ClampedArray, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.Int16Array:
             if (wasmRpcValue.kind === 'list') {
-                return new Int16Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.Number)));
+                return new Int16Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
                 throw new Error(`Expected Int16Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.Uint16Array:
             if (wasmRpcValue.kind === 'list') {
-                return new Uint16Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.Number)));
+                return new Uint16Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
                 throw new Error(`Expected Uint16Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.Int32Array:
             if (wasmRpcValue.kind === 'list') {
-                return new Int32Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.Number)));
+                return new Int32Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
                 throw new Error(`Expected Int32Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.Uint32Array:
             if (wasmRpcValue.kind === 'list') {
-                return new Uint32Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.Number)));
+                return new Uint32Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
                 throw new Error(`Expected Uint32Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.Float32Array:
             if (wasmRpcValue.kind === 'list') {
-                return new Float32Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.Number)));
+                return new Float32Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
                 throw new Error(`Expected Float32Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.Float64Array:
             if (wasmRpcValue.kind === 'list') {
-                return new Float64Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.Number)));
+                return new Float64Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
                 throw new Error(`Expected Float64Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.BigInt64Array:
             if (wasmRpcValue.kind === 'list') {
-                return new BigInt64Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.BigInt)));
+                return new BigInt64Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.BigInt)));
             } else {
                 throw new Error(`Expected BigInt64Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.BigUint64Array:
             if (wasmRpcValue.kind === 'list') {
-                return new BigUint64Array(wasmRpcValue.value.map(v => tsValueFromValue(v, Type.BigInt)));
+                return new BigUint64Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.BigInt)));
             } else {
                 throw new Error(`Expected BigUint64Array, obtained value ${wasmRpcValue}`);
             }
         case TypeKind.ArrayBuffer:
             if (wasmRpcValue.kind === 'list') {
                 const byteArray = wasmRpcValue.value.map(v => {
-                    const convertedValue = tsValueFromValue(v, Type.Number);
+                    const convertedValue = constructTsValueFromValue(v, Type.Number);
                     if (typeof convertedValue !== 'number') {
                         throw new Error(`Expected number, obtained value ${convertedValue}`);
                     }
@@ -632,7 +657,7 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
         case TypeKind.SharedArrayBuffer:
             if (wasmRpcValue.kind === 'list') {
                 const byteArray = wasmRpcValue.value.map(v => {
-                    const convertedValue = tsValueFromValue(v, Type.Number);
+                    const convertedValue = constructTsValueFromValue(v, Type.Number);
                     if (typeof convertedValue !== 'number') {
                         throw new Error(`Expected number, obtained value ${convertedValue}`);
                     }
@@ -647,7 +672,7 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
         case TypeKind.DataView:
             if (wasmRpcValue.kind === 'list') {
                 const byteArray = wasmRpcValue.value.map(v => {
-                    const convertedValue = tsValueFromValue(v, Type.Number);
+                    const convertedValue = constructTsValueFromValue(v, Type.Number);
                     if (typeof convertedValue !== 'number') {
                         throw new Error(`Expected number, obtained value ${convertedValue}`);
                     }
@@ -702,8 +727,13 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
                 return expectedTypeFields.reduce((acc, field, idx) => {
                     const name: string = field.name.toString();
                     const expectedFieldType = field.type;
-                    acc[name] = tsValueFromValue(fieldValues[idx], expectedFieldType);
-                    return acc;
+                    const tsValue = constructTsValueFromValue(fieldValues[idx], expectedFieldType)
+                    if (field.optional && (tsValue === undefined || tsValue === null)) {
+                       return acc
+                    } else {
+                        acc[name] = tsValue;
+                        return acc;
+                    }
                 }, {} as Record<string, any>);
             } else {
                 throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
@@ -740,7 +770,7 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
             }
         case TypeKind.Promise:
             const innerType = (expectedType as PromiseType).getTypeArguments()[0];
-            return tsValueFromValue(wasmRpcValue, innerType);
+            return constructTsValueFromValue(wasmRpcValue, innerType);
         case TypeKind.TemplateLiteral:
             break;
         case TypeKind.EnumLiteral:
@@ -776,7 +806,7 @@ function tsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
             if (!arg) {
                 throw new Error("Type must have a type argument");
             }
-            return tsValueFromValue(wasmRpcValue, arg);
+            return constructTsValueFromValue(wasmRpcValue, arg);
 
         case TypeKind.TypeCtor:
             break;
