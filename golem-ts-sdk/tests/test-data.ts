@@ -27,6 +27,10 @@ type ListType = Array<string>;
 
 type ListObjectType = Array<ObjectType>;
 
+type TupleType = [string, number, boolean];
+
+type TupleWithObjectType = [string, number, ObjectType];
+
 // enum EnumType {
 //     First = 'First',
 //     Second = 1,
@@ -53,6 +57,8 @@ export interface TestInterfaceType {
     objectProp: ObjectType,
     listProp: ListType,
     listObjectProp: ListObjectType,
+    tupleProp: TupleType,
+    tupleObjectProp: TupleWithObjectType,
     // enumType: EnumTypeAlias; // FIXME, RTTIST bug
     //enumTypeInlined: EnumType, // FIXME, RTTIST bug
     // objectPropInlined: { // FIXME, RTTIST bug

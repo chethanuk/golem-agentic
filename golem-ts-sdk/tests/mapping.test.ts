@@ -4,16 +4,8 @@ import {
     expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType, getTestObjectType, getUnionType,
 } from "./utils";
 import {AnalysedType, NameTypePair} from "../src/mapping/analysed-type";
-import {InterfaceType} from "rttist";
 
-// This test covers
-// Primitive types
-// Undefined types
-// Optional fields
-// Union types (aliased)
-// Object types
-// List type
-// List of objects
+// Interface type indirectly tests primitive types, union, list etc
 describe('TypeScript Interface to AnalysedType', () => {
     const interfaceType = getTestInterfaceType();
     const analysed = constructAnalysedTypeFromTsType(interfaceType);
@@ -53,6 +45,14 @@ describe('TypeScript Interface to AnalysedType', () => {
     it('List of objects within an interface', () => {
         checkListObjectFields(recordFields);
     })
+
+    it('Tuple type within an interface', () => {
+        checkTupleFields(recordFields);
+    })
+
+    it ('Tuple with object type within an interface', () => {
+        checkTupleWithObjectFields(recordFields);
+    })
 });
 
 describe('TypeScript Object to AnalysedType', () => {
@@ -84,8 +84,9 @@ describe('TypeScript Object to AnalysedType', () => {
     });
 });
 
+// To be confirmed. 
 describe('TypeScript Union to AnalysedType.Variant', () => {
-    it('transforms union type to analysed type', () => {
+    it('Union is converted to Variant with the name of the type as case name', () => {
         const enumType = getUnionType();
         const analysedType = constructAnalysedTypeFromTsType(enumType);
 
@@ -205,3 +206,36 @@ function checkListObjectFields(fields: any[]) {
     });
 }
 
+function checkTupleFields(fields: any[]) {
+    const tupleFields = fields.filter(f => f.name.startsWith('tupleProp'));
+    console.log(tupleFields)
+
+    tupleFields.forEach(field => {
+        expect(field.typ.kind).toBe('tuple');
+        if (field.typ.kind == 'tuple') {
+            const expected: AnalysedType[] = [{kind: 'string'}, {kind: 's32'}, {kind: 'bool'}];
+            expect(field.typ.value.items).toEqual(expected);
+        }
+    });
+}
+
+function checkTupleWithObjectFields(fields: any[]) {
+    const tupleObjectFields = fields.filter(f => f.name.startsWith('tupleObjectProp'));
+    expect(tupleObjectFields.length).toBeGreaterThan(0);
+
+    tupleObjectFields.forEach(field => {
+        expect(field.typ.kind).toBe('tuple');
+        if (field.typ.kind == 'tuple') {
+            const expected: AnalysedType[] = [
+                { kind: 'string' },
+                { kind: 's32' },
+                { kind: 'record', value: { fields: [
+                    { name: 'a', typ: { kind: 'string' } },
+                    { name: 'b', typ: { kind: 's32' } },
+                    { name: 'c', typ: { kind: 'bool' } }
+                ], name: undefined } }
+            ];
+            expect(field.typ.value.items).toEqual(expected);
+        }
+    });
+}
