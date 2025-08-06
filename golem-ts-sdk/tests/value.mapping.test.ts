@@ -5,7 +5,11 @@ import {
 } from "./utils";
 import {AnalysedType, NameTypePair} from "../src/mapping/analysed-type";
 import {SampleInterfaceDataDefault} from "./test-data";
-import {constructValueFromWitValue, constructWitValueFromTsValue} from "../src/mapping/value-mapping";
+import {
+    constructValueFromWitValue,
+    constructWitValueFromTsValue,
+    constructWitValueFromValue
+} from "../src/mapping/value-mapping";
 
 
 describe('TypeScript Values to Wit Value', () => {
@@ -13,8 +17,11 @@ describe('TypeScript Values to Wit Value', () => {
         const interfaceType = getTestInterfaceType();
         const witValue = constructWitValueFromTsValue(SampleInterfaceDataDefault, interfaceType);
         const value = constructValueFromWitValue(witValue);
-        console.log(witValue);
-        //console.log(value);
-        expect(1).toBe(1);
+        const witValueReturned = constructWitValueFromValue(value);
+
+        // Internal logic check - round trip (wit-value -> value -> wit-value)
+        expect(witValueReturned).toEqual(witValue);
+
+        // TODO; test constructTsValueFromWitValue(witValueReturned, interfaceType);
     })
 })

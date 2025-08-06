@@ -4,7 +4,6 @@ import {WitNode} from "golem:rpc/types@0.2.2";
 
 export function constructWitValueFromTsValue(tsValue: any, tsType: Type): WitValue {
     const value = constructValueFromTsValue(tsValue, tsType);
-    console.log(value);
     return constructWitValueFromValue(value);
 }
 
@@ -812,25 +811,33 @@ export type Value =
 
 export function constructValueFromWitValue(wit: WitValue): Value {
     if (!wit.nodes.length) throw new Error("Empty nodes in WitValue");
-    return buildTree(wit.nodes[0], wit.nodes);
-}
 
+    return buildTree(wit.nodes[wit.nodes.length - 1], wit.nodes);
+}
 
 function buildTree(node: WitNode, nodes: WitNode[]): Value {
     switch (node.tag) {
         case 'record-value':
             return {
                 kind: 'record',
-                value: node.val.map(i => buildTree(nodes[i], nodes)),
+                value: node.val.map(idx => buildTree(nodes[idx], nodes)),
             };
 
         case 'variant-value': {
             const [caseIdx, maybeIndex] = node.val;
-            return {
-                kind: 'variant',
-                caseIdx,
-                caseValue: maybeIndex !== undefined ? buildTree(nodes[maybeIndex], nodes) : undefined,
-            };
+            if (maybeIndex !== undefined) {
+                return {
+                    kind: 'variant',
+                    caseIdx,
+                    caseValue: buildTree(nodes[maybeIndex], nodes),
+                };
+            } else {
+                return {
+                    kind: 'variant',
+                    caseIdx,
+                    caseValue: undefined,
+                };
+            }
         }
 
         case 'enum-value':
@@ -842,34 +849,36 @@ function buildTree(node: WitNode, nodes: WitNode[]): Value {
         case 'tuple-value':
             return {
                 kind: 'tuple',
-                value: node.val.map(i => buildTree(nodes[i], nodes)),
+                value: node.val.map(idx => buildTree(nodes[idx], nodes)),
             };
 
         case 'list-value':
             return {
                 kind: 'list',
-                value: node.val.map(i => buildTree(nodes[i], nodes)),
+                value: node.val.map(idx => buildTree(nodes[idx], nodes)),
             };
 
         case 'option-value':
+            if (node.val === undefined) {
+                return { kind: 'option', value: undefined };
+            }
             return {
                 kind: 'option',
-                value: node.val !== undefined ? buildTree(nodes[node.val], nodes) : undefined,
+                value: buildTree(nodes[node.val], nodes),
             };
 
         case 'result-value': {
-            const res: { tag: "ok"; val: number | undefined } | { tag: "err"; val: number | undefined } = node.val;
-
-            if (res.tag === "ok") {
+            const res = node.val;
+            if (res.tag === 'ok') {
                 return {
-                    kind: "result",
+                    kind: 'result',
                     value: {
                         ok: res.val !== undefined ? buildTree(nodes[res.val], nodes) : undefined,
                     },
                 };
             } else {
                 return {
-                    kind: "result",
+                    kind: 'result',
                     value: {
                         err: res.val !== undefined ? buildTree(nodes[res.val], nodes) : undefined,
                     },
@@ -904,7 +913,6 @@ function buildTree(node: WitNode, nodes: WitNode[]): Value {
             throw new Error(`Unhandled tag: ${(node as any).tag}`);
     }
 }
-
 
 export function constructWitValueFromValue(value: Value): WitValue {
     const nodes: WitNode[] = [];
