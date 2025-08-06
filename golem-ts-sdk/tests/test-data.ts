@@ -33,13 +33,6 @@ type TupleWithObjectType = [string, number, ObjectType];
 
 type MapType = Map<string, number>;
 
-// enum EnumType {
-//     First = 'First',
-//     Second = 1,
-// }
-//
-// type EnumTypeAlias = EnumType;
-
 export interface TestInterfaceType {
     numberProp: number;
     stringProp: string;
@@ -55,20 +48,34 @@ export interface TestInterfaceType {
     optionalUndefinedProp?: undefined,
     nestedProp: SimpleInterfaceType;
     unionProp: UnionType,
-    //unionPropInlined: string | number; //FIXME, RTTIST bug
     objectProp: ObjectType,
     listProp: ListType,
     listObjectProp: ListObjectType,
     tupleProp: TupleType,
     tupleObjectProp: TupleWithObjectType,
     mapProp: MapType,
-    // enumType: EnumTypeAlias; // FIXME, RTTIST bug
-    //enumTypeInlined: EnumType, // FIXME, RTTIST bug
-    // objectPropInlined: { // FIXME, RTTIST bug
+    //FIXME, RTTIST bug or not supported yet
+    // mapAlternativeProp: MapTypeAlternative,
+    //unionPropInlined: string | number;
+    // recordProp: RecordType;
+    // enumType: EnumTypeAlias;
+    //enumTypeInlined: EnumType,
+    // objectPropInlined: {
     //     a: string,
     //     b: number,
     //     c: boolean
     // }
     //enumProp: EnumTypeAlias,
-    // enumPropInlined: EnumTypeAlias, // FIXME, RTTIST bug
+    // enumPropInlined: EnumTypeAlias,
 }
+
+// FIXME: RTTIST don't support these yet
+// type MapTypeAlternative = { [key: string]: number };
+// type RecordType = Record<number, string>;
+
+// enum EnumType {
+//     First = 'First',
+//     Second = 1,
+// }
+//
+// type EnumTypeAlias = EnumType;

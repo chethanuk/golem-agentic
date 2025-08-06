@@ -11,7 +11,6 @@ describe('TypeScript Interface to AnalysedType', () => {
     const analysed = constructAnalysedTypeFromTsType(interfaceType);
     const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
 
-
     it('Interface should be AnalysedType.Record', () => {
         expect(analysed).toBeDefined();
         expect(analysed.kind).toBe('record');
@@ -57,6 +56,7 @@ describe('TypeScript Interface to AnalysedType', () => {
     it('Map type within an interface', () => {
         checkMapFields(recordFields);
     })
+
 });
 
 describe('TypeScript Object to AnalysedType', () => {

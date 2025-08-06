@@ -259,7 +259,11 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
 
         case TypeKind.Object:
             const object = type as ObjectType;
-            const objectFields = object.getProperties().map(prop => {
+            const props = object.getProperties();
+            if (props.length === 0) {
+               throw new Error(`Unsupported type for type ${type}`);
+            }
+            const objectFields = props.map(prop => {
                 return analysedType.field(prop.name.toString(), constructAnalysedTypeFromTsType(prop.type));
             });
             return analysedType.record(objectFields);
