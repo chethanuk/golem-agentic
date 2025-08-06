@@ -154,6 +154,7 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.list(analysedType.tuple([weakKey, weakValue]));
 
         case TypeKind.SetDefinition:
+            throw new Error("set types are not supported in Golem");
         case TypeKind.WeakSetDefinition:
             const setType = type.getTypeArguments?.()[0];
             if (!setType) {
@@ -212,13 +213,19 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.list(constructAnalysedTypeFromTsType(asyncIterableIteratorType));
 
         case TypeKind.Type:
-            const arg = type.getTypeArguments?.()[0];
-            if (!arg) {
-                throw new Error("Type must have a type argument");
+            const typeArg = type.getTypeArguments?.()[0];
+            if (!typeArg) {
+                throw new Error("Array must have a type argument");
             }
 
-            return constructAnalysedTypeFromTsType(arg);
-
+            if (type.isArray()) {
+                return analysedType.list(constructAnalysedTypeFromTsType(typeArg));
+            }  else if (type.isTuple()) {
+                const tupleTypes = type.getTypeArguments?.().map(constructAnalysedTypeFromTsType) || [];
+                return analysedType.tuple(tupleTypes);
+            } else {
+                return constructAnalysedTypeFromTsType(typeArg);
+            }
 
         // To be handled
         case TypeKind.Module:
@@ -444,6 +451,8 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.tuple(tupleTypes);
 
         case TypeKind.ArrayDefinition:
+            throw new Error("type is not supported in Golem");
+
         case TypeKind.ReadonlyArrayDefinition:
             const elementType = type.getTypeArguments?.()[0];
             if (!elementType) {

@@ -23,6 +23,10 @@ type UnionType = number | string | boolean;
 
 type ObjectType = {a: string, b: number, c: boolean}
 
+type ListType = Array<string>;
+
+type ListObjectType = Array<ObjectType>;
+
 // enum EnumType {
 //     First = 'First',
 //     Second = 1,
@@ -47,6 +51,8 @@ export interface TestInterfaceType {
     unionProp: UnionType,
     //unionPropInlined: string | number; //FIXME, RTTIST bug
     objectProp: ObjectType,
+    listProp: ListType,
+    listObjectProp: ListObjectType,
     // enumType: EnumTypeAlias; // FIXME, RTTIST bug
     //enumTypeInlined: EnumType, // FIXME, RTTIST bug
     // objectPropInlined: { // FIXME, RTTIST bug

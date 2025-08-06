@@ -1,10 +1,19 @@
 import { describe, it, expect } from 'vitest'
 import {constructAnalysedTypeFromTsType} from "../src/mapping/type-mapping";
 import {
-    expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType, getTestObjectType,
+    expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType, getTestObjectType, getUnionType,
 } from "./utils";
-import {NameTypePair} from "../src/mapping/analysed-type";
+import {AnalysedType, NameTypePair} from "../src/mapping/analysed-type";
+import {InterfaceType} from "rttist";
 
+// This test covers
+// Primitive types
+// Undefined types
+// Optional fields
+// Union types (aliased)
+// Object types
+// List type
+// List of objects
 describe('TypeScript Interface to AnalysedType', () => {
     const interfaceType = getTestInterfaceType();
     const analysed = constructAnalysedTypeFromTsType(interfaceType);
@@ -35,6 +44,14 @@ describe('TypeScript Interface to AnalysedType', () => {
 
     it('Object types within an interface', () => {
         checkObjectFields(recordFields);
+    })
+
+    it('List type within an interface', () => {
+        checkListFields(recordFields);
+    })
+
+    it('List of objects within an interface', () => {
+        checkListObjectFields(recordFields);
     })
 });
 
@@ -67,34 +84,27 @@ describe('TypeScript Object to AnalysedType', () => {
     });
 });
 
-describe('TypeScript Object to AnalysedType/WitType mapping', () => {
-    it('correctly analyses fields of the test interface', () => {
-        const interfaceType = getTestObjectType();
-        const analysed = constructAnalysedTypeFromTsType(interfaceType);
+describe('TypeScript Union to AnalysedType.Variant', () => {
+    it('transforms union type to analysed type', () => {
+        const enumType = getUnionType();
+        const analysedType = constructAnalysedTypeFromTsType(enumType);
 
-        expect(analysed).toBeDefined();
-        expect(analysed.kind).toBe('record');
-
-        const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
-
-        const expected: NameTypePair[] = [
-            {
-                name: "a",
-                typ: { kind: 'string' }
-            },
-            {
-                name: "b",
-                typ: { kind: 's32' }
-            },
-            {
-                name: "c",
-                typ: { kind: 'bool'}
+        const expected: AnalysedType = {
+            kind: 'variant',
+            value: {
+                cases: [
+                    { name: 'string', typ: { kind: 'string' } },
+                    { name: 'number', typ: { kind: 's32' } },
+                    { name: 'false', typ: { kind: 'bool' } }, // RTTIST bug, should be just bool
+                    { name: 'true', typ: { kind: 'bool' } }
+                ],
+                name: undefined
             }
-        ]
+        }
 
-        expect(recordFields).toEqual(expected);
-    });
-});
+        expect(analysedType).toEqual(expected);
+    })
+})
 
 function checkPrimitiveFields(fields: any[]) {
     const expected = {
@@ -170,6 +180,28 @@ function checkObjectFields(fields: any[]) {
     objectFields.forEach(field => {
         expect(field.typ.kind).toBe('record');
         expect(field.typ.value.fields).toEqual(expected);
+    });
+}
+
+function checkListFields(fields: any[]) {
+    const listFields = fields.filter(f => f.name.startsWith('listProp'));
+    expect(listFields.length).toBeGreaterThan(0);
+
+    listFields.forEach(field => {
+        expect(field.typ.kind).toBe('list');
+        expect(field.typ.value.inner.kind).toBe('string'); // Assuming the inner type is string
+    });
+}
+
+function checkListObjectFields(fields: any[]) {
+    const listObjectFields = fields.filter(f => f.name.startsWith('listObjectProp'));
+    expect(listObjectFields.length).toBeGreaterThan(0);
+
+    listObjectFields.forEach(field => {
+        expect(field.typ.kind).toBe('list');
+        expect(field.typ.value.inner.kind).toBe('record');
+        const innerFields = getRecordFieldsFromAnalysedType(field.typ.value.inner)!;
+        expect(innerFields.length).toBe(3); // Assuming 3 fields in the object type
     });
 }
 
