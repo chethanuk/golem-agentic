@@ -119,7 +119,9 @@ describe('Round trip value conversion', () => {
                 console.log(data);
                 const interfaceType = getTestInterfaceType();
                 const witValue = constructWitValueFromTsValue(data, interfaceType);
-                expect(witValue).toEqual(witValue);
+                const value = constructValueFromWitValue(witValue);
+                const witValueReturned = constructWitValueFromValue(value);
+                expect(witValue).toEqual(witValueReturned);
                 //
                 // const witValue = constructWitValueFromTsValue(data, interfaceType);
                 // const value = constructValueFromWitValue(witValue);
