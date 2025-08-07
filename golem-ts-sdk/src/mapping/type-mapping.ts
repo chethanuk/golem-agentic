@@ -223,7 +223,6 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
 
                 return analysedType.list(constructAnalysedTypeFromTsType(typeArg));
             }  else if (type.isTuple()) {
-
                 const tupleTypes = type.getTypeArguments?.().map(constructAnalysedTypeFromTsType) || [];
                 return analysedType.tuple(tupleTypes);
             } else if (type.isGenericType()) {

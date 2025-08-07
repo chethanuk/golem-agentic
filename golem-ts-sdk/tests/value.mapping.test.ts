@@ -2,11 +2,10 @@ import { describe, it, expect } from 'vitest'
 import {getTestInterfaceType} from "./utils";
 import {
     constructTsValueFromWitValue,
-    constructValueFromWitValue,
     constructWitValueFromTsValue,
-    constructWitValueFromValue
 } from "../src/mapping/value-mapping";
 import {TestInterfaceType} from "./test-data";
+import {constructValueFromWitValue, constructWitValueFromValue} from "../src/mapping/value";
 
 
 describe('TypeScript Values to Wit Value', () => {
@@ -40,7 +39,7 @@ describe('TypeScript Values to Wit Value', () => {
 
         // Internal logic check - round trip (wit-value -> value -> wit-value)
         expect(witValueReturned).toEqual(witValue);
-        const result = constructTsValueFromWitValue(witValueReturned, interfaceType);
+        const result = constructTsValueFromWitValue(witValue, interfaceType);
         console.log(result);
 
         // TODO; test constructTsValueFromWitValue(witValueReturned, interfaceType);

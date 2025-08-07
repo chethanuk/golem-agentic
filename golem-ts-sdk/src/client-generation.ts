@@ -55,7 +55,6 @@ export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
                     const val = target[prop];
                     if (typeof val === "function") {
                         return (...fnArgs: any[]) => {
-                            console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
                             return val.apply(target, fnArgs);
                         };
                     }

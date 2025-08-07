@@ -9,8 +9,8 @@ import {
     TypeKind,
     UnionType
 } from "rttist";
-import {WasmRpc, WitValue} from "golem:rpc/types@0.2.2";
-import {WitNode} from "golem:rpc/types@0.2.2";
+import {WitValue} from "golem:rpc/types@0.2.2";
+import {constructValueFromWitValue, constructWitValueFromValue, Value} from "./value";
 
 export function constructWitValueFromTsValue(tsValue: any, tsType: Type): WitValue {
     const value = constructValueFromTsValue(tsValue, tsType);
@@ -18,8 +18,8 @@ export function constructWitValueFromTsValue(tsValue: any, tsType: Type): WitVal
 }
 
 export function constructTsValueFromWitValue(witValue: WitValue, expectedType: Type): any {
-    const wasmRpcValue = constructValueFromWitValue(witValue);
-    return constructTsValueFromValue(wasmRpcValue, expectedType);
+    const value = constructValueFromWitValue(witValue);
+    return constructTsValueFromValue(value, expectedType);
 }
 
 function constructValueFromTsValue(arg: any, type: Type): Value {
@@ -284,8 +284,36 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
             throw new Error(`Unimplemented type 62: ${type.kind}`);
 
         case TypeKind.Type:
-            const typeArg = type.getTypeArguments()[0];
-            return constructValueFromTsValue(arg, typeArg);
+            if (type.isArray()) {
+                const typeArg = type.getTypeArguments?.()[0];
+                return { kind: "list", value: arg.map((item: any) => constructValueFromTsValue(item, typeArg)) };
+            } else if (type.isTuple()) {
+                const typeArg = type.getTypeArguments?.();
+                return { kind: "tuple", value: arg.map((item: any, idx: number) => constructValueFromTsValue(item, typeArg[idx])) };
+            } else if (type.isGenericType()) {
+                const genericType: GenericType<typeof type> = (type as GenericType<typeof type>);
+                const genericTypeDefinition = genericType.genericTypeDefinition;
+                if (genericTypeDefinition.name == 'Map') {
+                    const typeArgs = type.getTypeArguments?.();
+
+                    if (!typeArgs || typeArgs.length !== 2) {
+                        throw new Error("Map must have two type arguments");
+                    }
+
+                    const result: Value[] =  Array.from(arg.entries()).map((keyValue: any) => {
+                       return  {kind : "tuple", value: [constructValueFromTsValue(keyValue[0], typeArgs[0]), constructValueFromTsValue(keyValue[1], typeArgs[1])] };
+                    })
+
+                    return {kind: "list", value: result}
+                } else {
+                    throw new Error("Type must have a type argument");
+                }
+            }
+
+            else {
+                const typeArg = type.getTypeArguments()[0];
+                return constructValueFromTsValue(arg, typeArg);
+            }
 
         case TypeKind.TypeCtor:
             throw new Error(`Unimplemented type 63: ${type.kind}`);
@@ -442,17 +470,17 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
     }
 }
 
-function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any {
-    if (wasmRpcValue == undefined) {
+function constructTsValueFromValue(value: Value, expectedType: Type): any {
+    if (value == undefined) {
         return null
     }
 
     // There is no option type in type-script, so take analysed type along with expected type.
-    if (wasmRpcValue.kind == 'option') {
-        if (!wasmRpcValue.value) {
+    if (value.kind == 'option') {
+        if (!value.value) {
             return null
         } else {
-            return constructValueFromTsValue(wasmRpcValue.value, expectedType)
+            return constructValueFromTsValue(value.value, expectedType)
         }
     }
 
@@ -475,55 +503,55 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
         case TypeKind.Intrinsic:
             break;
         case TypeKind.Boolean:
-            if (wasmRpcValue.kind === 'bool') {
-                return wasmRpcValue.value;
+            if (value.kind === 'bool') {
+                return value.value;
             } else {
-                throw new Error(`Expected boolean, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected boolean, obtained value ${value}`);
             }
         case TypeKind.False:
-            if (wasmRpcValue.kind === 'bool') {
-                return wasmRpcValue.value
+            if (value.kind === 'bool') {
+                return value.value
             } else {
-                throw new Error(`Expected boolean, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected boolean, obtained value ${value}`);
             }
         case TypeKind.True:
-            if (wasmRpcValue.kind === 'bool') {
-                return wasmRpcValue.value;
+            if (value.kind === 'bool') {
+                return value.value;
             } else {
-                throw new Error(`Expected boolean, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected boolean, obtained value ${value}`);
             }
         case TypeKind.Number:
-            if (wasmRpcValue.kind === 'f64' ||
-                wasmRpcValue.kind === 'u8' ||
-                wasmRpcValue.kind === 'u16' ||
-                wasmRpcValue.kind === 'u32' ||
-                wasmRpcValue.kind === 'u64' ||
-                wasmRpcValue.kind === 's8' ||
-                wasmRpcValue.kind === 's16' ||
-                wasmRpcValue.kind === 's32' ||
-                wasmRpcValue.kind === 's64'
+            if (value.kind === 'f64' ||
+                value.kind === 'u8' ||
+                value.kind === 'u16' ||
+                value.kind === 'u32' ||
+                value.kind === 'u64' ||
+                value.kind === 's8' ||
+                value.kind === 's16' ||
+                value.kind === 's32' ||
+                value.kind === 's64'
             ) {
-                return wasmRpcValue.value;
+                return value.value;
             }  else {
-                throw new Error(`Expected number, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected number, obtained value ${value}`);
             }
         case TypeKind.BigInt:
-            if (wasmRpcValue.kind == 'u64') {
-                return wasmRpcValue.value
+            if (value.kind == 'u64') {
+                return value.value
             } else {
-                throw new Error(`Expected bigint, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected bigint, obtained value ${value}`);
             }
         case TypeKind.String:
-            if (wasmRpcValue.kind === 'string')  {
-               return wasmRpcValue.value
+            if (value.kind === 'string')  {
+               return value.value
             } else {
-                throw new Error(`Expected string, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected string, obtained value ${value}`);
             }
         case TypeKind.Symbol:
-            throw new Error(`Unrecognized type for ${wasmRpcValue.kind}`);
+            throw new Error(`Unrecognized type for ${value.kind}`);
         case TypeKind.NonPrimitiveObject:
-            if (wasmRpcValue.kind == 'record') {
-                const fieldValues = wasmRpcValue.value;
+            if (value.kind == 'record') {
+                const fieldValues = value.value;
                 const expectedTypeFields: ReadonlyArray<PropertyInfo> = (expectedType as ObjectType).getProperties();
                 return expectedTypeFields.reduce((acc, field, idx) => {
                     const name: string = field.name.toString();
@@ -532,11 +560,11 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
                     return acc;
                 }, {} as Record<string, any>);
             } else {
-                throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected object, obtained value ${value}`);
             }
         case TypeKind.ObjectType:
-            if (wasmRpcValue.kind === 'record') {
-                const fieldValues = wasmRpcValue.value;
+            if (value.kind === 'record') {
+                const fieldValues = value.value;
                 const expectedTypeFields: ReadonlyArray<PropertyInfo> = (expectedType as ObjectType).getProperties();
                 return expectedTypeFields.reduce((acc, field, idx) => {
                     const name: string = field.name.toString();
@@ -545,105 +573,105 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
                     return acc;
                 }, {} as Record<string, any>);
             } else {
-                throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected object, obtained value ${value}`);
             }
         case TypeKind.FunctionType:
-            throw new Error(`Unrecognized type for ${wasmRpcValue.kind}`);
+            throw new Error(`Unrecognized type for ${value.kind}`);
         case TypeKind.Date:
-            if (wasmRpcValue.kind === 'string') {
-                return new Date(wasmRpcValue.value);
+            if (value.kind === 'string') {
+                return new Date(value.value);
             } else {
-                throw new Error(`Expected date, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected date, obtained value ${value}`);
             }
         case TypeKind.Error:
-            if (wasmRpcValue.kind === 'result') {
-                if (wasmRpcValue.value.err !== undefined) {
-                    if (wasmRpcValue.value.err.kind == 'string') {
-                        return new Error(wasmRpcValue.value.err.value);
+            if (value.kind === 'result') {
+                if (value.value.err !== undefined) {
+                    if (value.value.err.kind == 'string') {
+                        return new Error(value.value.err.value);
                     } else {
-                        throw new Error(`Expected error string, obtained value ${wasmRpcValue.value.err}`);
+                        throw new Error(`Expected error string, obtained value ${value.value.err}`);
                     }
                 } else {
-                    throw new Error(`Expected error, obtained value ${wasmRpcValue}`);
+                    throw new Error(`Expected error, obtained value ${value}`);
                 }
             } else {
-                throw new Error(`Expected error, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected error, obtained value ${value}`);
             }
         case TypeKind.RegExp:
-            if (wasmRpcValue.kind === 'string') {
-                return new RegExp(wasmRpcValue.value);
+            if (value.kind === 'string') {
+                return new RegExp(value.value);
             } else {
-                throw new Error(`Expected RegExp, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected RegExp, obtained value ${value}`);
             }
         case TypeKind.Int8Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new Int8Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
+            if (value.kind === 'list') {
+                return new Int8Array(value.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
-                throw new Error(`Expected Int8Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected Int8Array, obtained value ${value}`);
             }
         case TypeKind.Uint8Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new Uint8Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
+            if (value.kind === 'list') {
+                return new Uint8Array(value.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
-                throw new Error(`Expected Uint8Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected Uint8Array, obtained value ${value}`);
             }
         case TypeKind.Uint8ClampedArray:
-            if (wasmRpcValue.kind === 'list') {
-                return new Uint8ClampedArray(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
+            if (value.kind === 'list') {
+                return new Uint8ClampedArray(value.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
-                throw new Error(`Expected Uint8ClampedArray, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected Uint8ClampedArray, obtained value ${value}`);
             }
         case TypeKind.Int16Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new Int16Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
+            if (value.kind === 'list') {
+                return new Int16Array(value.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
-                throw new Error(`Expected Int16Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected Int16Array, obtained value ${value}`);
             }
         case TypeKind.Uint16Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new Uint16Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
+            if (value.kind === 'list') {
+                return new Uint16Array(value.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
-                throw new Error(`Expected Uint16Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected Uint16Array, obtained value ${value}`);
             }
         case TypeKind.Int32Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new Int32Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
+            if (value.kind === 'list') {
+                return new Int32Array(value.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
-                throw new Error(`Expected Int32Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected Int32Array, obtained value ${value}`);
             }
         case TypeKind.Uint32Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new Uint32Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
+            if (value.kind === 'list') {
+                return new Uint32Array(value.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
-                throw new Error(`Expected Uint32Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected Uint32Array, obtained value ${value}`);
             }
         case TypeKind.Float32Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new Float32Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
+            if (value.kind === 'list') {
+                return new Float32Array(value.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
-                throw new Error(`Expected Float32Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected Float32Array, obtained value ${value}`);
             }
         case TypeKind.Float64Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new Float64Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.Number)));
+            if (value.kind === 'list') {
+                return new Float64Array(value.value.map(v => constructTsValueFromValue(v, Type.Number)));
             } else {
-                throw new Error(`Expected Float64Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected Float64Array, obtained value ${value}`);
             }
         case TypeKind.BigInt64Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new BigInt64Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.BigInt)));
+            if (value.kind === 'list') {
+                return new BigInt64Array(value.value.map(v => constructTsValueFromValue(v, Type.BigInt)));
             } else {
-                throw new Error(`Expected BigInt64Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected BigInt64Array, obtained value ${value}`);
             }
         case TypeKind.BigUint64Array:
-            if (wasmRpcValue.kind === 'list') {
-                return new BigUint64Array(wasmRpcValue.value.map(v => constructTsValueFromValue(v, Type.BigInt)));
+            if (value.kind === 'list') {
+                return new BigUint64Array(value.value.map(v => constructTsValueFromValue(v, Type.BigInt)));
             } else {
-                throw new Error(`Expected BigUint64Array, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected BigUint64Array, obtained value ${value}`);
             }
         case TypeKind.ArrayBuffer:
-            if (wasmRpcValue.kind === 'list') {
-                const byteArray = wasmRpcValue.value.map(v => {
+            if (value.kind === 'list') {
+                const byteArray = value.value.map(v => {
                     const convertedValue = constructTsValueFromValue(v, Type.Number);
                     if (typeof convertedValue !== 'number') {
                         throw new Error(`Expected number, obtained value ${convertedValue}`);
@@ -652,11 +680,11 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
                 });
                 return new Uint8Array(byteArray).buffer;
             } else {
-                throw new Error(`Expected ArrayBuffer, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected ArrayBuffer, obtained value ${value}`);
             }
         case TypeKind.SharedArrayBuffer:
-            if (wasmRpcValue.kind === 'list') {
-                const byteArray = wasmRpcValue.value.map(v => {
+            if (value.kind === 'list') {
+                const byteArray = value.value.map(v => {
                     const convertedValue = constructTsValueFromValue(v, Type.Number);
                     if (typeof convertedValue !== 'number') {
                         throw new Error(`Expected number, obtained value ${convertedValue}`);
@@ -665,13 +693,13 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
                 });
                 return new Uint8Array(byteArray).buffer;
             } else {
-                throw new Error(`Expected SharedArrayBuffer, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected SharedArrayBuffer, obtained value ${value}`);
             }
         case TypeKind.Atomics:
             break;
         case TypeKind.DataView:
-            if (wasmRpcValue.kind === 'list') {
-                const byteArray = wasmRpcValue.value.map(v => {
+            if (value.kind === 'list') {
+                const byteArray = value.value.map(v => {
                     const convertedValue = constructTsValueFromValue(v, Type.Number);
                     if (typeof convertedValue !== 'number') {
                         throw new Error(`Expected number, obtained value ${convertedValue}`);
@@ -680,7 +708,7 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
                 });
                 return new DataView(new Uint8Array(byteArray).buffer);
             } else {
-                throw new Error(`Expected DataView, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected DataView, obtained value ${value}`);
             }
         case TypeKind.ArrayDefinition:
             break;
@@ -719,8 +747,8 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
         case TypeKind.Namespace:
             break;
         case TypeKind.Object:
-            if (wasmRpcValue.kind === 'record') {
-                const fieldValues = wasmRpcValue.value;
+            if (value.kind === 'record') {
+                const fieldValues = value.value;
                 const expectedTypeFields: ReadonlyArray<PropertyInfo> = (expectedType as ObjectType).getProperties();
                 return expectedTypeFields.reduce((acc, field, idx) => {
                     const name: string = field.name.toString();
@@ -734,11 +762,11 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
                     }
                 }, {} as Record<string, any>);
             } else {
-                throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected object, obtained value ${value}`);
             }
         case TypeKind.Interface:
-            if (wasmRpcValue.kind === 'record') {
-                const fieldValues = wasmRpcValue.value;
+            if (value.kind === 'record') {
+                const fieldValues = value.value;
                 const expectedTypeFields: ReadonlyArray<PropertyInfo> = (expectedType as InterfaceType).getProperties();
                 return expectedTypeFields.reduce((acc, field, idx) => {
                     const name: string = field.name.toString();
@@ -752,7 +780,7 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
                     }
                 }, {} as Record<string, any>);
             } else {
-                throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
+                throw new Error(`Expected object, obtained value ${value}`);
             }
         case TypeKind.Class:
             break;
@@ -769,7 +797,7 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
         case TypeKind.Alias:
             const aliasType = expectedType as TypeAliasType;
             const targetType = aliasType.target;
-            return constructTsValueFromValue(wasmRpcValue, targetType);
+            return constructTsValueFromValue(value, targetType);
         case TypeKind.Method:
             break;
         case TypeKind.Function:
@@ -781,14 +809,14 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
         case TypeKind.BigIntLiteral:
             break;
         case TypeKind.StringLiteral:
-            if (wasmRpcValue.kind === 'string') {
-                return wasmRpcValue.value;
+            if (value.kind === 'string') {
+                return value.value;
             } else {
-                throw new Error(`Unrecognized value for ${wasmRpcValue.kind}`);
+                throw new Error(`Unrecognized value for ${value.kind}`);
             }
         case TypeKind.Promise:
             const innerType = (expectedType as PromiseType).getTypeArguments()[0];
-            return constructTsValueFromValue(wasmRpcValue, innerType);
+            return constructTsValueFromValue(value, innerType);
         case TypeKind.TemplateLiteral:
             break;
         case TypeKind.EnumLiteral:
@@ -820,11 +848,55 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
         case TypeKind.Jsx:
             break;
         case TypeKind.Type:
-            const arg = expectedType.getTypeArguments?.()[0];
-            if (!arg) {
-                throw new Error("Type must have a type argument");
+            if (expectedType.isArray()) {
+                if (value.kind == "list") {
+                    return value.value.map((item: Value) => constructTsValueFromValue(item, expectedType.getTypeArguments?.()[0]));
+                } else {
+                    throw new Error(`Expected array, obtained value ${value}`);
+                }
+            } else if (expectedType.isTuple()) {
+                const typeArg = expectedType.getTypeArguments?.();
+                if (value.kind == "tuple") {
+                    return value.value.map((item: Value, idx: number) => constructTsValueFromValue(item, typeArg[idx]));
+                } else {
+                    throw new Error(`Expected tuple, obtained value ${value}`);
+                }
+            } else if (expectedType.isGenericType()) {
+                const genericType: GenericType<typeof expectedType> = (expectedType as GenericType<typeof expectedType>);
+                const genericTypeDefinition = genericType.genericTypeDefinition;
+                if (genericTypeDefinition.name == 'Map') {
+                    const typeArgs = expectedType.getTypeArguments?.();
+
+                    if (!typeArgs || typeArgs.length !== 2) {
+                        throw new Error("Map must have two type arguments");
+                    }
+
+                    if (value.kind == 'list') {
+                        const entries = value.value.flatMap((item: Value) => {
+                            if (item.kind !== 'tuple' || item.value.length !== 2) {
+                                throw new Error(`Expected tuple of two items, obtained value ${item}`);
+                            }
+                            return [
+                                constructTsValueFromValue(item.value[0], typeArgs[0]),
+                                constructTsValueFromValue(item.value[1], typeArgs[1])
+                            ];
+                        });
+                        return new Map(entries);
+                    } else {
+                        throw new Error(`Expected Map, obtained value ${value}`);
+                    }
+                } else {
+                    throw new Error("Type must have a type argument");
+                }
             }
-            return constructTsValueFromValue(wasmRpcValue, arg);
+
+            else {
+                const arg = expectedType.getTypeArguments?.()[0];
+                if (!arg) {
+                    throw new Error("Type must have a type argument");
+                }
+                return constructTsValueFromValue(value, arg);
+            }
 
         case TypeKind.TypeCtor:
             break;
@@ -832,223 +904,3 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
     }
 }
 
-export type Value =
-    | { kind: 'bool'; value: boolean }
-    | { kind: 'u8'; value: number }
-    | { kind: 'u16'; value: number }
-    | { kind: 'u32'; value: number }
-    | { kind: 'u64'; value: bigint }
-    | { kind: 's8'; value: number }
-    | { kind: 's16'; value: number }
-    | { kind: 's32'; value: number }
-    | { kind: 's64'; value: bigint }
-    | { kind: 'f32'; value: number }
-    | { kind: 'f64'; value: number }
-    | { kind: 'char'; value: string }
-    | { kind: 'string'; value: string }
-    | { kind: 'list'; value: Value[] }
-    | { kind: 'tuple'; value: Value[] }
-    | { kind: 'record'; value: Value[] }
-    | { kind: 'variant'; caseIdx: number; caseValue?: Value }
-    | { kind: 'enum'; value: number }
-    | { kind: 'flags'; value: boolean[] }
-    | { kind: 'option'; value?: Value }
-    | { kind: 'result'; value: { ok?: Value; err?: Value } }
-    | { kind: 'handle'; uri: string; resourceId: bigint };
-
-
-export function constructValueFromWitValue(wit: WitValue): Value {
-    if (!wit.nodes.length) throw new Error("Empty nodes in WitValue");
-
-    return buildTree(wit.nodes[wit.nodes.length - 1], wit.nodes);
-}
-
-function buildTree(node: WitNode, nodes: WitNode[]): Value {
-    switch (node.tag) {
-        case 'record-value':
-            return {
-                kind: 'record',
-                value: node.val.map(idx => buildTree(nodes[idx], nodes)),
-            };
-
-        case 'variant-value': {
-            const [caseIdx, maybeIndex] = node.val;
-            if (maybeIndex !== undefined) {
-                return {
-                    kind: 'variant',
-                    caseIdx,
-                    caseValue: buildTree(nodes[maybeIndex], nodes),
-                };
-            } else {
-                return {
-                    kind: 'variant',
-                    caseIdx,
-                    caseValue: undefined,
-                };
-            }
-        }
-
-        case 'enum-value':
-            return { kind: 'enum', value: node.val };
-
-        case 'flags-value':
-            return { kind: 'flags', value: node.val };
-
-        case 'tuple-value':
-            return {
-                kind: 'tuple',
-                value: node.val.map(idx => buildTree(nodes[idx], nodes)),
-            };
-
-        case 'list-value':
-            return {
-                kind: 'list',
-                value: node.val.map(idx => buildTree(nodes[idx], nodes)),
-            };
-
-        case 'option-value':
-            if (node.val === undefined) {
-                return { kind: 'option', value: undefined };
-            }
-            return {
-                kind: 'option',
-                value: buildTree(nodes[node.val], nodes),
-            };
-
-        case 'result-value': {
-            const res = node.val;
-            if (res.tag === 'ok') {
-                return {
-                    kind: 'result',
-                    value: {
-                        ok: res.val !== undefined ? buildTree(nodes[res.val], nodes) : undefined,
-                    },
-                };
-            } else {
-                return {
-                    kind: 'result',
-                    value: {
-                        err: res.val !== undefined ? buildTree(nodes[res.val], nodes) : undefined,
-                    },
-                };
-            }
-        }
-
-        case 'prim-u8': return { kind: 'u8', value: node.val };
-        case 'prim-u16': return { kind: 'u16', value: node.val };
-        case 'prim-u32': return { kind: 'u32', value: node.val };
-        case 'prim-u64': return { kind: 'u64', value: node.val };
-        case 'prim-s8': return { kind: 's8', value: node.val };
-        case 'prim-s16': return { kind: 's16', value: node.val };
-        case 'prim-s32': return { kind: 's32', value: node.val };
-        case 'prim-s64': return { kind: 's64', value: node.val };
-        case 'prim-float32': return { kind: 'f32', value: node.val };
-        case 'prim-float64': return { kind: 'f64', value: node.val };
-        case 'prim-char': return { kind: 'char', value: node.val };
-        case 'prim-bool': return { kind: 'bool', value: node.val };
-        case 'prim-string': return { kind: 'string', value: node.val };
-
-        case 'handle': {
-            const [uri, resourceId] = node.val;
-            return {
-                kind: 'handle',
-                uri: uri.value,
-                resourceId,
-            };
-        }
-
-        default:
-            throw new Error(`Unhandled tag: ${(node as any).tag}`);
-    }
-}
-
-export function constructWitValueFromValue(value: Value): WitValue {
-    const nodes: WitNode[] = [];
-    buildNodes(value, nodes);
-    return { nodes: nodes };
-}
-
-
-function buildNodes(value: Value, nodes: WitNode[]): number {
-    const push = (node: WitNode): number => {
-        nodes.push(node);
-        return nodes.length - 1;
-    };
-
-    switch (value.kind) {
-        case 'record':
-            const recordIndices = value.value.map(v => buildNodes(v, nodes));
-            return push({ tag: 'record-value', val: recordIndices });
-
-        case 'variant':
-            return push({ tag: 'variant-value', val: value.caseValue !== undefined
-                    ? [value.caseIdx, buildNodes(value.caseValue, nodes)]
-                    : [value.caseIdx, undefined] });
-
-        case 'enum':
-            return push({ tag: 'enum-value', val: value.value });
-
-        case 'flags':
-            return push({ tag: 'flags-value', val: value.value });
-
-        case 'tuple':
-            const tupleIndices = value.value.map(v => buildNodes(v, nodes));
-            return push({ tag: 'tuple-value', val: tupleIndices });
-
-        case 'list':
-            const listIndices = value.value.map(v => buildNodes(v, nodes));
-            return push({ tag: 'list-value', val: listIndices });
-
-        case 'option':
-            return push({
-                tag: 'option-value',
-                val: value.value !== undefined ? buildNodes(value.value, nodes) : undefined
-            });
-
-        case 'result':
-            if ('ok' in value.value) {
-                return push({
-                    tag: 'result-value',
-                    val: {
-                        tag: 'ok',
-                        val: value.value.ok !== undefined
-                            ? buildNodes(value.value.ok, nodes)
-                            : undefined
-                    }
-                });
-            } else {
-                return push({
-                    tag: 'result-value',
-                    val: {
-                        tag: 'err',
-                        val: value.value.err !== undefined
-                            ? buildNodes(value.value.err, nodes)
-                            : undefined
-                    }
-                });
-            }
-
-        case 'u8': return push({ tag: 'prim-u8', val: value.value });
-        case 'u16': return push({ tag: 'prim-u16', val: value.value });
-        case 'u32': return push({ tag: 'prim-u32', val: value.value });
-        case 'u64': return push({ tag: 'prim-u64', val: value.value });
-        case 's8': return push({ tag: 'prim-s8', val: value.value });
-        case 's16': return push({ tag: 'prim-s16', val: value.value });
-        case 's32': return push({ tag: 'prim-s32', val: value.value });
-        case 's64': return push({ tag: 'prim-s64', val: value.value });
-        case 'f32': return push({ tag: 'prim-float32', val: value.value });
-        case 'f64': return push({ tag: 'prim-float64', val: value.value });
-        case 'char': return push({ tag: 'prim-char', val: value.value });
-        case 'bool': return push({ tag: 'prim-bool', val: value.value });
-        case 'string': return push({ tag: 'prim-string', val: value.value });
-
-        case 'handle':
-            return push({
-                tag: 'handle',
-                val: [{ value: value.uri }, value.resourceId]
-            });
-
-        default:
-            throw new Error(`Unhandled kind: ${(value as any).kind}`);
-    }
-}
