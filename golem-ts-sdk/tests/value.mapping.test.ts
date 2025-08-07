@@ -1,12 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {getTestInterfaceType} from "./utils";
-import {
-    constructTsValueFromWitValue,
-    constructWitValueFromTsValue,
-} from "../src/mapping/value-mapping";
 import {TestInterfaceType} from "./test-data";
-import {constructValueFromWitValue, constructWitValueFromValue} from "../src/mapping/value";
-import {InterfaceType} from "rttist";
+import {constructValueFromWitValue, constructWitValueFromValue} from "../src/mapping/values/value";
+import {constructWitValueFromTsValue} from "../src/mapping/values/ts-to-wit";
+import {constructTsValueFromWitValue} from "../src/mapping/values/wit-to-ts";
 
 
 describe('TypeScript Values to Wit Value', () => {

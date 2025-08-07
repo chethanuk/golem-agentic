@@ -5,7 +5,7 @@ import {
 } from './analysed-type';
 import {NamedWitTypeNode, NodeIndex, ResourceMode, WitTypeNode} from "golem:rpc/types@0.2.2";
 import {WitType} from "golem:agent/common";
-import {EnumType, GenericType, MapType, Type, TypeAliasType, UnionType} from "rttist";
+import {EnumType, GenericType, Type, TypeAliasType, UnionType} from "rttist";
 import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
 import {analysedType} from "./analysed-type";
 

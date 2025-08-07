@@ -2,7 +2,7 @@ import {PackageName} from "../src/type_metadata";
 import {Metadata} from "../src";
 import {Type} from "rttist";
 import './setup';
-import {AnalysedType, NameTypePair} from "../src/mapping/analysed-type";
+import {AnalysedType, NameTypePair} from "../src/mapping/types/analysed-type";
 import {expect} from "vitest";
 
 export function getAll() {

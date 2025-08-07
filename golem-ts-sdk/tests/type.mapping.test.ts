@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import {constructAnalysedTypeFromTsType} from "../src/mapping/type-mapping";
 import {
-    expectTupleTypeWithNoItems, getTestInterfaceType, getRecordFieldsFromAnalysedType, getTestObjectType, getUnionType,
+    getTestInterfaceType, getRecordFieldsFromAnalysedType, getTestObjectType, getUnionType,
 } from "./utils";
-import {analysedType, AnalysedType, NameTypePair} from "../src/mapping/analysed-type";
+import {analysedType, AnalysedType, NameTypePair} from "../src/mapping/types/analysed-type";
+import {constructAnalysedTypeFromTsType} from "../src/mapping/types/ts-to-wit";
 
 // Interface type indirectly tests primitive types, union, list etc
 describe('TypeScript Interface to AnalysedType', () => {
