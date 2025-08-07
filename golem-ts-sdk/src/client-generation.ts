@@ -5,11 +5,11 @@ import {ComponentId, getSelfMetadata} from "golem:api/host@1.1.7";
 import {agentInitiators} from "./agent-Initiator";
 import {
     constructTsValueFromWitValue,
-    constructValueFromWitValue,
-    constructWitValueFromTsValue, constructWitValueFromValue, Value
+    constructWitValueFromTsValue
 } from "./mapping/value-mapping";
 import {agentRegistry} from "./agent-registry";
 import {DataValue} from "golem:agent/common";
+import {constructValueFromWitValue, constructWitValueFromValue, Value} from "./mapping/value";
 
 export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     return (...args: any[]) => {
