@@ -1,15 +1,34 @@
-import { describe, it, expect } from 'vitest'
+import {describe, it, expect} from 'vitest'
 import {getTestInterfaceType} from "./utils";
 import {TestInterfaceType} from "./test-data";
 import {constructValueFromWitValue, constructWitValueFromValue} from "../src/mapping/values/value";
 import {constructWitValueFromTsValue} from "../src/mapping/values/ts-to-wit";
 import {constructTsValueFromWitValue} from "../src/mapping/values/wit-to-ts";
-import { testInterfaceTypeArb } from './arbitraries'
+import {testInterfaceTypeArb} from './arbitraries'
 import * as fc from 'fast-check'
 
-describe('Round trip value conversion', () => {
-    it('with only required values', () => {
-        // Just default values and see if we can successfully convert all of them to WIT value
+describe('typescript value to wit value round-trip conversions', () => {
+    it('should correctly perform round-trip conversion for arbitrary values of interface type', () => {
+        fc.assert(
+            fc.property(testInterfaceTypeArb, (data) => {
+                const interfaceType = getTestInterfaceType();
+                const witValue = constructWitValueFromTsValue(data, interfaceType);
+
+                // Round trip wit-value -> value -> wit-value
+                const value = constructValueFromWitValue(witValue);
+                const witValueReturned = constructWitValueFromValue(value);
+                expect(witValueReturned).toEqual(witValue);
+
+                // Round trip ts-value -> wit-value -> ts-value
+                const tsValueReturned: TestInterfaceType =
+                    constructTsValueFromWitValue(witValueReturned, interfaceType);
+
+                expect(tsValueReturned).toEqual(data);
+            })
+        )
+    })
+
+    it('should preserve values with only required properties (excluding optional)', () => {
          const defaultData: TestInterfaceType = {
             bigintProp: 0n,
             booleanProp: false,
@@ -30,22 +49,20 @@ describe('Round trip value conversion', () => {
 
         const interfaceType = getTestInterfaceType();
         const witValue = constructWitValueFromTsValue(defaultData, interfaceType);
+
+        // Round trip wit-value -> value -> wit-value
         const value = constructValueFromWitValue(witValue);
         const witValueReturned = constructWitValueFromValue(value);
-
-        // Internal logic check - round trip (wit-value -> value -> wit-value)
         expect(witValueReturned).toEqual(witValue);
 
-        const result = constructTsValueFromWitValue(witValue, interfaceType);
-
+        // Round trip ts-value -> wit-value -> ts-value
         const tsValueReturned: TestInterfaceType =
             constructTsValueFromWitValue(witValueReturned, interfaceType);
 
-        // Round trip (ts-value -> wit-value -> ts-value)
         expect(tsValueReturned).toEqual(defaultData);
     })
 
-    it('With optional values', () => {
+    it('should preserve values including optional properties', () => {
         const withOptionalValues: TestInterfaceType = {
             bigintProp: 0n,
             booleanProp: false,
@@ -67,19 +84,20 @@ describe('Round trip value conversion', () => {
 
         const interfaceType = getTestInterfaceType();
         const witValue = constructWitValueFromTsValue(withOptionalValues, interfaceType);
+
+        // Round trip wit-value -> value -> wit-value
         const value = constructValueFromWitValue(witValue);
         const witValueReturned = constructWitValueFromValue(value);
-
         expect(witValueReturned).toEqual(witValue);
 
+        // Round trip ts-value -> wit-value -> ts-value
         const tsValueReturned: TestInterfaceType =
             constructTsValueFromWitValue(witValue, interfaceType);
 
-        // Round trip (ts-value -> wit-value -> ts-value)
         expect(tsValueReturned).toEqual(withOptionalValues);
     })
 
-    it('With complex values fo union types', () => {
+    it('should preserve union properties with complex object variants', () => {
         const withComplexUnionType: TestInterfaceType = {
             bigintProp: 0n,
             booleanProp: false,
@@ -101,38 +119,16 @@ describe('Round trip value conversion', () => {
 
         const interfaceType = getTestInterfaceType();
         const witValue = constructWitValueFromTsValue(withComplexUnionType, interfaceType);
+
+        // Round trip wit-value -> value -> wit-value
         const value = constructValueFromWitValue(witValue);
         const witValueReturned = constructWitValueFromValue(value);
-
         expect(witValueReturned).toEqual(witValue);
 
+        // Round trip ts-value -> wit-value -> ts-value
         const tsValueReturned: TestInterfaceType =
             constructTsValueFromWitValue(witValue, interfaceType);
 
-        // Round trip (ts-value -> wit-value -> ts-value)
         expect(tsValueReturned).toEqual(withComplexUnionType);
-    })
-
-    it('round-trip conversion should preserve TestInterfaceType', () => {
-        fc.assert(
-            fc.property(testInterfaceTypeArb, (data) => {
-                console.log(data);
-                const interfaceType = getTestInterfaceType();
-                const witValue = constructWitValueFromTsValue(data, interfaceType);
-                const value = constructValueFromWitValue(witValue);
-                const witValueReturned = constructWitValueFromValue(value);
-                expect(witValue).toEqual(witValueReturned);
-                //
-                // const witValue = constructWitValueFromTsValue(data, interfaceType);
-                // const value = constructValueFromWitValue(witValue);
-                // const witValueReturned = constructWitValueFromValue(value);
-                // expect(witValueReturned).toEqual(witValue);
-                //
-                // const tsValueReturned: TestInterfaceType =
-                //     constructTsValueFromWitValue(witValueReturned, interfaceType);
-                //
-                // expect(tsValueReturned).toEqual(data);
-            })
-        )
     })
 })

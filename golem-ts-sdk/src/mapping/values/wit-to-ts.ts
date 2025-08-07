@@ -273,6 +273,9 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
             } else {
                 throw new Error(`Expected object, obtained value ${value}`);
             }
+        case TypeKind.Undefined:
+            console.log(`Warning: Undefined type encountered, returning null for value ${value}`);
+            return null;
         case TypeKind.Union:
             if (value.kind === 'variant') {
                 const caseValue = value.caseValue;
@@ -325,14 +328,15 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
                     }
 
                     if (value.kind == 'list') {
-                        const entries = value.value.flatMap((item: Value) => {
+                        const entries: [any, any][] = value.value.map((item: Value) => {
                             if (item.kind !== 'tuple' || item.value.length !== 2) {
                                 throw new Error(`Expected tuple of two items, obtained value ${item}`);
                             }
+
                             return [
                                 constructTsValueFromValue(item.value[0], typeArgs[0]),
                                 constructTsValueFromValue(item.value[1], typeArgs[1])
-                            ];
+                            ] as [any, any];
                         });
                         return new Map(entries);
                     } else {
