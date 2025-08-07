@@ -53,6 +53,7 @@
   },
   "private": false,
   "dependencies": {
-    "effect": "^3.17.6"
+    "effect": "^3.17.6",
+    "fast-check": "^4.2.0"
   }
 }
