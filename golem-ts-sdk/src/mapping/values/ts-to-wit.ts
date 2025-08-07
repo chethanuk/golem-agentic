@@ -240,6 +240,7 @@ function handleObject(tsValue: any, type: Type) : Value {
 
 
 function findTypeOfAny(value: any, typeList: readonly Type[]): [Type, number] | undefined {
+
     let idx = 0;
     for (const type of typeList) {
         if (matchesType(value, type)) {
@@ -263,6 +264,12 @@ function matchesType(value: any, type: Type): boolean {
         case TypeKind.Boolean:
             return typeof value === 'boolean';
 
+        case TypeKind.True:
+            return typeof value === 'boolean';
+
+        case TypeKind.False:
+            return typeof value === 'boolean';
+
         case TypeKind.Null:
             return value === null;
 
@@ -280,27 +287,16 @@ function matchesType(value: any, type: Type): boolean {
             return Array.isArray(value) && value.length === tupleTypes.length &&
                 value.every((v, idx) => matchesType(v, tupleTypes[idx]));
 
+        case TypeKind.ObjectType:
+            return handleObjectMatch(value, type);
+
+        case TypeKind.Alias:
+            const aliasType = type as TypeAliasType;
+            const targetType = aliasType.target;
+            return matchesType(value, targetType);
+
         case TypeKind.Object:
-            if (typeof value !== 'object' || value === null) return false;
-
-            let allValid = true;
-
-            for (const prop of (type as ObjectType).getProperties() ?? []) {
-                const propExists = (prop.name.toString() in value)
-                if (!propExists) {
-                    if (!prop.optional)  {
-                        allValid = false;
-                        break;
-                    }
-                } else {
-                    if (!matchesType(value[prop.name.toString()], prop.type)) {
-                        allValid = false;
-                        break;
-                    }
-                }
-            }
-
-            return allValid;
+            return handleObjectMatch(value, type);
 
         case TypeKind.Union:
             throw new Error("union of union not yet supported");
@@ -311,4 +307,27 @@ function matchesType(value: any, type: Type): boolean {
         default:
             return false;
     }
+}
+
+function handleObjectMatch(value: any, type: Type): boolean {
+    if (typeof value !== 'object' || value === null) return false;
+
+    let allValidProp = true;
+
+    for (const prop of (type as ObjectType).getProperties() ?? []) {
+        const propExists = (prop.name.toString() in value)
+        if (!propExists) {
+            if (!prop.optional)  {
+                allValidProp = false;
+                break;
+            }
+        } else {
+            if (!matchesType(value[prop.name.toString()], prop.type)) {
+                allValidProp = false;
+                break;
+            }
+        }
+    }
+
+    return allValidProp;
 }
