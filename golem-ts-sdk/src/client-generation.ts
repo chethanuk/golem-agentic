@@ -3,13 +3,11 @@ import {ClassType} from "rttist";
 import {WasmRpc, WitValue, WorkerId} from "golem:rpc/types@0.2.2";
 import {ComponentId, getSelfMetadata} from "golem:api/host@1.1.7";
 import {agentInitiators} from "./agent-Initiator";
-import {
-    constructTsValueFromWitValue,
-    constructValueFromWitValue,
-    constructWitValueFromTsValue, constructWitValueFromValue, Value
-} from "./mapping/value-mapping";
 import {agentRegistry} from "./agent-registry";
 import {DataValue} from "golem:agent/common";
+import {constructValueFromWitValue, constructWitValueFromValue, Value} from "./mapping/values/value";
+import {constructWitValueFromTsValue} from "./mapping/values/ts-to-wit";
+import {constructTsValueFromWitValue} from "./mapping/values/wit-to-ts";
 
 export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     return (...args: any[]) => {
@@ -55,7 +53,6 @@ export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
                     const val = target[prop];
                     if (typeof val === "function") {
                         return (...fnArgs: any[]) => {
-                            console.log(`[Local] ${ctor.name}.${String(prop)}(${fnArgs})`);
                             return val.apply(target, fnArgs);
                         };
                     }

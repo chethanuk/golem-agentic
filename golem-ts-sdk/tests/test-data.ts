@@ -19,7 +19,7 @@ interface SimpleInterfaceType {
 // A union type will become a variant in WIT, and the names will be available in the case.name
 // Example: [{name: 'string', typ: { kind: 'string' }}, {name: 'number', typ: { kind: 's32' }}]
 // This needs to be verified with @vigoo
-type UnionType = number | string | boolean;
+type UnionType = number | string | boolean | ObjectType;
 
 type ObjectType = {a: string, b: number, c: boolean}
 
@@ -39,13 +39,9 @@ export interface TestInterfaceType {
     booleanProp: boolean;
     bigintProp: bigint;
     nullProp: null;
-    undefinedProp: undefined
     trueProp: true;
     falseProp: false;
-    unknownProp: unknown;
-    voidProp: void;
     optionalProp?: number;
-    optionalUndefinedProp?: undefined,
     nestedProp: SimpleInterfaceType;
     unionProp: UnionType,
     objectProp: ObjectType,
@@ -79,27 +75,3 @@ export interface TestInterfaceType {
 // }
 //
 // type EnumTypeAlias = EnumType;
-
-// Just default values and see if we can successfully convert all of them to WIT value
-export const SampleInterfaceDataDefault: TestInterfaceType = {
-    bigintProp: 0n,
-    booleanProp: false,
-    falseProp: false,
-    listObjectProp: [],
-    listProp: [],
-    mapProp: new Map<string, number>(),
-    nestedProp: {n: 0},
-    nullProp: null,
-    numberProp: 0,
-    objectProp: {a: "", b: 0, c: false},
-    stringProp: "",
-    trueProp: true,
-    tupleObjectProp: ["", 0, {a: "", b: 0, c: false}],
-    tupleProp: ["", 0, false],
-    undefinedProp: undefined,
-    unionProp: 1,
-    unknownProp: undefined,
-    voidProp: undefined
-
-
-}

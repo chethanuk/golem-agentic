@@ -31,8 +31,6 @@ class Agent {
     }
 
     static async create(agentType: string, input: DataValue): Promise<Result<Agent, AgentError>> {
-        console.log("Agent constructor called", agentType, input);
-
         const initiator = agentInitiators.get(agentType);
 
         if (!initiator) {
@@ -63,8 +61,6 @@ class Agent {
 }
 
 async function getAgent(agentType: string, agentId: string): Promise<Agent> {
-    console.log("getAgent called", agentId);
-
     const typedAgentId = AgentId.fromString(agentId);
 
     const agent = agents.get(typedAgentId)
@@ -78,15 +74,11 @@ async function getAgent(agentType: string, agentId: string): Promise<Agent> {
 }
 
 async function discoverAgents(): Promise<Agent[]> {
-    console.log("discoverAgents called");
-
     return Array.from(agents.values());
 }
 
 
 async function discoverAgentTypes(): Promise<bindings.guest.AgentType[]> {
-    console.log("discoverAgentTypes called");
-
     return getRegisteredAgents();
 }
 

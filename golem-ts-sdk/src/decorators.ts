@@ -4,14 +4,15 @@ import {AgentInternal} from "./agent-internal";
 import {ResolvedAgent} from "./resolved-agent";
 import {Metadata}  from "./type_metadata";
 import {ClassType, ParameterInfo, Type} from "rttist";
-import {constructWitTypeFromTsType} from "./mapping/type-mapping";
 import {getLocalClient, getRemoteClient} from "./client-generation";
 import {BaseAgent} from "./base-agent";
 import {agentInitiators} from "./agent-Initiator";
 import {createUniqueAgentId} from "./agent-instance-counter";
 import {createAgentName} from "./agent-name";
-import {constructTsValueFromWitValue, constructWitValueFromTsValue} from "./mapping/value-mapping";
 import {agentRegistry} from "./agent-registry";
+import {constructWitTypeFromTsType} from "./mapping/types/ts-to-wit";
+import {constructTsValueFromWitValue} from "./mapping/values/wit-to-ts";
+import {constructWitValueFromTsValue} from "./mapping/values/ts-to-wit";
 
 
 const methodMetadata = new Map<string, Map<string, { prompt?: string; description?: string }>>();
