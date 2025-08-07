@@ -34,13 +34,13 @@ describe('TypeScript Values to Wit Value', () => {
 
         // Internal logic check - round trip (wit-value -> value -> wit-value)
         expect(witValueReturned).toEqual(witValue);
+
         const result = constructTsValueFromWitValue(witValue, interfaceType);
-        console.log(result);
 
-        const tsValueReturned = constructTsValueFromWitValue(witValueReturned, interfaceType);
+        const tsValueReturned: TestInterfaceType =
+            constructTsValueFromWitValue(witValueReturned, interfaceType);
 
-        console.log(tsValueReturned);
-
-        // TODO; test constructTsValueFromWitValue(witValueReturned, interfaceType);
+        // Round trip (ts-value -> wit-value -> ts-value)
+        expect(tsValueReturned).toEqual(defaultData);
     })
 })
