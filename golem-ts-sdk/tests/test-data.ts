@@ -19,7 +19,7 @@ interface SimpleInterfaceType {
 // A union type will become a variant in WIT, and the names will be available in the case.name
 // Example: [{name: 'string', typ: { kind: 'string' }}, {name: 'number', typ: { kind: 's32' }}]
 // This needs to be verified with @vigoo
-type UnionType = number | string | boolean;
+type UnionType = number | string | boolean | ObjectType;
 
 type ObjectType = {a: string, b: number, c: boolean}
 

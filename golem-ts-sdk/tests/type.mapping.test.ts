@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import {describe, it, expect} from 'vitest'
 import {
     getTestInterfaceType, getRecordFieldsFromAnalysedType, getTestObjectType, getUnionType,
 } from "./utils";
@@ -45,7 +45,7 @@ describe('TypeScript Interface to AnalysedType', () => {
         checkTupleFields(recordFields);
     })
 
-    it ('Tuple with object type within an interface', () => {
+    it('Tuple with object type within an interface', () => {
         checkTupleWithObjectFields(recordFields);
     })
 
@@ -68,15 +68,15 @@ describe('TypeScript Object to AnalysedType', () => {
         const expected: NameTypePair[] = [
             {
                 name: "a",
-                typ: { kind: 'string' }
+                typ: {kind: 'string'}
             },
             {
                 name: "b",
-                typ: { kind: 's32' }
+                typ: {kind: 's32'}
             },
             {
                 name: "c",
-                typ: { kind: 'bool'}
+                typ: {kind: 'bool'}
             }
         ]
 
@@ -94,10 +94,39 @@ describe('TypeScript Union to AnalysedType.Variant', () => {
             kind: 'variant',
             value: {
                 cases: [
-                    { name: 'string', typ: { kind: 'string' } },
-                    { name: 'number', typ: { kind: 's32' } },
-                    { name: 'false', typ: { kind: 'bool' } }, // RTTIST bug, should be just bool
-                    { name: 'true', typ: { kind: 'bool' } }
+                    {name: 'string', typ: {kind: 'string'}},
+                    {name: 'number', typ: {kind: 's32'}},
+                    {name: 'false', typ: {kind: 'bool'}}, // RTTIST bug, should be just bool
+                    {name: 'true', typ: {kind: 'bool'}},
+                    {
+                        name: "objecttype",
+                        typ: {
+                            kind: "record",
+                            value: {
+                                fields: [
+                                    {
+                                        name: "a",
+                                        typ: {
+                                            kind: "string",
+                                        },
+                                    },
+                                    {
+                                        name: "b",
+                                        typ: {
+                                            kind: "s32",
+                                        },
+                                    },
+                                    {
+                                        name: "c",
+                                        typ: {
+                                            kind: "bool",
+                                        },
+                                    },
+                                ],
+                                "name": undefined,
+                            },
+                        },
+                    },
                 ],
                 name: undefined
             }
@@ -109,13 +138,13 @@ describe('TypeScript Union to AnalysedType.Variant', () => {
 
 function checkPrimitiveFields(fields: any[]) {
     const expected = {
-        numberProp: { kind: 's32' },
-        stringProp: { kind: 'string' },
-        booleanProp: { kind: 'bool' },
-        bigintProp: { kind: 'u64' },
-        nullProp: { kind: 'tuple', value: { items: [] } },
-        trueProp: { kind: 'bool' },
-        falseProp: { kind: 'bool' },
+        numberProp: {kind: 's32'},
+        stringProp: {kind: 'string'},
+        booleanProp: {kind: 'bool'},
+        bigintProp: {kind: 'u64'},
+        nullProp: {kind: 'tuple', value: {items: []}},
+        trueProp: {kind: 'bool'},
+        falseProp: {kind: 'bool'},
     };
 
     for (const [name, expectedType] of Object.entries(expected)) {
@@ -137,11 +166,40 @@ function checkUnionFields(fields: any[]) {
     const unionFields = fields.filter(f => f.name.startsWith('unionProp'));
     expect(unionFields.length).toBeGreaterThan(0);
 
-    const expectedCases = [
-        { name: 'string', typ: { kind: 'string' } },
-        { name: 'number', typ: { kind: 's32' } },
-        { name: 'false', typ: { kind: 'bool' } },
-        { name: 'true', typ: { kind: 'bool' } },
+    const expectedCases: NameTypePair[] = [
+        {name: 'string', typ: {kind: 'string'}},
+        {name: 'number', typ: {kind: 's32'}},
+        {name: 'false', typ: {kind: 'bool'}},
+        {name: 'true', typ: {kind: 'bool'}},
+        {
+            name: "objecttype",
+            typ: {
+                kind: "record",
+                value: {
+                    fields: [
+                        {
+                            name: "a",
+                            typ: {
+                                kind: "string",
+                            },
+                        },
+                        {
+                            name: "b",
+                            typ: {
+                                kind: "s32",
+                            },
+                        },
+                        {
+                            name: "c",
+                            typ: {
+                                kind: "bool",
+                            },
+                        },
+                    ],
+                    "name": undefined,
+                },
+            },
+        },
     ];
 
     // This implies wit value will be a variant with these cases
@@ -156,9 +214,9 @@ function checkObjectFields(fields: any[]) {
     expect(objectFields.length).toBeGreaterThan(0);
 
     const expected = [
-        { name: 'a', typ: { kind: 'string' } },
-        { name: 'b', typ: { kind: 's32' } },
-        { name: 'c', typ: { kind: 'bool' } },
+        {name: 'a', typ: {kind: 'string'}},
+        {name: 'b', typ: {kind: 's32'}},
+        {name: 'c', typ: {kind: 'bool'}},
     ];
 
     objectFields.forEach(field => {
@@ -209,13 +267,17 @@ function checkTupleWithObjectFields(fields: any[]) {
         expect(field.typ.kind).toBe('tuple');
         if (field.typ.kind == 'tuple') {
             const expected: AnalysedType[] = [
-                { kind: 'string' },
-                { kind: 's32' },
-                { kind: 'record', value: { fields: [
-                    { name: 'a', typ: { kind: 'string' } },
-                    { name: 'b', typ: { kind: 's32' } },
-                    { name: 'c', typ: { kind: 'bool' } }
-                ], name: undefined } }
+                {kind: 'string'},
+                {kind: 's32'},
+                {
+                    kind: 'record', value: {
+                        fields: [
+                            {name: 'a', typ: {kind: 'string'}},
+                            {name: 'b', typ: {kind: 's32'}},
+                            {name: 'c', typ: {kind: 'bool'}}
+                        ], name: undefined
+                    }
+                }
             ];
             expect(field.typ.value.items).toEqual(expected);
         }
