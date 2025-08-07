@@ -13,7 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface SimpleInterfaceType {
-    n: number,
+  n: number;
 }
 
 // A union type will become a variant in WIT, and the names will be available in the case.name
@@ -21,7 +21,7 @@ interface SimpleInterfaceType {
 // This needs to be verified with @vigoo
 type UnionType = number | string | boolean | ObjectType;
 
-type ObjectType = {a: string, b: number, c: boolean}
+type ObjectType = { a: string; b: number; c: boolean };
 
 type ListType = Array<string>;
 
@@ -34,35 +34,35 @@ type TupleWithObjectType = [string, number, ObjectType];
 type MapType = Map<string, number>;
 
 export interface TestInterfaceType {
-    numberProp: number;
-    stringProp: string;
-    booleanProp: boolean;
-    bigintProp: bigint;
-    nullProp: null;
-    trueProp: true;
-    falseProp: false;
-    optionalProp?: number;
-    nestedProp: SimpleInterfaceType;
-    unionProp: UnionType,
-    objectProp: ObjectType,
-    listProp: ListType,
-    listObjectProp: ListObjectType,
-    tupleProp: TupleType,
-    tupleObjectProp: TupleWithObjectType,
-    mapProp: MapType,
-    //FIXME, RTTIST bug or not supported yet
-    // mapAlternativeProp: MapTypeAlternative,
-    //unionPropInlined: string | number;
-    // recordProp: RecordType;
-    // enumType: EnumTypeAlias;
-    //enumTypeInlined: EnumType,
-    // objectPropInlined: {
-    //     a: string,
-    //     b: number,
-    //     c: boolean
-    // }
-    //enumProp: EnumTypeAlias,
-    // enumPropInlined: EnumTypeAlias,
+  numberProp: number;
+  stringProp: string;
+  booleanProp: boolean;
+  bigintProp: bigint;
+  nullProp: null;
+  trueProp: true;
+  falseProp: false;
+  optionalProp?: number;
+  nestedProp: SimpleInterfaceType;
+  unionProp: UnionType;
+  objectProp: ObjectType;
+  listProp: ListType;
+  listObjectProp: ListObjectType;
+  tupleProp: TupleType;
+  tupleObjectProp: TupleWithObjectType;
+  mapProp: MapType;
+  //FIXME, RTTIST bug or not supported yet
+  // mapAlternativeProp: MapTypeAlternative,
+  //unionPropInlined: string | number;
+  // recordProp: RecordType;
+  // enumType: EnumTypeAlias;
+  //enumTypeInlined: EnumType,
+  // objectPropInlined: {
+  //     a: string,
+  //     b: number,
+  //     c: boolean
+  // }
+  //enumProp: EnumTypeAlias,
+  // enumPropInlined: EnumTypeAlias,
 }
 
 // FIXME: RTTIST don't support these yet
