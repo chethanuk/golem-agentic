@@ -38,7 +38,7 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
             return { kind: "tuple", value: [] };
 
         case TypeKind.Undefined:
-            return { kind: "tuple", value: [] };
+           throw new Error(`Unimplemented type 5: ${type.kind}`);
 
         case TypeKind.Null:
             return { kind: "tuple", value: [] };
@@ -494,9 +494,9 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
         case TypeKind.Never:
             throw new Error(`'${expectedType.kind}' not supported`);
         case TypeKind.Void:
-            return undefined;
+            throw new Error(`'${expectedType.kind}' not supported`);
         case TypeKind.Undefined:
-            return undefined;
+            throw new Error(`'${expectedType.kind}' not supported`);
         case TypeKind.Null:
             return null;
 

@@ -5,10 +5,9 @@ import {
 } from './analysed-type';
 import {NamedWitTypeNode, NodeIndex, ResourceMode, WitTypeNode} from "golem:rpc/types@0.2.2";
 import {WitType} from "golem:agent/common";
-import {ArrayType, EnumType, GenericType, MapType, Type, TypeAliasType, UnionType} from "rttist";
+import {EnumType, GenericType, MapType, Type, TypeAliasType, UnionType} from "rttist";
 import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
 import {analysedType} from "./analysed-type";
-import {cons} from "effect/List";
 
 export function constructWitTypeFromTsType(type: Type) : WitType {
     const analysedType = constructAnalysedTypeFromTsType(type)
@@ -343,16 +342,19 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
         case TypeKind.TypeCtor:
             throw new Error("type constructor is not supported in Golem");
         case TypeKind.Unknown:
-            return analysedType.tuple([]); // FIXME: Maybe we can disallow
+            throw new Error("unknown is not supported in Unknown");
         case TypeKind.Any:
             throw new Error("any type is not supported in Golem");
         case TypeKind.Never:
             throw new Error("never type is not supported in Golem");
         case TypeKind.Void:
-            return analysedType.tuple([]); // FIXME: Maybe we can disallow
+            throw new Error("void type is not supported in Golem");
 
         case TypeKind.Undefined:
-            // Why empty tuple for undefined?
+            throw new Error("undefined type is not supported in Golem");
+
+        case TypeKind.Null:
+            // Why empty tuple for null?
             //
             // Undefined types can exist
             // a: undefined;
@@ -364,9 +366,6 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             // This is different to `a?: string`. In this case type of `a` is just option<string>
             // and if there is `a?: undefined`, then it is option<undefined>, and we have no loss of information
             // if we make it an empty tuple
-            return analysedType.tuple([]);
-
-        case TypeKind.Null:
             return analysedType.tuple([])
 
         case TypeKind.BigInt:

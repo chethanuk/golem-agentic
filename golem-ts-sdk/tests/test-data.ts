@@ -39,13 +39,9 @@ export interface TestInterfaceType {
     booleanProp: boolean;
     bigintProp: bigint;
     nullProp: null;
-    undefinedProp: undefined
     trueProp: true;
     falseProp: false;
-    unknownProp: unknown;
-    voidProp: void;
     optionalProp?: number;
-    optionalUndefinedProp?: undefined,
     nestedProp: SimpleInterfaceType;
     unionProp: UnionType,
     objectProp: ObjectType,

@@ -20,13 +20,9 @@ describe('TypeScript Interface to AnalysedType', () => {
         checkPrimitiveFields(recordFields);
     });
 
-    it('Undefined types within an interface', () => {
-        checkUndefinedFields(recordFields);
-    })
 
     it('Optional fields within an interface', () => {
         checkOptionalFields(recordFields);
-        checkOptionalUndefinedFields(recordFields);
     })
 
     it('Union types (aliased) within an interface', () => {
@@ -118,11 +114,8 @@ function checkPrimitiveFields(fields: any[]) {
         booleanProp: { kind: 'bool' },
         bigintProp: { kind: 'u64' },
         nullProp: { kind: 'tuple', value: { items: [] } },
-        undefinedProp: { kind: 'tuple', value: { items: [] } },
         trueProp: { kind: 'bool' },
         falseProp: { kind: 'bool' },
-        unknownProp: { kind: 'tuple', value: { items: [] } },
-        voidProp: { kind: 'tuple', value: { items: [] } },
     };
 
     for (const [name, expectedType] of Object.entries(expected)) {
@@ -132,26 +125,11 @@ function checkPrimitiveFields(fields: any[]) {
     }
 }
 
-function checkUndefinedFields(fields: NameTypePair[]) {
-    const undefinedProps = fields.filter(f => f.name.startsWith('undefinedProp'));
-    undefinedProps.forEach(field => {
-        expectTupleTypeWithNoItems(field.typ);
-    });
-}
 
 function checkOptionalFields(fields: NameTypePair[]) {
-    const optionalFields = fields.filter(f => f.name.startsWith('optional') && !f.name.includes('Undefined'));
+    const optionalFields = fields.filter(f => f.name.startsWith('optional'));
     optionalFields.forEach(field => {
         expect(field.typ.kind).toBe('option');
-    });
-}
-
-function checkOptionalUndefinedFields(fields: any[]) {
-    const optionalFields = fields.filter(f => f.name.startsWith('optionalUndefinedProp'));
-    optionalFields.forEach(field => {
-        expect(field.typ.kind).toBe('option');
-        const inner = field.typ.value.inner;
-        expectTupleTypeWithNoItems(inner);
     });
 }
 

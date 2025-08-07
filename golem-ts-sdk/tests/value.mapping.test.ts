@@ -6,6 +6,7 @@ import {
 } from "../src/mapping/value-mapping";
 import {TestInterfaceType} from "./test-data";
 import {constructValueFromWitValue, constructWitValueFromValue} from "../src/mapping/value";
+import {InterfaceType} from "rttist";
 
 
 describe('TypeScript Values to Wit Value', () => {
@@ -26,13 +27,12 @@ describe('TypeScript Values to Wit Value', () => {
             trueProp: true,
             tupleObjectProp: ["", 0, {a: "", b: 0, c: false}],
             tupleProp: ["", 0, false],
-            undefinedProp: undefined,
             unionProp: 1,
             unknownProp: undefined,
-            voidProp: undefined,
         }
 
         const interfaceType = getTestInterfaceType();
+         console.log((interfaceType as InterfaceType).getProperties().map((p) => p.name));
         const witValue = constructWitValueFromTsValue(defaultData, interfaceType);
         const value = constructValueFromWitValue(witValue);
         const witValueReturned = constructWitValueFromValue(value);
