@@ -37,6 +37,10 @@ describe('TypeScript Values to Wit Value', () => {
         const result = constructTsValueFromWitValue(witValue, interfaceType);
         console.log(result);
 
+        const tsValueReturned = constructTsValueFromWitValue(witValueReturned, interfaceType);
+
+        console.log(tsValueReturned);
+
         // TODO; test constructTsValueFromWitValue(witValueReturned, interfaceType);
     })
 })

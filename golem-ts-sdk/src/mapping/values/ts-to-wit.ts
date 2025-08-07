@@ -48,48 +48,10 @@ function constructValueFromTsValue(tsValue: any, type: Type): Value {
             return constructValueFromTsValue(tsValue, promiseDefArgType);
 
         case TypeKind.Interface:
-            if (typeof tsValue === "object" && tsValue !== null) {
-                const innerType = type as ObjectType;
-                const innerProperties = innerType.getProperties();
-                const values: Value[] = [];
-                for (const prop of innerProperties) {
-                    const key = prop.name.toString();
-                    if (!Object.prototype.hasOwnProperty.call(tsValue, key)) {
-                        if (prop.optional) {
-                            values.push({ kind: "option"});
-                        } else {
-                            throw new Error(`Missing property '${key}' in value`);
-                        }
-                    } else {
-                        const fieldVal = constructValueFromTsValue(tsValue[key], prop.type);
-                        values.push(fieldVal);
-                    }
-                }
-
-                return { kind: "record", value: values };
-            } else {
-                throw new Error(`Expected object, got ${tsValue} which is ${typeof tsValue}`);
-            }
-
-        case TypeKind.Class:
-            throw new Error(`Unimplemented type 36: ${type.kind}`);
+            return handleObject(tsValue, type);
 
         case TypeKind.Union: {
-            // When it comes to TS, a value for a union type is simply a non complex value.
-            // function processUnion(x: string | number | boolean) { }
-            // and x can be 1 or "1" or true.
-            // to convert it to wit-value, the only choice is to match against all possible types
-            const unionType = type as UnionType;
-            const possibleTypes = unionType.types;
-            const typeWithIndex = findTypeOfAny(tsValue, possibleTypes);
-
-            if (!typeWithIndex) {
-                throw new Error(`No matching type found for ${tsValue} in union type`);
-            } else {
-                const innerType = typeWithIndex[0];
-                const result = constructValueFromTsValue(tsValue, innerType);
-                return {kind: "variant", caseIdx: typeWithIndex![1], caseValue: result}
-            }
+            return handleUnion(tsValue, type);
         }
 
         case TypeKind.Alias:
@@ -103,79 +65,12 @@ function constructValueFromTsValue(tsValue: any, type: Type): Value {
             return constructValueFromTsValue(tsValue, argument)
 
         case TypeKind.Type:
-            if (type.isArray()) {
-                const typeArg = type.getTypeArguments?.()[0];
-                return { kind: "list", value: tsValue.map((item: any) => constructValueFromTsValue(item, typeArg)) };
-            } else if (type.isTuple()) {
-                const typeArg = type.getTypeArguments?.();
-                return { kind: "tuple", value: tsValue.map((item: any, idx: number) => constructValueFromTsValue(item, typeArg[idx])) };
-            } else if (type.isGenericType()) {
-                const genericType: GenericType<typeof type> = (type as GenericType<typeof type>);
-                const genericTypeDefinition = genericType.genericTypeDefinition;
-                if (genericTypeDefinition.name == 'Map') {
-                    const typeArgs = type.getTypeArguments?.();
-
-                    if (!typeArgs || typeArgs.length !== 2) {
-                        throw new Error("Map must have two type arguments");
-                    }
-
-                    const result: Value[] =  Array.from(tsValue.entries()).map((keyValue: any) => {
-                        return  {kind : "tuple", value: [constructValueFromTsValue(keyValue[0], typeArgs[0]), constructValueFromTsValue(keyValue[1], typeArgs[1])] };
-                    })
-
-                    return {kind: "list", value: result}
-                } else {
-                    throw new Error("Type must have a type argument");
-                }
-            }
-
-            else {
-                const typeArg = type.getTypeArguments()[0];
-                return constructValueFromTsValue(tsValue, typeArg);
-            }
+            return handleGeneralType(tsValue, type);
 
         // Difference between Object and ObjectType to be determine
         case TypeKind.ObjectType:
-            if (typeof tsValue === "object" && tsValue !== null) {
-                const innerType = type as ObjectType;
-                const innerProperties = innerType.getProperties();
-                const values: Value[] = [];
-                for (const prop of innerProperties) {
-                    const key = prop.name.toString();
-                    if (!Object.prototype.hasOwnProperty.call(tsValue, key)) {
-                        if (prop.type.isString()) {
-                            if (tsValue == "") {
-                                values.push({kind: "string", value: ""});
-                            } else {
-                                throw new Error(`Missing property '${key}' in value`);
-                            }
-                        } else if (prop.type.isNumber()) {
-                            if (tsValue == 0) {
-                                values.push({kind: "s32", value: 0});
-                            } else {
-                                throw new Error(`Missing property '${key}' in value`);
-                            }
-                        } else if (prop.type.isBoolean()) {
-                            if (tsValue == false) {
-                                values.push({kind: "bool", value: false});
-                            } else {
-                                throw new Error(`Missing property '${key}' in value`);
-                            }
-                        } else if (prop.optional) {
-                            values.push({ kind: "option" });
-                        } else {
-                            throw new Error(`Missing property '${key}' in value`);
-                        }
-                    } else {
-                        const fieldVal = constructValueFromTsValue(tsValue[key], prop.type);
-                        values.push(fieldVal);
-                    }
-                }
+            return handleObject(tsValue, type);
 
-                return { kind: "record", value: values };
-            } else {
-                throw new Error(`Expected object, got ${typeof tsValue}`);
-            }
         case TypeKind.Uint8Array:
             if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "number")) {
                 return { kind: "list", value: tsValue.map(item => ({ kind: "u8", value: item })) };
@@ -237,46 +132,8 @@ function constructValueFromTsValue(tsValue: any, type: Type): Value {
                 throw new Error(`Expected BigUint64Array, got ${typeof tsValue}`);
             }
         case TypeKind.Object:
-            if (typeof tsValue === "object" && tsValue !== null) {
-                const innerType = type as ObjectType;
-                const innerProperties = innerType.getProperties();
-                const values: Value[] = [];
-                for (const prop of innerProperties) {
-                    const key = prop.name.toString();
-                    if (!Object.prototype.hasOwnProperty.call(tsValue, key)) {
-                        if (prop.type.isString()) {
-                            if (tsValue == "") {
-                                values.push({kind: "string", value: ""});
-                            } else {
-                                throw new Error(`Missing property '${key}' in value`);
-                            }
-                        } else if (prop.type.isNumber()) {
-                            if (tsValue == 0) {
-                                values.push({kind: "s32", value: 0});
-                            } else {
-                                throw new Error(`Missing property '${key}' in value`);
-                            }
-                        } else if (prop.type.isBoolean()) {
-                            if (tsValue == false) {
-                                values.push({kind: "bool", value: false});
-                            } else {
-                                throw new Error(`Missing property '${key}' in value`);
-                            }
-                        } else if (prop.optional) {
-                            values.push({ kind: "option" });
-                        } else {
-                            throw new Error(`Missing property '${key}' in value`);
-                        }
-                    } else {
-                        const fieldVal = constructValueFromTsValue(tsValue[key], prop.type);
-                        values.push(fieldVal);
-                    }
-                }
+           return handleObject(tsValue, type);
 
-                return { kind: "record", value: values };
-            } else {
-                throw new Error(`Expected object, got ${typeof tsValue}`);
-            }
         case TypeKind.StringLiteral:
             if (typeof tsValue === "string") {
                 return { kind: "string", value: tsValue };
@@ -288,6 +145,101 @@ function constructValueFromTsValue(tsValue: any, type: Type): Value {
     }
 }
 
+function handleUnion(tsValue: any, type: Type): Value {
+    // When it comes to TS, a value for a union type is simply a non complex value.
+    // function processUnion(x: string | number | boolean) { }
+    // and x can be 1 or "1" or true.
+    // to convert it to wit-value, the only choice is to match against all possible types
+    const unionType = type as UnionType;
+    const possibleTypes = unionType.types;
+    const typeWithIndex = findTypeOfAny(tsValue, possibleTypes);
+
+    if (!typeWithIndex) {
+        throw new Error(`No matching type found for ${tsValue} in union type`);
+    } else {
+        const innerType = typeWithIndex[0];
+        const result = constructValueFromTsValue(tsValue, innerType);
+        return {kind: "variant", caseIdx: typeWithIndex![1], caseValue: result}
+    }
+}
+
+function handleGeneralType(tsValue: any, type: Type): Value {
+    if (type.isArray()) {
+        const typeArg = type.getTypeArguments?.()[0];
+        return { kind: "list", value: tsValue.map((item: any) => constructValueFromTsValue(item, typeArg)) };
+    } else if (type.isTuple()) {
+        const typeArg = type.getTypeArguments?.();
+        return { kind: "tuple", value: tsValue.map((item: any, idx: number) => constructValueFromTsValue(item, typeArg[idx])) };
+    } else if (type.isGenericType()) {
+        const genericType: GenericType<typeof type> = (type as GenericType<typeof type>);
+        const genericTypeDefinition = genericType.genericTypeDefinition;
+        if (genericTypeDefinition.name == 'Map') {
+            const typeArgs = type.getTypeArguments?.();
+
+            if (!typeArgs || typeArgs.length !== 2) {
+                throw new Error("Map must have two type arguments");
+            }
+
+            const result: Value[] =  Array.from(tsValue.entries()).map((keyValue: any) => {
+                return  {kind : "tuple", value: [constructValueFromTsValue(keyValue[0], typeArgs[0]), constructValueFromTsValue(keyValue[1], typeArgs[1])] };
+            })
+
+            return {kind: "list", value: result}
+        } else {
+            throw new Error("Type must have a type argument");
+        }
+    }
+
+    else {
+        const typeArg = type.getTypeArguments()[0];
+        return constructValueFromTsValue(tsValue, typeArg);
+    }
+}
+
+function handleObject(tsValue: any, type: Type) : Value {
+    if (typeof tsValue === "object" && tsValue !== null) {
+        const innerType = type as ObjectType;
+        const innerProperties = innerType.getProperties();
+        const values: Value[] = [];
+        for (const prop of innerProperties) {
+            const key = prop.name.toString();
+            if (!Object.prototype.hasOwnProperty.call(tsValue, key)) {
+                if (prop.optional) {
+                    values.push({ kind: "option"});
+                } else if (prop.type.isString()) {
+                    if (tsValue == "") {
+                        values.push({kind: "string", value: ""});
+                    } else {
+                        throw new Error(`Missing property '${key}' in value`);
+                    }
+                } else if (prop.type.isNumber()) {
+                    if (tsValue == 0) {
+                        values.push({kind: "s32", value: 0});
+                    } else {
+                        throw new Error(`Missing property '${key}' in value`);
+                    }
+                } else if (prop.type.isBoolean()) {
+                    if (tsValue == false) {
+                        values.push({kind: "bool", value: false});
+                    } else {
+                        throw new Error(`Missing property '${key}' in value`);
+                    }
+                } else if (prop.optional) {
+                    values.push({ kind: "option" });
+                } else {
+                    throw new Error(`Missing property '${key}' in value`);
+                }
+            } else {
+                const fieldVal = constructValueFromTsValue(tsValue[key], prop.type);
+                values.push(fieldVal);
+            }
+        }
+
+        return { kind: "record", value: values };
+    } else {
+        throw new Error(`Expected object, got ${typeof tsValue}`);
+    }
+}
 
 
 function findTypeOfAny(value: any, typeList: readonly Type[]): [Type, number] | undefined {
