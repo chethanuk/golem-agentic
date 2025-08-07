@@ -35,8 +35,6 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
         case TypeKind.Null:
             return null;
 
-        case TypeKind.Intrinsic:
-            break;
         case TypeKind.Boolean:
             if (value.kind === 'bool') {
                 return value.value;

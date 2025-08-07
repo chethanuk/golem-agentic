@@ -4,6 +4,8 @@ import {TestInterfaceType} from "./test-data";
 import {constructValueFromWitValue, constructWitValueFromValue} from "../src/mapping/values/value";
 import {constructWitValueFromTsValue} from "../src/mapping/values/ts-to-wit";
 import {constructTsValueFromWitValue} from "../src/mapping/values/wit-to-ts";
+import { testInterfaceTypeArb } from './arbitraries'
+import * as fc from 'fast-check'
 
 
 describe('Round trip value conversion', () => {
@@ -110,5 +112,23 @@ describe('Round trip value conversion', () => {
 
         // Round trip (ts-value -> wit-value -> ts-value)
         expect(tsValueReturned).toEqual(withComplexUnionType);
+    })
+
+    it('round-trip conversion should preserve TestInterfaceType', () => {
+        fc.assert(
+            fc.property(testInterfaceTypeArb, (data) => {
+                const interfaceType = getTestInterfaceType();
+
+                const witValue = constructWitValueFromTsValue(data, interfaceType);
+                const value = constructValueFromWitValue(witValue);
+                const witValueReturned = constructWitValueFromValue(value);
+                expect(witValueReturned).toEqual(witValue);
+
+                const tsValueReturned: TestInterfaceType =
+                    constructTsValueFromWitValue(witValueReturned, interfaceType);
+
+                expect(tsValueReturned).toEqual(data);
+            })
+        )
     })
 })
