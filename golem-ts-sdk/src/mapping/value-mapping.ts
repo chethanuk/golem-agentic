@@ -458,17 +458,17 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
 
     switch (expectedType.kind)  {
         case TypeKind.Invalid:
-            break;
+            throw new Error(`Expected type '${expectedType.kind}'`);
         case TypeKind.Unknown:
-            break;
+            return null;
         case TypeKind.Any:
-            break;
+            throw new Error(`'${expectedType.kind}' not supported`);
         case TypeKind.Never:
-            break;
+            throw new Error(`'${expectedType.kind}' not supported`);
         case TypeKind.Void:
-            break;
+            return undefined;
         case TypeKind.Undefined:
-            break;
+            return undefined;
         case TypeKind.Null:
             return null;
 
@@ -719,7 +719,23 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
         case TypeKind.Namespace:
             break;
         case TypeKind.Object:
-            break;
+            if (wasmRpcValue.kind === 'record') {
+                const fieldValues = wasmRpcValue.value;
+                const expectedTypeFields: ReadonlyArray<PropertyInfo> = (expectedType as ObjectType).getProperties();
+                return expectedTypeFields.reduce((acc, field, idx) => {
+                    const name: string = field.name.toString();
+                    const expectedFieldType = field.type;
+                    const tsValue = constructTsValueFromValue(fieldValues[idx], expectedFieldType)
+                    if (field.optional && (tsValue === undefined || tsValue === null)) {
+                        return acc
+                    } else {
+                        acc[name] = tsValue;
+                        return acc;
+                    }
+                }, {} as Record<string, any>);
+            } else {
+                throw new Error(`Expected object, obtained value ${wasmRpcValue}`);
+            }
         case TypeKind.Interface:
             if (wasmRpcValue.kind === 'record') {
                 const fieldValues = wasmRpcValue.value;
@@ -751,7 +767,9 @@ function constructTsValueFromValue(wasmRpcValue: Value, expectedType: Type): any
         case TypeKind.TypeParameter:
             break;
         case TypeKind.Alias:
-            break;
+            const aliasType = expectedType as TypeAliasType;
+            const targetType = aliasType.target;
+            return constructTsValueFromValue(wasmRpcValue, targetType);
         case TypeKind.Method:
             break;
         case TypeKind.Function:
