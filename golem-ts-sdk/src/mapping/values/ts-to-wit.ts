@@ -12,9 +12,6 @@ function constructValueFromTsValue(tsValue: any, type: Type): Value {
         case TypeKind.Null:
             return { kind: "tuple", value: [] };
 
-        case TypeKind.Intrinsic:
-            throw new Error(`Unimplemented type 8: ${type.kind}`);
-
         case TypeKind.Boolean:
             if (typeof tsValue === "boolean") {
                 return { kind: "bool", value: tsValue };
