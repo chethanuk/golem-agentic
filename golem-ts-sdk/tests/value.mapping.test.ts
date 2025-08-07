@@ -28,11 +28,9 @@ describe('TypeScript Values to Wit Value', () => {
             tupleObjectProp: ["", 0, {a: "", b: 0, c: false}],
             tupleProp: ["", 0, false],
             unionProp: 1,
-            unknownProp: undefined,
         }
 
         const interfaceType = getTestInterfaceType();
-         console.log((interfaceType as InterfaceType).getProperties().map((p) => p.name));
         const witValue = constructWitValueFromTsValue(defaultData, interfaceType);
         const value = constructValueFromWitValue(witValue);
         const witValueReturned = constructWitValueFromValue(value);

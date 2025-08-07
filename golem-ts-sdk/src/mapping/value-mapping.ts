@@ -22,24 +22,8 @@ export function constructTsValueFromWitValue(witValue: WitValue, expectedType: T
     return constructTsValueFromValue(value, expectedType);
 }
 
-function constructValueFromTsValue(arg: any, type: Type): Value {
+function constructValueFromTsValue(tsValue: any, type: Type): Value {
     switch (type.kind) {
-        case TypeKind.Invalid:
-            throw new Error(`Unimplemented type invalid: ${type.kind}`);
-        case TypeKind.Unknown:
-            return { kind: "tuple", value: [] };
-        case TypeKind.Any:
-            throw new Error(`Unimplemented type 3: ${type.kind}`);
-
-        case TypeKind.Never:
-            throw new Error(`Unimplemented type 4: ${type.kind}`);
-
-        case TypeKind.Void:
-            return { kind: "tuple", value: [] };
-
-        case TypeKind.Undefined:
-           throw new Error(`Unimplemented type 5: ${type.kind}`);
-
         case TypeKind.Null:
             return { kind: "tuple", value: [] };
 
@@ -47,249 +31,99 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
             throw new Error(`Unimplemented type 8: ${type.kind}`);
 
         case TypeKind.Boolean:
-            if (typeof arg === "boolean") {
-                return { kind: "bool", value: arg };
+            if (typeof tsValue === "boolean") {
+                return { kind: "bool", value: tsValue };
             } else {
-                throw new Error(`Expected boolean, got ${typeof arg}`);
+                throw new Error(`Expected boolean, got ${typeof tsValue}`);
             }
         case TypeKind.False:
-            if (typeof arg === "boolean") {
-                return { kind: "bool", value: arg };
+            if (typeof tsValue === "boolean") {
+                return { kind: "bool", value: tsValue };
             } else {
-                throw new Error(`Expected boolean, got ${typeof arg}`);
+                throw new Error(`Expected boolean, got ${typeof tsValue}`);
             }
         case TypeKind.True:
-            if (typeof arg === "boolean") {
-                return { kind: "bool", value: arg };
+            if (typeof tsValue === "boolean") {
+                return { kind: "bool", value: tsValue };
             } else {
-                throw new Error(`Expected boolean, got ${typeof arg}`);
+                throw new Error(`Expected boolean, got ${typeof tsValue}`);
             }
         case TypeKind.Number:
-            return { kind: "s32", value: arg };
+            return { kind: "s32", value: tsValue };
 
         case TypeKind.BigInt:
-            return { kind: "u64", value: arg };
+            return { kind: "u64", value: tsValue };
 
         case TypeKind.String:
-            return { kind: "string", value: arg };
-
-        case TypeKind.Symbol:
-            throw new Error(`Unimplemented type 9: ${type.kind}`);
-
-        case TypeKind.NonPrimitiveObject:
-            throw new Error(`Unimplemented type 10: ${type.kind}`);
-
-        case TypeKind.FunctionType:
-            throw new Error(`Unimplemented type 11: ${type.kind}`);
-
-        case TypeKind.Date:
-            throw new Error(`Unimplemented type 12: ${type.kind}`);
-
-        case TypeKind.Error:
-            throw new Error(`Unimplemented type 13: ${type.kind}`);
-
-        case TypeKind.RegExp:
-            throw new Error(`Unimplemented type 14: ${type.kind}`);
-
-        case TypeKind.Int8Array:
-            throw new Error(`Unimplemented type 15: ${type.kind}`);
-
-        case TypeKind.ArrayBuffer:
-            throw new Error(`Unimplemented type 16: ${type.kind}`);
-
-        case TypeKind.SharedArrayBuffer:
-            throw new Error(`Unimplemented type 17: ${type.kind}`);
-
-        case TypeKind.Atomics:
-            throw new Error(`Unimplemented type 18: ${type.kind}`);
-
-        case TypeKind.DataView:
-            throw new Error(`Unimplemented type 19: ${type.kind}`);
-
-        case TypeKind.ArrayDefinition:
-            throw new Error(`Unimplemented type 20: ${type.kind}`);
-
-        case TypeKind.ReadonlyArrayDefinition:
-            throw new Error(`Unimplemented type 21: ${type.kind}`);
-
-        case TypeKind.TupleDefinition:
-            throw new Error(`Unimplemented type 22: ${type.kind}`);
-
-        case TypeKind.MapDefinition:
-            throw new Error(`Unimplemented type 22: ${type.kind}`);
-
-        case TypeKind.WeakMapDefinition:
-            throw new Error(`Unimplemented type 23: ${type.kind}`);
-
-        case TypeKind.SetDefinition:
-            throw new Error(`Unimplemented type 24: ${type.kind}`);
-
-        case TypeKind.WeakSetDefinition:
-            throw new Error(`Unimplemented type 25: ${type.kind}`);
+            return { kind: "string", value: tsValue };
 
         case TypeKind.PromiseDefinition:
             const promiseDefType = type as PromiseType;
             const promiseDefArgType = promiseDefType.getTypeArguments()[0];
-            return constructValueFromTsValue(arg, promiseDefArgType);
-
-        case TypeKind.GeneratorDefinition:
-            throw new Error(`Unimplemented type 26: ${type.kind}`);
-
-        case TypeKind.AsyncGeneratorDefinition:
-            throw new Error(`Unimplemented type 27: ${type.kind}`);
-
-        case TypeKind.IteratorDefinition:
-            throw new Error(`Unimplemented type 28: ${type.kind}`);
-
-        case TypeKind.IterableDefinition:
-            throw new Error(`Unimplemented type 29: ${type.kind}`);
-
-        case TypeKind.IterableIteratorDefinition:
-            throw new Error(`Unimplemented type 30: ${type.kind}`);
-
-        case TypeKind.AsyncIteratorDefinition:
-            throw new Error(`Unimplemented type 31: ${type.kind}`);
-
-        case TypeKind.AsyncIterableDefinition:
-            throw new Error(`Unimplemented type 32: ${type.kind}`);
-
-        case TypeKind.AsyncIterableIteratorDefinition:
-            throw new Error(`Unimplemented type 33: ${type.kind}`);
-
-        case TypeKind.Module:
-            throw new Error(`Unimplemented type 34: ${type.kind}`);
-
-        case TypeKind.Namespace:
-            throw new Error(`Unimplemented type 35: ${type.kind}`);
+            return constructValueFromTsValue(tsValue, promiseDefArgType);
 
         case TypeKind.Interface:
-            if (typeof arg === "object" && arg !== null) {
+            if (typeof tsValue === "object" && tsValue !== null) {
                 const innerType = type as ObjectType;
                 const innerProperties = innerType.getProperties();
                 const values: Value[] = [];
                 for (const prop of innerProperties) {
                     const key = prop.name.toString();
-                    if (!Object.prototype.hasOwnProperty.call(arg, key)) {
+                    if (!Object.prototype.hasOwnProperty.call(tsValue, key)) {
                         if (prop.optional) {
                             values.push({ kind: "option"});
                         } else {
                             throw new Error(`Missing property '${key}' in value`);
                         }
                     } else {
-                        const fieldVal = constructValueFromTsValue(arg[key], prop.type);
+                        const fieldVal = constructValueFromTsValue(tsValue[key], prop.type);
                         values.push(fieldVal);
                     }
                 }
 
                 return { kind: "record", value: values };
             } else {
-                throw new Error(`Expected object, got ${arg} which is ${typeof arg}`);
+                throw new Error(`Expected object, got ${tsValue} which is ${typeof tsValue}`);
             }
 
         case TypeKind.Class:
             throw new Error(`Unimplemented type 36: ${type.kind}`);
 
-        // This should return a variant
-        case TypeKind.Union:
+        case TypeKind.Union: {
+            // When it comes to TS, a value for a union type is simply a non complex value.
+            // function processUnion(x: string | number | boolean) { }
+            // and x can be 1 or "1" or true.
+            // to convert it to wit-value, the only choice is to match against all possible types
             const unionType = type as UnionType;
-            const lowered = (typeof arg).toLowerCase();
-            const idx = unionType.types.findIndex((x) => x.name.toLowerCase() == lowered);
-            const innerType = unionType.types[idx];
-            if (idx < 0) {
-                throw new Error(`No matching type found for ${lowered} in union type`);
+            const possibleTypes = unionType.types;
+            const typeWithIndex = findTypeOfAny(tsValue, possibleTypes);
+
+            if (!typeWithIndex) {
+                throw new Error(`No matching type found for ${tsValue} in union type`);
+            } else {
+                const innerType = typeWithIndex[0];
+                const result = constructValueFromTsValue(tsValue, innerType);
+                return {kind: "variant", caseIdx: typeWithIndex![1], caseValue: result}
             }
-
-            return {kind: "variant", caseIdx: idx,  caseValue: constructValueFromTsValue(arg, innerType) }
-
-        case TypeKind.Intersection:
-            throw new Error(`Unimplemented type 38: ${type.kind}`);
-
-        case TypeKind.ConditionalType:
-            throw new Error(`Unimplemented type 39: ${type.kind}`);
-
-        case TypeKind.IndexedAccess:
-            throw new Error(`Unimplemented type 40: ${type.kind}`);
-
-        case TypeKind.TypeParameter:
-            throw new Error(`Unimplemented type 41: ${type.kind}`);
+        }
 
         case TypeKind.Alias:
             const aliasType = type as TypeAliasType;
             const targetType = aliasType.target;
-            return constructValueFromTsValue(arg, targetType);
-
-        case TypeKind.Method:
-            throw new Error(`Unimplemented type 43: ${type.kind}`);
-
-        case TypeKind.Function:
-            throw new Error(`Unimplemented type 44: ${type.kind}`);
-
-        case TypeKind.GeneratorFunction:
-            throw new Error(`Unimplemented type 45: ${type.kind}`);
-
-        case TypeKind.NumberLiteral:
-            throw new Error(`Unimplemented type 46: ${type.kind}`);
-
-        case TypeKind.BigIntLiteral:
-            throw new Error(`Unimplemented type 47: ${type.kind}`);
-
-        case TypeKind.TemplateLiteral:
-            throw new Error(`Unimplemented type 48: ${type.kind}`);
-
-        case TypeKind.EnumLiteral:
-            throw new Error(`Unimplemented type 49: ${type.kind}`);
-
-        case TypeKind.RegExpLiteral:
-            throw new Error(`Unimplemented type 50: ${type.kind}`);
-
-        case TypeKind.Enum:
-            throw new Error(`Unimplemented type 51: ${type.kind}`);
-
-        case TypeKind.UniqueSymbol:
-            throw new Error(`Unimplemented type 52: ${type.kind}`);
-
-        case TypeKind.ESSymbol:
-            throw new Error(`Unimplemented type 53: ${type.kind}`);
+            return constructValueFromTsValue(tsValue, targetType);
 
         case TypeKind.Promise:
             const promiseType = type as PromiseType;
             const argument = promiseType.getTypeArguments()[0];
-            return constructValueFromTsValue(arg, argument)
-
-        case TypeKind.Generator:
-            throw new Error(`Unimplemented type 54: ${type.kind}`);
-
-        case TypeKind.AsyncGenerator:
-            throw new Error(`Unimplemented type 55: ${type.kind}`);
-
-        case TypeKind.Iterator:
-            throw new Error(`Unimplemented type 56: ${type.kind}`);
-
-        case TypeKind.Iterable:
-            throw new Error(`Unimplemented type 57: ${type.kind}`);
-
-        case TypeKind.IterableIterator:
-            throw new Error(`Unimplemented type 58: ${type.kind}`);
-
-        case TypeKind.AsyncIterator:
-            throw new Error(`Unimplemented type 59: ${type.kind}`);
-
-        case TypeKind.AsyncIterable:
-            throw new Error(`Unimplemented type 60: ${type.kind}`);
-
-        case TypeKind.AsyncIterableIterator:
-            throw new Error(`Unimplemented type 61: ${type.kind}`);
-
-        case TypeKind.Jsx:
-            throw new Error(`Unimplemented type 62: ${type.kind}`);
+            return constructValueFromTsValue(tsValue, argument)
 
         case TypeKind.Type:
             if (type.isArray()) {
                 const typeArg = type.getTypeArguments?.()[0];
-                return { kind: "list", value: arg.map((item: any) => constructValueFromTsValue(item, typeArg)) };
+                return { kind: "list", value: tsValue.map((item: any) => constructValueFromTsValue(item, typeArg)) };
             } else if (type.isTuple()) {
                 const typeArg = type.getTypeArguments?.();
-                return { kind: "tuple", value: arg.map((item: any, idx: number) => constructValueFromTsValue(item, typeArg[idx])) };
+                return { kind: "tuple", value: tsValue.map((item: any, idx: number) => constructValueFromTsValue(item, typeArg[idx])) };
             } else if (type.isGenericType()) {
                 const genericType: GenericType<typeof type> = (type as GenericType<typeof type>);
                 const genericTypeDefinition = genericType.genericTypeDefinition;
@@ -300,7 +134,7 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                         throw new Error("Map must have two type arguments");
                     }
 
-                    const result: Value[] =  Array.from(arg.entries()).map((keyValue: any) => {
+                    const result: Value[] =  Array.from(tsValue.entries()).map((keyValue: any) => {
                        return  {kind : "tuple", value: [constructValueFromTsValue(keyValue[0], typeArgs[0]), constructValueFromTsValue(keyValue[1], typeArgs[1])] };
                     })
 
@@ -312,35 +146,32 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
 
             else {
                 const typeArg = type.getTypeArguments()[0];
-                return constructValueFromTsValue(arg, typeArg);
+                return constructValueFromTsValue(tsValue, typeArg);
             }
-
-        case TypeKind.TypeCtor:
-            throw new Error(`Unimplemented type 63: ${type.kind}`);
 
         // Difference between Object and ObjectType to be determine
         case TypeKind.ObjectType:
-            if (typeof arg === "object" && arg !== null) {
+            if (typeof tsValue === "object" && tsValue !== null) {
                 const innerType = type as ObjectType;
                 const innerProperties = innerType.getProperties();
                 const values: Value[] = [];
                 for (const prop of innerProperties) {
                     const key = prop.name.toString();
-                    if (!Object.prototype.hasOwnProperty.call(arg, key)) {
+                    if (!Object.prototype.hasOwnProperty.call(tsValue, key)) {
                         if (prop.type.isString()) {
-                            if (arg == "") {
+                            if (tsValue == "") {
                                 values.push({kind: "string", value: ""});
                             } else {
                                 throw new Error(`Missing property '${key}' in value`);
                             }
                         } else if (prop.type.isNumber()) {
-                            if (arg == 0) {
+                            if (tsValue == 0) {
                                 values.push({kind: "s32", value: 0});
                             } else {
                                 throw new Error(`Missing property '${key}' in value`);
                             }
                         } else if (prop.type.isBoolean()) {
-                            if (arg == false) {
+                            if (tsValue == false) {
                                 values.push({kind: "bool", value: false});
                             } else {
                                 throw new Error(`Missing property '${key}' in value`);
@@ -351,97 +182,97 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                             throw new Error(`Missing property '${key}' in value`);
                         }
                     } else {
-                        const fieldVal = constructValueFromTsValue(arg[key], prop.type);
+                        const fieldVal = constructValueFromTsValue(tsValue[key], prop.type);
                         values.push(fieldVal);
                     }
                 }
 
                 return { kind: "record", value: values };
             } else {
-                throw new Error(`Expected object, got ${typeof arg}`);
+                throw new Error(`Expected object, got ${typeof tsValue}`);
             }
         case TypeKind.Uint8Array:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "number")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "u8", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "number")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "u8", value: item })) };
             } else {
-                throw new Error(`Expected Uint8Array, got ${typeof arg}`);
+                throw new Error(`Expected Uint8Array, got ${typeof tsValue}`);
             }
         case TypeKind.Uint8ClampedArray:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "number")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "u8", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "number")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "u8", value: item })) };
             } else {
-                throw new Error(`Expected Uint8ClampedArray, got ${typeof arg}`);
+                throw new Error(`Expected Uint8ClampedArray, got ${typeof tsValue}`);
             }
         case TypeKind.Int16Array:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "number")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "s16", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "number")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "s16", value: item })) };
             } else {
-                throw new Error(`Expected Int16Array, got ${typeof arg}`);
+                throw new Error(`Expected Int16Array, got ${typeof tsValue}`);
             }
         case TypeKind.Uint16Array:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "number")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "u16", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "number")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "u16", value: item })) };
             } else {
-                throw new Error(`Expected Uint16Array, got ${typeof arg}`);
+                throw new Error(`Expected Uint16Array, got ${typeof tsValue}`);
             }
         case TypeKind.Int32Array:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "number")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "s32", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "number")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "s32", value: item })) };
             } else {
-                throw new Error(`Expected Int32Array, got ${typeof arg}`);
+                throw new Error(`Expected Int32Array, got ${typeof tsValue}`);
             }
         case TypeKind.Uint32Array:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "number")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "u32", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "number")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "u32", value: item })) };
             } else {
-                throw new Error(`Expected Uint32Array, got ${typeof arg}`);
+                throw new Error(`Expected Uint32Array, got ${typeof tsValue}`);
             }
         case TypeKind.Float32Array:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "number")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "f32", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "number")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "f32", value: item })) };
             } else {
-                throw new Error(`Expected Float32Array, got ${typeof arg}`);
+                throw new Error(`Expected Float32Array, got ${typeof tsValue}`);
             }
         case TypeKind.Float64Array:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "number")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "f64", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "number")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "f64", value: item })) };
             } else {
-                throw new Error(`Expected Float64Array, got ${typeof arg}`);
+                throw new Error(`Expected Float64Array, got ${typeof tsValue}`);
             }
         case TypeKind.BigInt64Array:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "bigint")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "s64", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "bigint")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "s64", value: item })) };
             } else {
-                throw new Error(`Expected BigInt64Array, got ${typeof arg}`);
+                throw new Error(`Expected BigInt64Array, got ${typeof tsValue}`);
             }
         case TypeKind.BigUint64Array:
-            if (Array.isArray(arg) && arg.every(item => typeof item === "bigint")) {
-                return { kind: "list", value: arg.map(item => ({ kind: "u64", value: item })) };
+            if (Array.isArray(tsValue) && tsValue.every(item => typeof item === "bigint")) {
+                return { kind: "list", value: tsValue.map(item => ({ kind: "u64", value: item })) };
             } else {
-                throw new Error(`Expected BigUint64Array, got ${typeof arg}`);
+                throw new Error(`Expected BigUint64Array, got ${typeof tsValue}`);
             }
         case TypeKind.Object:
-            if (typeof arg === "object" && arg !== null) {
+            if (typeof tsValue === "object" && tsValue !== null) {
                 const innerType = type as ObjectType;
                 const innerProperties = innerType.getProperties();
                 const values: Value[] = [];
                 for (const prop of innerProperties) {
                     const key = prop.name.toString();
-                    if (!Object.prototype.hasOwnProperty.call(arg, key)) {
+                    if (!Object.prototype.hasOwnProperty.call(tsValue, key)) {
                         if (prop.type.isString()) {
-                            if (arg == "") {
+                            if (tsValue == "") {
                                 values.push({kind: "string", value: ""});
                             } else {
                                 throw new Error(`Missing property '${key}' in value`);
                             }
                         } else if (prop.type.isNumber()) {
-                            if (arg == 0) {
+                            if (tsValue == 0) {
                                 values.push({kind: "s32", value: 0});
                             } else {
                                 throw new Error(`Missing property '${key}' in value`);
                             }
                         } else if (prop.type.isBoolean()) {
-                            if (arg == false) {
+                            if (tsValue == false) {
                                 values.push({kind: "bool", value: false});
                             } else {
                                 throw new Error(`Missing property '${key}' in value`);
@@ -452,21 +283,23 @@ function constructValueFromTsValue(arg: any, type: Type): Value {
                             throw new Error(`Missing property '${key}' in value`);
                         }
                     } else {
-                        const fieldVal = constructValueFromTsValue(arg[key], prop.type);
+                        const fieldVal = constructValueFromTsValue(tsValue[key], prop.type);
                         values.push(fieldVal);
                     }
                 }
 
                 return { kind: "record", value: values };
             } else {
-                throw new Error(`Expected object, got ${typeof arg}`);
+                throw new Error(`Expected object, got ${typeof tsValue}`);
             }
         case TypeKind.StringLiteral:
-            if (typeof arg === "string") {
-                return { kind: "string", value: arg };
+            if (typeof tsValue === "string") {
+                return { kind: "string", value: tsValue };
             } else {
-                throw new Error(`Expected string literal, got ${typeof arg}`);
+                throw new Error(`Expected string literal, got ${typeof tsValue}`);
             }
+        default:
+            throw new Error(`The following type is not supported in Golem in the context of agents: ${type.displayName}`);
     }
 }
 
@@ -485,18 +318,6 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
     }
 
     switch (expectedType.kind)  {
-        case TypeKind.Invalid:
-            throw new Error(`Expected type '${expectedType.kind}'`);
-        case TypeKind.Unknown:
-            return null;
-        case TypeKind.Any:
-            throw new Error(`'${expectedType.kind}' not supported`);
-        case TypeKind.Never:
-            throw new Error(`'${expectedType.kind}' not supported`);
-        case TypeKind.Void:
-            throw new Error(`'${expectedType.kind}' not supported`);
-        case TypeKind.Undefined:
-            throw new Error(`'${expectedType.kind}' not supported`);
         case TypeKind.Null:
             return null;
 
@@ -547,8 +368,6 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
             } else {
                 throw new Error(`Expected string, obtained value ${value}`);
             }
-        case TypeKind.Symbol:
-            throw new Error(`Unrecognized type for ${value.kind}`);
         case TypeKind.NonPrimitiveObject:
             if (value.kind == 'record') {
                 const fieldValues = value.value;
@@ -575,8 +394,6 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
             } else {
                 throw new Error(`Expected object, obtained value ${value}`);
             }
-        case TypeKind.FunctionType:
-            throw new Error(`Unrecognized type for ${value.kind}`);
         case TypeKind.Date:
             if (value.kind === 'string') {
                 return new Date(value.value);
@@ -695,8 +512,6 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
             } else {
                 throw new Error(`Expected SharedArrayBuffer, obtained value ${value}`);
             }
-        case TypeKind.Atomics:
-            break;
         case TypeKind.DataView:
             if (value.kind === 'list') {
                 const byteArray = value.value.map(v => {
@@ -710,42 +525,6 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
             } else {
                 throw new Error(`Expected DataView, obtained value ${value}`);
             }
-        case TypeKind.ArrayDefinition:
-            break;
-        case TypeKind.ReadonlyArrayDefinition:
-            break;
-        case TypeKind.TupleDefinition:
-            break;
-        case TypeKind.MapDefinition:
-            break;
-        case TypeKind.WeakMapDefinition:
-            break;
-        case TypeKind.SetDefinition:
-            break;
-        case TypeKind.WeakSetDefinition:
-            break;
-        case TypeKind.PromiseDefinition:
-            break;
-        case TypeKind.GeneratorDefinition:
-            break;
-        case TypeKind.AsyncGeneratorDefinition:
-            break;
-        case TypeKind.IteratorDefinition:
-            break;
-        case TypeKind.IterableDefinition:
-            break;
-        case TypeKind.IterableIteratorDefinition:
-            break;
-        case TypeKind.AsyncIteratorDefinition:
-            break;
-        case TypeKind.AsyncIterableDefinition:
-            break;
-        case TypeKind.AsyncIterableIteratorDefinition:
-            break;
-        case TypeKind.Module:
-            break;
-        case TypeKind.Namespace:
-            break;
         case TypeKind.Object:
             if (value.kind === 'record') {
                 const fieldValues = value.value;
@@ -782,32 +561,24 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
             } else {
                 throw new Error(`Expected object, obtained value ${value}`);
             }
-        case TypeKind.Class:
-            break;
         case TypeKind.Union:
-            break;
-        case TypeKind.Intersection:
-            break;
-        case TypeKind.ConditionalType:
-            break;
-        case TypeKind.IndexedAccess:
-            break;
-        case TypeKind.TypeParameter:
-            break;
+            if (value.kind === 'variant') {
+                const caseValue = value.caseValue;
+                if (!caseValue) {
+                    throw new Error(`Expected value, obtained value ${value}`);
+                }
+
+                const unionTypes = (expectedType as UnionType).types;
+                const matchingType = unionTypes[value.caseIdx];
+
+                return constructTsValueFromValue(caseValue, matchingType)
+            } else {
+                throw new Error(`Expected union, obtained value ${value}`);
+            }
         case TypeKind.Alias:
             const aliasType = expectedType as TypeAliasType;
             const targetType = aliasType.target;
             return constructTsValueFromValue(value, targetType);
-        case TypeKind.Method:
-            break;
-        case TypeKind.Function:
-            break;
-        case TypeKind.GeneratorFunction:
-            break;
-        case TypeKind.NumberLiteral:
-            break;
-        case TypeKind.BigIntLiteral:
-            break;
         case TypeKind.StringLiteral:
             if (value.kind === 'string') {
                 return value.value;
@@ -817,36 +588,6 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
         case TypeKind.Promise:
             const innerType = (expectedType as PromiseType).getTypeArguments()[0];
             return constructTsValueFromValue(value, innerType);
-        case TypeKind.TemplateLiteral:
-            break;
-        case TypeKind.EnumLiteral:
-            break;
-        case TypeKind.RegExpLiteral:
-            break;
-        case TypeKind.Enum:
-            break;
-        case TypeKind.UniqueSymbol:
-            break;
-        case TypeKind.ESSymbol:
-            break;
-        case TypeKind.Generator:
-            break;
-        case TypeKind.AsyncGenerator:
-            break;
-        case TypeKind.Iterator:
-            break;
-        case TypeKind.Iterable:
-            break;
-        case TypeKind.IterableIterator:
-            break;
-        case TypeKind.AsyncIterator:
-            break;
-        case TypeKind.AsyncIterable:
-            break;
-        case TypeKind.AsyncIterableIterator:
-            break;
-        case TypeKind.Jsx:
-            break;
         case TypeKind.Type:
             if (expectedType.isArray()) {
                 if (value.kind == "list") {
@@ -898,9 +639,82 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
                 return constructTsValueFromValue(value, arg);
             }
 
-        case TypeKind.TypeCtor:
-            break;
+        default:
+            throw new Error(`'${expectedType.displayName} with kind ${expectedType.kind} not supported'`);
 
     }
 }
 
+function findTypeOfAny(value: any, typeList: readonly Type[]): [Type, number] | undefined {
+    let idx = 0;
+    for (const type of typeList) {
+        if (matchesType(value, type)) {
+            return [type, idx];
+        }
+
+        idx++;
+    }
+
+    return undefined;
+}
+
+function matchesType(value: any, type: Type): boolean {
+    switch (type.kind) {
+        case TypeKind.Number:
+            return typeof value === 'number';
+
+        case TypeKind.String:
+            return typeof value === 'string';
+
+        case TypeKind.Boolean:
+            return typeof value === 'boolean';
+
+        case TypeKind.Null:
+            return value === null;
+
+        case TypeKind.Undefined:
+            return value === undefined;
+
+        case TypeKind.ArrayBuffer:
+            const elementType = type.getTypeArguments?.()[0];
+            return Array.isArray(value) &&
+                value.every((item) => matchesType(item, elementType));
+
+        case TypeKind.TupleDefinition:
+            const tupleTypes = type.getTypeArguments();
+
+            return Array.isArray(value) && value.length === tupleTypes.length &&
+                value.every((v, idx) => matchesType(v, tupleTypes[idx]));
+
+        case TypeKind.Object:
+            if (typeof value !== 'object' || value === null) return false;
+
+            let allValid = true;
+
+            for (const prop of (type as ObjectType).getProperties() ?? []) {
+                const propExists = (prop.name.toString() in value)
+                if (!propExists) {
+                    if (!prop.optional)  {
+                        allValid = false;
+                        break;
+                    }
+                } else {
+                    if (!matchesType(value[prop.name.toString()], prop.type)) {
+                        allValid = false;
+                        break;
+                    }
+                }
+            }
+
+            return allValid;
+
+        case TypeKind.Union:
+            throw new Error("union of union not yet supported");
+
+        case TypeKind.Any:
+            return true;
+
+        default:
+            return false;
+    }
+}

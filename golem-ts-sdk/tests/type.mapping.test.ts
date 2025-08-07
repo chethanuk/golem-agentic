@@ -144,6 +144,7 @@ function checkUnionFields(fields: any[]) {
         { name: 'true', typ: { kind: 'bool' } },
     ];
 
+    // This implies wit value will be a variant with these cases
     unionFields.forEach(field => {
         expect(field.typ.kind).toBe('variant');
         expect(field.typ.value.cases).toEqual(expectedCases);
