@@ -405,6 +405,9 @@ function matchesType(value: any, type: Type): boolean {
     case TypeKind.ObjectType:
       return handleObjectMatch(value, type);
 
+    case TypeKind.Interface:
+      return handleObjectMatch(value, type);
+
     case TypeKind.Alias:
       const aliasType = type as TypeAliasType;
       const targetType = aliasType.target;

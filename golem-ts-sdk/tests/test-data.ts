@@ -36,7 +36,7 @@ export type UnionComplexType =
    | TupleType
    | TupleComplexType
   // | MapType
-  // | SimpleInterfaceType;
+   | SimpleInterfaceType;
 
 export type ObjectType = { a: string; b: number; c: boolean };
 

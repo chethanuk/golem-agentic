@@ -68,9 +68,9 @@ export const unionComplexArb: fc.Arbitrary<UnionComplexType> = fc.oneof(
     tupleArb,
     tupleComplexArb,
     // mapArb,
-    // fc.record({
-    //   n: fc.integer(),
-    // }),
+    fc.record({
+      n: fc.integer(),
+    }),
 );
 
 export const objectComplexArb: fc.Arbitrary<ObjectComplexType> = fc.record({
