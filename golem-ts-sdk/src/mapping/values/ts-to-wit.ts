@@ -18,6 +18,8 @@ export function constructWitValueFromTsValue(
   return constructWitValueFromValue(value);
 }
 
+// Note that we take `type: Type` instead of `type: AnalysedType`(because at this point `AnalysedType` of the `tsValue` is also available)
+// as `Type` holds more information, and can be used to determine the error messages for wrong `tsValue` more accurately.
 function constructValueFromTsValue(tsValue: any, type: Type): Value {
   switch (type.kind) {
     case TypeKind.Null:
