@@ -14,21 +14,7 @@ describe('typescript value to wit value round-trip conversions', () => {
   it('should correctly perform round-trip conversion for arbitrary values of interface type', () => {
     fc.assert(
       fc.property(testInterfaceTypeArb, (data) => {
-        const interfaceType = getTestInterfaceType();
-        const witValue = constructWitValueFromTsValue(data, interfaceType);
-
-        // Round trip wit-value -> value -> wit-value
-        const value = constructValueFromWitValue(witValue);
-        const witValueReturned = constructWitValueFromValue(value);
-        expect(witValueReturned).toEqual(witValue);
-
-        // Round trip ts-value -> wit-value -> ts-value
-        const tsValueReturned: TestInterfaceType = constructTsValueFromWitValue(
-          witValueReturned,
-          interfaceType,
-        );
-
-        expect(tsValueReturned).toEqual(data);
+        runRoundTripTest(data as TestInterfaceType);
       }),
     );
   });
@@ -52,21 +38,7 @@ describe('typescript value to wit value round-trip conversions', () => {
       unionProp: 1,
     };
 
-    const interfaceType = getTestInterfaceType();
-    const witValue = constructWitValueFromTsValue(defaultData, interfaceType);
-
-    // Round trip wit-value -> value -> wit-value
-    const value = constructValueFromWitValue(witValue);
-    const witValueReturned = constructWitValueFromValue(value);
-    expect(witValueReturned).toEqual(witValue);
-
-    // Round trip ts-value -> wit-value -> ts-value
-    const tsValueReturned: TestInterfaceType = constructTsValueFromWitValue(
-      witValueReturned,
-      interfaceType,
-    );
-
-    expect(tsValueReturned).toEqual(defaultData);
+    runRoundTripTest(defaultData);
   });
 
   it('should preserve values including optional properties', () => {
@@ -89,24 +61,7 @@ describe('typescript value to wit value round-trip conversions', () => {
       optionalProp: 2,
     };
 
-    const interfaceType = getTestInterfaceType();
-    const witValue = constructWitValueFromTsValue(
-      withOptionalValues,
-      interfaceType,
-    );
-
-    // Round trip wit-value -> value -> wit-value
-    const value = constructValueFromWitValue(witValue);
-    const witValueReturned = constructWitValueFromValue(value);
-    expect(witValueReturned).toEqual(witValue);
-
-    // Round trip ts-value -> wit-value -> ts-value
-    const tsValueReturned: TestInterfaceType = constructTsValueFromWitValue(
-      witValue,
-      interfaceType,
-    );
-
-    expect(tsValueReturned).toEqual(withOptionalValues);
+    runRoundTripTest(withOptionalValues);
   });
 
   it('should preserve union properties with complex object variants', () => {
@@ -129,23 +84,24 @@ describe('typescript value to wit value round-trip conversions', () => {
       optionalProp: 2,
     };
 
-    const interfaceType = getTestInterfaceType();
-    const witValue = constructWitValueFromTsValue(
-      withComplexUnionType,
-      interfaceType,
-    );
-
-    // Round trip wit-value -> value -> wit-value
-    const value = constructValueFromWitValue(witValue);
-    const witValueReturned = constructWitValueFromValue(value);
-    expect(witValueReturned).toEqual(witValue);
-
-    // Round trip ts-value -> wit-value -> ts-value
-    const tsValueReturned: TestInterfaceType = constructTsValueFromWitValue(
-      witValue,
-      interfaceType,
-    );
-
-    expect(tsValueReturned).toEqual(withComplexUnionType);
+    runRoundTripTest(withComplexUnionType);
   });
 });
+
+function runRoundTripTest(data: TestInterfaceType) {
+  const interfaceType = getTestInterfaceType();
+  const witValue = constructWitValueFromTsValue(data, interfaceType);
+
+  // Round trip wit-value -> value -> wit-value
+  const value = constructValueFromWitValue(witValue);
+  const witValueReturned = constructWitValueFromValue(value);
+  expect(witValueReturned).toEqual(witValue);
+
+  // Round trip ts-value -> wit-value -> ts-value
+  const tsValueReturned: TestInterfaceType = constructTsValueFromWitValue(
+      witValueReturned,
+      interfaceType,
+  );
+
+  expect(tsValueReturned).toEqual(data);
+}
