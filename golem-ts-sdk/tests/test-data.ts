@@ -16,16 +16,47 @@ interface SimpleInterfaceType {
   n: number;
 }
 
-// A union type will become a variant in WIT, and the names will be available in the case.name
-// Example: [{name: 'string', typ: { kind: 'string' }}, {name: 'number', typ: { kind: 's32' }}]
-// This needs to be verified with @vigoo
+// A union type will become a variant in WIT, however the names are of the type names (which is wrong)
+// but I can't figure any other way of naming it unless it affect the user such as always do an alias
+// i.e, instead of type MyUnion = `number | string`
+// they have to write it as
+// type MyNumber = number;
+// type MyString = string;
+// type MyUnion = MyNumber | MyString;
 export type UnionType = number | string | boolean | ObjectType;
+
+// Deliberately adding duplicate types since TypeScript allows it
+export type UnionComplexType =
+  | number
+  | string
+  | boolean
+  | UnionType
+  //  | ListType
+  // | ListComplexType
+  | TupleType
+  | TupleComplexType
+  // | MapType
+  | SimpleInterfaceType;
 
 export type ObjectType = { a: string; b: number; c: boolean };
 
+export type ObjectComplexType = {
+  a: string;
+  b: number;
+  c: boolean;
+  d: ObjectType;
+  e: UnionType;
+  f: ListType;
+  g: ListComplexType;
+  h: TupleType;
+  i: TupleComplexType;
+  j: MapType;
+  k: SimpleInterfaceType;
+};
+
 export type ListType = Array<string>;
 
-export type ListObjectType = Array<ObjectType>;
+export type ListComplexType = Array<ObjectType>;
 
 export type TupleType = [string, number, boolean];
 
@@ -44,24 +75,26 @@ export interface TestInterfaceType {
   optionalProp?: number;
   nestedProp: SimpleInterfaceType;
   unionProp: UnionType;
+  unionComplexProp: UnionComplexType;
   objectProp: ObjectType;
+  objectComplexProp: ObjectComplexType;
   listProp: ListType;
-  listObjectProp: ListObjectType;
+  listObjectProp: ListComplexType;
   tupleProp: TupleType;
   tupleObjectProp: TupleComplexType;
   mapProp: MapType;
-  //FIXME, RTTIST bug or not supported yet
+  // FIXME, `RTTIST` bug or not supported yet
   // mapAlternativeProp: MapTypeAlternative,
-  //unionPropInlined: string | number;
+  // unionPropInlined: string | number;
   // recordProp: RecordType;
   // enumType: EnumTypeAlias;
-  //enumTypeInlined: EnumType,
+  // enumTypeInlined: EnumType,
   // objectPropInlined: {
   //     a: string,
   //     b: number,
   //     c: boolean
   // }
-  //enumProp: EnumTypeAlias,
+  // enumProp: EnumTypeAlias,
   // enumPropInlined: EnumTypeAlias,
 }
 

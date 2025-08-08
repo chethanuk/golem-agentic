@@ -37,6 +37,7 @@ describe('TypeScript Interface to AnalysedType', () => {
 
   it('Object types within an interface', () => {
     checkObjectFields(recordFields);
+    checkObjectComplexFields(recordFields);
   });
 
   it('List type within an interface', () => {
@@ -312,5 +313,156 @@ function checkMapFields(fields: any[]) {
       expect(inner.value.items[0].kind).toBe('string');
       expect(inner.value.items[1].kind).toBe('s32');
     }
+  });
+}
+
+function checkObjectComplexFields(fields: any[]) {
+  const objectFields = fields.filter((f) =>
+    f.name.startsWith('objectComplexProp'),
+  );
+  expect(objectFields.length).toBeGreaterThan(0);
+
+  const expected = [
+    { name: 'a', typ: { kind: 'string' } },
+    { name: 'b', typ: { kind: 's32' } },
+    { name: 'c', typ: { kind: 'bool' } },
+    {
+      name: 'd',
+      typ: {
+        kind: 'record',
+        value: {
+          fields: [
+            { name: 'a', typ: { kind: 'string' } },
+            { name: 'b', typ: { kind: 's32' } },
+            { name: 'c', typ: { kind: 'bool' } },
+          ],
+          name: undefined,
+        },
+      },
+    },
+    {
+      name: 'e',
+      typ: {
+        kind: 'variant',
+        value: {
+          cases: [
+            { name: 'string', typ: { kind: 'string' } },
+            { name: 'number', typ: { kind: 's32' } },
+            { name: 'false', typ: { kind: 'bool' } },
+            { name: 'true', typ: { kind: 'bool' } },
+            {
+              name: 'objecttype',
+              typ: {
+                kind: 'record',
+                value: {
+                  fields: [
+                    { name: 'a', typ: { kind: 'string' } },
+                    { name: 'b', typ: { kind: 's32' } },
+                    { name: 'c', typ: { kind: 'bool' } },
+                  ],
+                  name: undefined,
+                },
+              },
+            },
+          ],
+          name: undefined,
+        },
+      },
+    },
+    {
+      name: 'f',
+      typ: {
+        kind: 'list',
+        value: {
+          inner: { kind: 'string' },
+          name: undefined,
+        },
+      },
+    },
+    {
+      name: 'g',
+      typ: {
+        kind: 'list',
+        value: {
+          inner: {
+            kind: 'record',
+            value: {
+              fields: [
+                { name: 'a', typ: { kind: 'string' } },
+                { name: 'b', typ: { kind: 's32' } },
+                { name: 'c', typ: { kind: 'bool' } },
+              ],
+              name: undefined,
+            },
+          },
+          name: undefined,
+        },
+      },
+    },
+    {
+      name: 'h',
+      typ: {
+        kind: 'tuple',
+        value: {
+          items: [{ kind: 'string' }, { kind: 's32' }, { kind: 'bool' }],
+          name: undefined,
+        },
+      },
+    },
+    {
+      name: 'i',
+      typ: {
+        kind: 'tuple',
+        value: {
+          items: [
+            { kind: 'string' },
+            { kind: 's32' },
+            {
+              kind: 'record',
+              value: {
+                fields: [
+                  { name: 'a', typ: { kind: 'string' } },
+                  { name: 'b', typ: { kind: 's32' } },
+                  { name: 'c', typ: { kind: 'bool' } },
+                ],
+                name: undefined,
+              },
+            },
+          ],
+          name: undefined,
+        },
+      },
+    },
+    {
+      name: 'j',
+      typ: {
+        kind: 'list',
+        value: {
+          inner: {
+            kind: 'tuple',
+            value: {
+              items: [{ kind: 'string' }, { kind: 's32' }],
+              name: undefined,
+            },
+          },
+          name: undefined,
+        },
+      },
+    },
+    {
+      name: 'k',
+      typ: {
+        kind: 'record',
+        value: {
+          fields: [{ name: 'n', typ: { kind: 's32' } }],
+          name: undefined,
+        },
+      },
+    },
+  ];
+
+  objectFields.forEach((field) => {
+    expect(field.typ.kind).toBe('record');
+    expect(field.typ.value.fields).toEqual(expected);
   });
 }

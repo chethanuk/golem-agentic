@@ -7,6 +7,8 @@ import {
   getTestListOfObjectType,
   getTupleComplexType,
   getTupleType,
+  getUnionType,
+  getUnionComplexType,
 } from './utils';
 import { TestInterfaceType } from './test-data';
 import {
@@ -20,9 +22,11 @@ import {
   listArb,
   mapArb,
   objectArb,
-  listOfObjArb,
+  listComplexArb,
   tupleComplexArb,
   tupleArb,
+  unionArb,
+  unionComplexArb,
 } from './arbitraries';
 import * as fc from 'fast-check';
 import { Type } from 'rttist';
@@ -66,7 +70,7 @@ describe('typescript value to wit value round-trip conversions', () => {
 
   it('should correctly perform round-trip conversion for arbitrary values of list of object type', () => {
     fc.assert(
-      fc.property(listOfObjArb, (arbData) => {
+      fc.property(listComplexArb, (arbData) => {
         const type = getTestListOfObjectType();
         runRoundTripTest(arbData, type);
       }),
@@ -79,8 +83,20 @@ describe('typescript value to wit value round-trip conversions', () => {
         const simpleType = getTupleType();
         runRoundTripTest(tupleData, simpleType);
 
-        const type = getTupleComplexType();
-        runRoundTripTest(tupleComplexData, type);
+        const complexType = getTupleComplexType();
+        runRoundTripTest(tupleComplexData, complexType);
+      }),
+    );
+  });
+
+  it('should correctly perform round-trip conversion for arbitrary values of union', () => {
+    fc.assert(
+      fc.property(unionArb, unionComplexArb, (unionData, unionComplexData) => {
+        const simpleType = getUnionType();
+        runRoundTripTest(unionData, simpleType);
+
+        const complexType = getUnionComplexType();
+        runRoundTripTest(unionComplexData, complexType);
       }),
     );
   });
@@ -94,6 +110,24 @@ describe('typescript value to wit value round-trip conversions', () => {
       listProp: [],
       mapProp: new Map<string, number>(),
       nestedProp: { n: 0 },
+      objectComplexProp: {
+        a: '',
+        b: 0,
+        c: false,
+        d: {
+          a: '',
+          b: 0,
+          c: false,
+        },
+        e: '',
+        f: [],
+        g: [],
+        h: ['', 0, false],
+        i: ['', 0, { a: '', b: 0, c: false }],
+        j: new Map<string, number>(),
+        k: { n: 0 },
+      },
+      unionComplexProp: 1,
       nullProp: null,
       numberProp: 0,
       objectProp: { a: '', b: 0, c: false },
@@ -127,6 +161,24 @@ describe('typescript value to wit value round-trip conversions', () => {
       tupleProp: ['', 0, false],
       unionProp: 1,
       optionalProp: 2,
+      unionComplexProp: 1,
+      objectComplexProp: {
+        a: '',
+        b: 0,
+        c: false,
+        d: {
+          a: '',
+          b: 0,
+          c: false,
+        },
+        e: '',
+        f: [],
+        g: [],
+        h: ['', 0, false],
+        i: ['', 0, { a: '', b: 0, c: false }],
+        j: new Map<string, number>(),
+        k: { n: 0 },
+      },
     };
 
     const type = getTestInterfaceType();
@@ -152,6 +204,24 @@ describe('typescript value to wit value round-trip conversions', () => {
       tupleProp: ['', 0, false],
       unionProp: { a: 'test', b: 42, c: true }, // Using an object as a union type
       optionalProp: 2,
+      unionComplexProp: 1,
+      objectComplexProp: {
+        a: '',
+        b: 0,
+        c: false,
+        d: {
+          a: '',
+          b: 0,
+          c: false,
+        },
+        e: '',
+        f: [],
+        g: [],
+        h: ['', 0, false],
+        i: ['', 0, { a: '', b: 0, c: false }],
+        j: new Map<string, number>(),
+        k: { n: 0 },
+      },
     };
 
     const type = getTestInterfaceType();

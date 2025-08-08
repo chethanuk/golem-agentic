@@ -18,6 +18,8 @@ export function constructWitValueFromTsValue(
   return constructWitValueFromValue(value);
 }
 
+// Note that we take `type: Type` instead of `type: AnalysedType`(because at this point `AnalysedType` of the `tsValue` is also available)
+// as `Type` holds more information, and can be used to determine the error messages for wrong `tsValue` more accurately.
 function constructValueFromTsValue(tsValue: any, type: Type): Value {
   switch (type.kind) {
     case TypeKind.Null:
@@ -225,7 +227,9 @@ function handleUnion(tsValue: any, type: Type): Value {
   const typeWithIndex = findTypeOfAny(tsValue, possibleTypes);
 
   if (!typeWithIndex) {
-    throw new Error(`No matching type found for ${tsValue} in union type`);
+    throw new Error(
+      `No matching type found for the value '${tsValue}' in union type. Type structure: ${unionType.displayName}`,
+    );
   } else {
     const innerType = typeWithIndex[0];
     const result = constructValueFromTsValue(tsValue, innerType);
@@ -368,6 +372,27 @@ function matchesType(value: any, type: Type): boolean {
     case TypeKind.Undefined:
       return value === undefined;
 
+    case TypeKind.Type:
+      // TypeKind.Type is a generic type, we need to check if the value matches the type
+      if (type.isArray()) {
+        const typeArg = type.getTypeArguments?.()[0];
+        return (
+          Array.isArray(value) &&
+          value.every((item) => matchesType(item, typeArg))
+        );
+      } else if (type.isTuple()) {
+        const typeArgs = type.getTypeArguments?.();
+        return (
+          Array.isArray(value) &&
+          value.length === typeArgs.length &&
+          value.every((v, idx) => matchesType(v, typeArgs[idx]))
+        );
+      } else {
+        throw new Error(
+          `Unsupported TypeKind.Type with generic type: ${type.displayName}`,
+        );
+      }
+
     case TypeKind.ArrayBuffer:
       const elementType = type.getTypeArguments?.()[0];
       return (
@@ -385,6 +410,9 @@ function matchesType(value: any, type: Type): boolean {
       );
 
     case TypeKind.ObjectType:
+      return handleObjectMatch(value, type);
+
+    case TypeKind.Interface:
       return handleObjectMatch(value, type);
 
     case TypeKind.Alias:

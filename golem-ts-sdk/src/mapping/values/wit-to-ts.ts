@@ -12,6 +12,10 @@ import {
 import { WitValue } from 'golem:rpc/types@0.2.2';
 import { constructValueFromWitValue, Value } from './value';
 
+// Note that we take `expectedType: Type` instead of `expectedType: AnalysedType`(because at this point `AnalysedType` of the `witValue`
+// is also available) as `Type` holds more information, and help us have fine-grained control over the type conversion.
+// Hence, we need to use `Type` instead of `AnalysedType`. Note that the output of this function is a real ts-value,
+// and we need to ensure it is compatible with the `expectedType: Type`.
 export function constructTsValueFromWitValue(
   witValue: WitValue,
   expectedType: Type,

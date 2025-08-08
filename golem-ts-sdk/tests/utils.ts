@@ -4,7 +4,7 @@ import { Type } from 'rttist';
 import './setup';
 import { AnalysedType, NameTypePair } from '../src/mapping/types/analysed-type';
 import { expect } from 'vitest';
-import { ListObjectType } from './test-data';
+import { ListComplexType } from './test-data';
 
 export function getAll() {
   return Metadata.getTypes().filter(
@@ -29,11 +29,15 @@ export function getTestListType(): Type {
 }
 
 export function getTestListOfObjectType(): Type {
-  return fetchType('ListObjectType');
+  return fetchType('ListComplexType');
 }
 
 export function getUnionType(): Type {
   return fetchType('UnionType');
+}
+
+export function getUnionComplexType(): Type {
+  return fetchType('UnionComplexType');
 }
 
 export function getTupleType(): Type {
