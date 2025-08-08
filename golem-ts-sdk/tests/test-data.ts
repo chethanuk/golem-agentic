@@ -65,18 +65,18 @@ export interface TestInterfaceType {
   tupleProp: TupleType;
   tupleObjectProp: TupleComplexType;
   mapProp: MapType;
-  //FIXME, RTTIST bug or not supported yet
+  // FIXME, `RTTIST` bug or not supported yet
   // mapAlternativeProp: MapTypeAlternative,
-  //unionPropInlined: string | number;
+  // unionPropInlined: string | number;
   // recordProp: RecordType;
   // enumType: EnumTypeAlias;
-  //enumTypeInlined: EnumType,
+  // enumTypeInlined: EnumType,
   // objectPropInlined: {
   //     a: string,
   //     b: number,
   //     c: boolean
   // }
-  //enumProp: EnumTypeAlias,
+  // enumProp: EnumTypeAlias,
   // enumPropInlined: EnumTypeAlias,
 }
 
