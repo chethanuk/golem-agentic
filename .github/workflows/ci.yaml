@@ -28,6 +28,14 @@ jobs:
         run: |
           npm install
 
+      - name: Check code formatting
+        working-directory: ./golem-ts-sdk
+        run: |
+          npm run format:check || (
+            echo "Code formatting issues found. Please run 'npm run format' to fix them."
+            exit 1
+          )      
+
       - name: Build the package
         working-directory: ./golem-ts-sdk
         run: |
