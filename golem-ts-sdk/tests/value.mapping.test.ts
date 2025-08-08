@@ -5,6 +5,8 @@ import {
   getTestObjectType,
   getTestListType,
   getTestListOfObjectType,
+  getTupleComplexType,
+  getTupleType,
 } from './utils';
 import { TestInterfaceType } from './test-data';
 import {
@@ -14,11 +16,13 @@ import {
 import { constructWitValueFromTsValue } from '../src/mapping/values/ts-to-wit';
 import { constructTsValueFromWitValue } from '../src/mapping/values/wit-to-ts';
 import {
-  testInterfaceTypeArb,
-  testListArb,
-  testMapArb,
-  testObjectArb,
-  testOfListObjectArb,
+  interfaceArb,
+  listArb,
+  mapArb,
+  objectArb,
+  listOfObjArb,
+  tupleComplexArb,
+  tupleArb,
 } from './arbitraries';
 import * as fc from 'fast-check';
 import { Type } from 'rttist';
@@ -26,7 +30,7 @@ import { Type } from 'rttist';
 describe('typescript value to wit value round-trip conversions', () => {
   it('should correctly perform round-trip conversion for arbitrary values of interface type', () => {
     fc.assert(
-      fc.property(testInterfaceTypeArb, (arbData) => {
+      fc.property(interfaceArb, (arbData) => {
         const type = getTestInterfaceType();
         runRoundTripTest(arbData, type);
       }),
@@ -35,7 +39,7 @@ describe('typescript value to wit value round-trip conversions', () => {
 
   it('should correctly perform round-trip conversion for arbitrary values of object type', () => {
     fc.assert(
-      fc.property(testObjectArb, (arbData) => {
+      fc.property(objectArb, (arbData) => {
         const type = getTestObjectType();
         runRoundTripTest(arbData, type);
       }),
@@ -44,7 +48,7 @@ describe('typescript value to wit value round-trip conversions', () => {
 
   it('should correctly perform round-trip conversion for arbitrary values of map type', () => {
     fc.assert(
-      fc.property(testMapArb, (arbData) => {
+      fc.property(mapArb, (arbData) => {
         const type = getTestMapType();
         runRoundTripTest(arbData, type);
       }),
@@ -53,7 +57,7 @@ describe('typescript value to wit value round-trip conversions', () => {
 
   it('should correctly perform round-trip conversion for arbitrary values of list type', () => {
     fc.assert(
-      fc.property(testListArb, (arbData) => {
+      fc.property(listArb, (arbData) => {
         const type = getTestListType();
         runRoundTripTest(arbData, type);
       }),
@@ -62,9 +66,21 @@ describe('typescript value to wit value round-trip conversions', () => {
 
   it('should correctly perform round-trip conversion for arbitrary values of list of object type', () => {
     fc.assert(
-      fc.property(testOfListObjectArb, (arbData) => {
+      fc.property(listOfObjArb, (arbData) => {
         const type = getTestListOfObjectType();
         runRoundTripTest(arbData, type);
+      }),
+    );
+  });
+
+  it('should correctly perform round-trip conversion for arbitrary values of complex tuple', () => {
+    fc.assert(
+      fc.property(tupleArb, tupleComplexArb, (tupleData, tupleComplexData) => {
+        const simpleType = getTupleType();
+        runRoundTripTest(tupleData, simpleType);
+
+        const type = getTupleComplexType();
+        runRoundTripTest(tupleComplexData, type);
       }),
     );
   });
