@@ -36,6 +36,10 @@ export function getUnionType(): Type {
   return fetchType('UnionType');
 }
 
+export function getUnionComplexType(): Type {
+  return fetchType('UnionComplexType');
+}
+
 export function getTupleType(): Type {
   return fetchType('TupleType');
 }

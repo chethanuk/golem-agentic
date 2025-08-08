@@ -7,6 +7,8 @@ import {
   getTestListOfObjectType,
   getTupleComplexType,
   getTupleType,
+  getUnionType,
+  getUnionComplexType,
 } from './utils';
 import { TestInterfaceType } from './test-data';
 import {
@@ -23,6 +25,8 @@ import {
   listComplexArb,
   tupleComplexArb,
   tupleArb,
+  unionArb,
+  unionComplexArb,
 } from './arbitraries';
 import * as fc from 'fast-check';
 import { Type } from 'rttist';
@@ -79,8 +83,20 @@ describe('typescript value to wit value round-trip conversions', () => {
         const simpleType = getTupleType();
         runRoundTripTest(tupleData, simpleType);
 
-        const type = getTupleComplexType();
-        runRoundTripTest(tupleComplexData, type);
+        const complexType = getTupleComplexType();
+        runRoundTripTest(tupleComplexData, complexType);
+      }),
+    );
+  });
+
+  it('should correctly perform round-trip conversion for arbitrary values of union', () => {
+    fc.assert(
+      fc.property(unionArb, unionComplexArb, (unionData, unionComplexData) => {
+        const simpleType = getUnionType();
+        runRoundTripTest(unionData, simpleType);
+
+        const complexType = getUnionComplexType();
+        runRoundTripTest(unionComplexData, complexType);
       }),
     );
   });

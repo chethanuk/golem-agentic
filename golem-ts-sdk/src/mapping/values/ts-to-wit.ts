@@ -227,7 +227,9 @@ function handleUnion(tsValue: any, type: Type): Value {
   const typeWithIndex = findTypeOfAny(tsValue, possibleTypes);
 
   if (!typeWithIndex) {
-    throw new Error(`No matching type found for the value '${tsValue}' in union type. Type structure: ${unionType.displayName}`);
+    throw new Error(
+      `No matching type found for the value '${tsValue}' in union type. Type structure: ${unionType.displayName}`,
+    );
   } else {
     const innerType = typeWithIndex[0];
     const result = constructValueFromTsValue(tsValue, innerType);
@@ -371,20 +373,25 @@ function matchesType(value: any, type: Type): boolean {
       return value === undefined;
 
     case TypeKind.Type:
-        // TypeKind.Type is a generic type, we need to check if the value matches the type
-        if (type.isArray()) {
-            const typeArg = type.getTypeArguments?.()[0];
-            return Array.isArray(value) && value.every((item) => matchesType(item, typeArg));
-        } else if (type.isTuple()) {
-            const typeArgs = type.getTypeArguments?.();
-            return (
-            Array.isArray(value) &&
-            value.length === typeArgs.length &&
-            value.every((v, idx) => matchesType(v, typeArgs[idx]))
-            );
-        } else {
-            throw new Error(`Unsupported TypeKind.Type with generic type: ${type.displayName}`);
-        }
+      // TypeKind.Type is a generic type, we need to check if the value matches the type
+      if (type.isArray()) {
+        const typeArg = type.getTypeArguments?.()[0];
+        return (
+          Array.isArray(value) &&
+          value.every((item) => matchesType(item, typeArg))
+        );
+      } else if (type.isTuple()) {
+        const typeArgs = type.getTypeArguments?.();
+        return (
+          Array.isArray(value) &&
+          value.length === typeArgs.length &&
+          value.every((v, idx) => matchesType(v, typeArgs[idx]))
+        );
+      } else {
+        throw new Error(
+          `Unsupported TypeKind.Type with generic type: ${type.displayName}`,
+        );
+      }
 
     case TypeKind.ArrayBuffer:
       const elementType = type.getTypeArguments?.()[0];

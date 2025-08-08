@@ -7,7 +7,8 @@ import {
   ObjectType,
   TestInterfaceType,
   TupleComplexType,
-  TupleType, UnionComplexType,
+  TupleType,
+  UnionComplexType,
   UnionType,
 } from './test-data';
 
@@ -59,18 +60,18 @@ export const tupleComplexArb: fc.Arbitrary<TupleComplexType> = fc.tuple(
 );
 
 export const unionComplexArb: fc.Arbitrary<UnionComplexType> = fc.oneof(
-    fc.integer(),
-    fc.string(),
-    fc.boolean(),
-    fc.oneof(fc.integer(), fc.string(), fc.boolean(), objectArb),
-    // listArb,
-    // listComplexArb,
-    tupleArb,
-    tupleComplexArb,
-    // mapArb,
-    fc.record({
-      n: fc.integer(),
-    }),
+  fc.integer(),
+  fc.string(),
+  fc.boolean(),
+  fc.oneof(fc.integer(), fc.string(), fc.boolean(), objectArb),
+  // listArb,
+  // listComplexArb,
+  tupleArb,
+  tupleComplexArb,
+  // mapArb,
+  fc.record({
+    n: fc.integer(),
+  }),
 );
 
 export const objectComplexArb: fc.Arbitrary<ObjectComplexType> = fc.record({

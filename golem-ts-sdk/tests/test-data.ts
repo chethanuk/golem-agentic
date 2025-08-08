@@ -31,12 +31,12 @@ export type UnionComplexType =
   | string
   | boolean
   | UnionType
-//  | ListType
+  //  | ListType
   // | ListComplexType
-   | TupleType
-   | TupleComplexType
+  | TupleType
+  | TupleComplexType
   // | MapType
-   | SimpleInterfaceType;
+  | SimpleInterfaceType;
 
 export type ObjectType = { a: string; b: number; c: boolean };
 
