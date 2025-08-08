@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getTestInterfaceType } from './utils';
+import {
+  getTestMapType,
+  getTestInterfaceType,
+  getTestObjectType,
+  getTestListType,
+  getTestListOfObjectType,
+} from './utils';
 import { TestInterfaceType } from './test-data';
 import {
   constructValueFromWitValue,
@@ -7,14 +13,58 @@ import {
 } from '../src/mapping/values/value';
 import { constructWitValueFromTsValue } from '../src/mapping/values/ts-to-wit';
 import { constructTsValueFromWitValue } from '../src/mapping/values/wit-to-ts';
-import { testInterfaceTypeArb } from './arbitraries';
+import {
+  testInterfaceTypeArb,
+  testListArb,
+  testMapArb,
+  testObjectArb,
+  testOfListObjectArb,
+} from './arbitraries';
 import * as fc from 'fast-check';
+import { Type } from 'rttist';
 
 describe('typescript value to wit value round-trip conversions', () => {
   it('should correctly perform round-trip conversion for arbitrary values of interface type', () => {
     fc.assert(
-      fc.property(testInterfaceTypeArb, (data) => {
-        runRoundTripTest(data as TestInterfaceType);
+      fc.property(testInterfaceTypeArb, (arbData) => {
+        const type = getTestInterfaceType();
+        runRoundTripTest(arbData, type);
+      }),
+    );
+  });
+
+  it('should correctly perform round-trip conversion for arbitrary values of object type', () => {
+    fc.assert(
+      fc.property(testObjectArb, (arbData) => {
+        const type = getTestObjectType();
+        runRoundTripTest(arbData, type);
+      }),
+    );
+  });
+
+  it('should correctly perform round-trip conversion for arbitrary values of map type', () => {
+    fc.assert(
+      fc.property(testMapArb, (arbData) => {
+        const type = getTestMapType();
+        runRoundTripTest(arbData, type);
+      }),
+    );
+  });
+
+  it('should correctly perform round-trip conversion for arbitrary values of list type', () => {
+    fc.assert(
+      fc.property(testListArb, (arbData) => {
+        const type = getTestListType();
+        runRoundTripTest(arbData, type);
+      }),
+    );
+  });
+
+  it('should correctly perform round-trip conversion for arbitrary values of list of object type', () => {
+    fc.assert(
+      fc.property(testOfListObjectArb, (arbData) => {
+        const type = getTestListOfObjectType();
+        runRoundTripTest(arbData, type);
       }),
     );
   });
@@ -38,7 +88,9 @@ describe('typescript value to wit value round-trip conversions', () => {
       unionProp: 1,
     };
 
-    runRoundTripTest(defaultData);
+    const type = getTestInterfaceType();
+
+    runRoundTripTest(defaultData, type);
   });
 
   it('should preserve values including optional properties', () => {
@@ -61,7 +113,9 @@ describe('typescript value to wit value round-trip conversions', () => {
       optionalProp: 2,
     };
 
-    runRoundTripTest(withOptionalValues);
+    const type = getTestInterfaceType();
+
+    runRoundTripTest(withOptionalValues, type);
   });
 
   it('should preserve union properties with complex object variants', () => {
@@ -84,13 +138,14 @@ describe('typescript value to wit value round-trip conversions', () => {
       optionalProp: 2,
     };
 
-    runRoundTripTest(withComplexUnionType);
+    const type = getTestInterfaceType();
+
+    runRoundTripTest(withComplexUnionType, type);
   });
 });
 
-function runRoundTripTest(data: TestInterfaceType) {
-  const interfaceType = getTestInterfaceType();
-  const witValue = constructWitValueFromTsValue(data, interfaceType);
+function runRoundTripTest<T>(data: T, type: Type) {
+  const witValue = constructWitValueFromTsValue(data, type);
 
   // Round trip wit-value -> value -> wit-value
   const value = constructValueFromWitValue(witValue);
@@ -98,10 +153,7 @@ function runRoundTripTest(data: TestInterfaceType) {
   expect(witValueReturned).toEqual(witValue);
 
   // Round trip ts-value -> wit-value -> ts-value
-  const tsValueReturned: TestInterfaceType = constructTsValueFromWitValue(
-    witValueReturned,
-    interfaceType,
-  );
+  const tsValueReturned = constructTsValueFromWitValue(witValueReturned, type);
 
   expect(tsValueReturned).toEqual(data);
 }

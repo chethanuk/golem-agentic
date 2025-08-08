@@ -21,17 +21,17 @@ interface SimpleInterfaceType {
 // This needs to be verified with @vigoo
 type UnionType = number | string | boolean | ObjectType;
 
-type ObjectType = { a: string; b: number; c: boolean };
+export type ObjectType = { a: string; b: number; c: boolean };
 
-type ListType = Array<string>;
+export type ListType = Array<string>;
 
-type ListObjectType = Array<ObjectType>;
+export type ListObjectType = Array<ObjectType>;
 
 type TupleType = [string, number, boolean];
 
 type TupleWithObjectType = [string, number, ObjectType];
 
-type MapType = Map<string, number>;
+export type MapType = Map<string, number>;
 
 export interface TestInterfaceType {
   numberProp: number;

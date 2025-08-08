@@ -1,5 +1,31 @@
 import * as fc from 'fast-check';
-import { TestInterfaceType } from './test-data';
+import {
+  ListObjectType,
+  ListType,
+  MapType,
+  ObjectType,
+  TestInterfaceType,
+} from './test-data';
+
+export const testMapArb: fc.Arbitrary<MapType> = fc
+  .dictionary(fc.string(), fc.integer())
+  .map((obj) => new Map(Object.entries(obj)));
+
+export const testObjectArb: fc.Arbitrary<ObjectType> = fc.record({
+  a: fc.string(),
+  b: fc.integer(),
+  c: fc.boolean(),
+});
+
+export const testListArb: fc.Arbitrary<ListType> = fc.array(fc.string());
+
+export const testOfListObjectArb: fc.Arbitrary<ListObjectType> = fc.array(
+  fc.record({
+    a: fc.string(),
+    b: fc.integer(),
+    c: fc.boolean(),
+  }),
+);
 
 export const testInterfaceTypeArb: fc.Arbitrary<TestInterfaceType> = fc.record({
   bigintProp: fc.bigInt(),
