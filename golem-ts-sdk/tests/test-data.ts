@@ -33,7 +33,7 @@ export type UnionComplexType =
   | UnionType
 //  | ListType
   // | ListComplexType
-  // | TupleType
+   | TupleType
   // | TupleComplexType
   // | MapType
   // | SimpleInterfaceType;

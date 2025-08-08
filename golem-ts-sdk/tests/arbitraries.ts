@@ -65,7 +65,7 @@ export const unionComplexArb: fc.Arbitrary<UnionComplexType> = fc.oneof(
     fc.oneof(fc.integer(), fc.string(), fc.boolean(), objectArb),
     // listArb,
     // listComplexArb,
-    // tupleArb,
+    tupleArb,
     // tupleComplexArb,
     // mapArb,
     // fc.record({
