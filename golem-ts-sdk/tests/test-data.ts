@@ -23,9 +23,23 @@ export type UnionType = number | string | boolean | ObjectType;
 
 export type ObjectType = { a: string; b: number; c: boolean };
 
+export type ObjectComplexType = {
+  a: string,
+  b: number,
+  c: boolean,
+  d: ObjectType,
+  e: UnionType,
+  f: ListType,
+  g: ListComplexType,
+  h: TupleType,
+  i: TupleComplexType,
+  j: MapType,
+  k: SimpleInterfaceType
+}
+
 export type ListType = Array<string>;
 
-export type ListObjectType = Array<ObjectType>;
+export type ListComplexType = Array<ObjectType>;
 
 export type TupleType = [string, number, boolean];
 
@@ -45,8 +59,9 @@ export interface TestInterfaceType {
   nestedProp: SimpleInterfaceType;
   unionProp: UnionType;
   objectProp: ObjectType;
+  objectComplexProp: ObjectComplexType;
   listProp: ListType;
-  listObjectProp: ListObjectType;
+  listObjectProp: ListComplexType;
   tupleProp: TupleType;
   tupleObjectProp: TupleComplexType;
   mapProp: MapType;
