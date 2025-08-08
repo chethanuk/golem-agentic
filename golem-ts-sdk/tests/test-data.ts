@@ -16,13 +16,6 @@ interface SimpleInterfaceType {
   n: number;
 }
 
-// A union type will become a variant in WIT, however the names are of the type names (which is wrong)
-// but I can't figure any other way of naming it unless it affect the user such as always do an alias
-// i.e, instead of type MyUnion = `number | string`
-// they have to write it as
-// type MyNumber = number;
-// type MyString = string;
-// type MyUnion = MyNumber | MyString;
 export type UnionType = number | string | boolean | ObjectType;
 
 // Deliberately adding duplicate types since TypeScript allows it
