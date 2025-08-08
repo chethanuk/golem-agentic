@@ -19,19 +19,19 @@ interface SimpleInterfaceType {
 // A union type will become a variant in WIT, and the names will be available in the case.name
 // Example: [{name: 'string', typ: { kind: 'string' }}, {name: 'number', typ: { kind: 's32' }}]
 // This needs to be verified with @vigoo
-type UnionType = number | string | boolean | ObjectType;
+export type UnionType = number | string | boolean | ObjectType;
 
-type ObjectType = { a: string; b: number; c: boolean };
+export type ObjectType = { a: string; b: number; c: boolean };
 
-type ListType = Array<string>;
+export type ListType = Array<string>;
 
-type ListObjectType = Array<ObjectType>;
+export type ListObjectType = Array<ObjectType>;
 
-type TupleType = [string, number, boolean];
+export type TupleType = [string, number, boolean];
 
-type TupleWithObjectType = [string, number, ObjectType];
+export type TupleComplexType = [string, number, ObjectType];
 
-type MapType = Map<string, number>;
+export type MapType = Map<string, number>;
 
 export interface TestInterfaceType {
   numberProp: number;
@@ -48,7 +48,7 @@ export interface TestInterfaceType {
   listProp: ListType;
   listObjectProp: ListObjectType;
   tupleProp: TupleType;
-  tupleObjectProp: TupleWithObjectType;
+  tupleObjectProp: TupleComplexType;
   mapProp: MapType;
   //FIXME, RTTIST bug or not supported yet
   // mapAlternativeProp: MapTypeAlternative,

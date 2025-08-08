@@ -4,6 +4,7 @@ import { Type } from 'rttist';
 import './setup';
 import { AnalysedType, NameTypePair } from '../src/mapping/types/analysed-type';
 import { expect } from 'vitest';
+import { ListObjectType } from './test-data';
 
 export function getAll() {
   return Metadata.getTypes().filter(
@@ -12,15 +13,35 @@ export function getAll() {
 }
 
 export function getTestInterfaceType(): Type {
-  return getAll().filter((type) => type.name == 'TestInterfaceType')[0];
+  return fetchType('TestInterfaceType');
+}
+
+export function getTestMapType(): Type {
+  return fetchType('MapType');
 }
 
 export function getTestObjectType(): Type {
-  return getAll().filter((type) => type.name == 'ObjectType')[0];
+  return fetchType('ObjectType');
+}
+
+export function getTestListType(): Type {
+  return fetchType('ListType');
+}
+
+export function getTestListOfObjectType(): Type {
+  return fetchType('ListObjectType');
 }
 
 export function getUnionType(): Type {
-  return getAll().filter((type) => type.name == 'UnionType')[0];
+  return fetchType('UnionType');
+}
+
+export function getTupleType(): Type {
+  return fetchType('TupleType');
+}
+
+export function getTupleComplexType(): Type {
+  return fetchType('TupleComplexType');
 }
 
 export function expectTupleTypeWithNoItems(typ: AnalysedType) {
@@ -33,4 +54,13 @@ export function getRecordFieldsFromAnalysedType(
   analysedType: AnalysedType,
 ): NameTypePair[] | undefined {
   return analysedType.kind === 'record' ? analysedType.value.fields : undefined;
+}
+
+function fetchType(typeNameInTestData: string): Type {
+  const types = getAll().filter((type) => type.name == typeNameInTestData);
+
+  if (types.length === 0) {
+    throw new Error(`Type ${typeNameInTestData} not found in test data`);
+  }
+  return types[0];
 }
