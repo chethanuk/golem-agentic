@@ -99,8 +99,8 @@ function runRoundTripTest(data: TestInterfaceType) {
 
   // Round trip ts-value -> wit-value -> ts-value
   const tsValueReturned: TestInterfaceType = constructTsValueFromWitValue(
-      witValueReturned,
-      interfaceType,
+    witValueReturned,
+    interfaceType,
   );
 
   expect(tsValueReturned).toEqual(data);
