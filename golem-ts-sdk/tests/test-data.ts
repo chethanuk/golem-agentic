@@ -24,18 +24,18 @@ export type UnionType = number | string | boolean | ObjectType;
 export type ObjectType = { a: string; b: number; c: boolean };
 
 export type ObjectComplexType = {
-  a: string,
-  b: number,
-  c: boolean,
-  d: ObjectType,
-  e: UnionType,
-  f: ListType,
-  g: ListComplexType,
-  h: TupleType,
-  i: TupleComplexType,
-  j: MapType,
-  k: SimpleInterfaceType
-}
+  a: string;
+  b: number;
+  c: boolean;
+  d: ObjectType;
+  e: UnionType;
+  f: ListType;
+  g: ListComplexType;
+  h: TupleType;
+  i: TupleComplexType;
+  j: MapType;
+  k: SimpleInterfaceType;
+};
 
 export type ListType = Array<string>;
 

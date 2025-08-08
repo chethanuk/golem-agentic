@@ -317,7 +317,9 @@ function checkMapFields(fields: any[]) {
 }
 
 function checkObjectComplexFields(fields: any[]) {
-  const objectFields = fields.filter((f) => f.name.startsWith('objectComplexProp'));
+  const objectFields = fields.filter((f) =>
+    f.name.startsWith('objectComplexProp'),
+  );
   expect(objectFields.length).toBeGreaterThan(0);
 
   const expected = [
@@ -402,11 +404,7 @@ function checkObjectComplexFields(fields: any[]) {
       typ: {
         kind: 'tuple',
         value: {
-          items: [
-            { kind: 'string' },
-            { kind: 's32' },
-            { kind: 'bool' },
-          ],
+          items: [{ kind: 'string' }, { kind: 's32' }, { kind: 'bool' }],
           name: undefined,
         },
       },
@@ -443,10 +441,7 @@ function checkObjectComplexFields(fields: any[]) {
           inner: {
             kind: 'tuple',
             value: {
-              items: [
-                { kind: 'string' },
-                { kind: 's32' },
-              ],
+              items: [{ kind: 'string' }, { kind: 's32' }],
               name: undefined,
             },
           },
@@ -459,9 +454,7 @@ function checkObjectComplexFields(fields: any[]) {
       typ: {
         kind: 'record',
         value: {
-          fields: [
-            { name: 'n', typ: { kind: 's32' } },
-          ],
+          fields: [{ name: 'n', typ: { kind: 's32' } }],
           name: undefined,
         },
       },

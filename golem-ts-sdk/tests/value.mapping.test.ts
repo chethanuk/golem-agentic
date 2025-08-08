@@ -101,7 +101,7 @@ describe('typescript value to wit value round-trip conversions', () => {
         d: {
           a: '',
           b: 0,
-          c: false
+          c: false,
         },
         e: '',
         f: [],
@@ -151,7 +151,7 @@ describe('typescript value to wit value round-trip conversions', () => {
         d: {
           a: '',
           b: 0,
-          c: false
+          c: false,
         },
         e: '',
         f: [],
@@ -193,7 +193,7 @@ describe('typescript value to wit value round-trip conversions', () => {
         d: {
           a: '',
           b: 0,
-          c: false
+          c: false,
         },
         e: '',
         f: [],
