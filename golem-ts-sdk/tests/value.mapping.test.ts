@@ -111,6 +111,7 @@ describe('typescript value to wit value round-trip conversions', () => {
         j: new Map<string, number>(),
         k: { n: 0 },
       },
+      unionComplexProp: 1,
       nullProp: null,
       numberProp: 0,
       objectProp: { a: '', b: 0, c: false },
@@ -144,6 +145,7 @@ describe('typescript value to wit value round-trip conversions', () => {
       tupleProp: ['', 0, false],
       unionProp: 1,
       optionalProp: 2,
+      unionComplexProp: 1,
       objectComplexProp: {
         a: '',
         b: 0,
@@ -186,6 +188,7 @@ describe('typescript value to wit value round-trip conversions', () => {
       tupleProp: ['', 0, false],
       unionProp: { a: 'test', b: 42, c: true }, // Using an object as a union type
       optionalProp: 2,
+      unionComplexProp: 1,
       objectComplexProp: {
         a: '',
         b: 0,

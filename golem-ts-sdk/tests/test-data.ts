@@ -25,6 +25,19 @@ interface SimpleInterfaceType {
 // type MyUnion = MyNumber | MyString;
 export type UnionType = number | string | boolean | ObjectType;
 
+// Deliberately adding duplicate types since TypeScript allows it
+export type UnionComplexType =
+  | number
+  | string
+  | boolean
+  | UnionType
+//  | ListType
+  // | ListComplexType
+  // | TupleType
+  // | TupleComplexType
+  // | MapType
+  // | SimpleInterfaceType;
+
 export type ObjectType = { a: string; b: number; c: boolean };
 
 export type ObjectComplexType = {
@@ -62,6 +75,7 @@ export interface TestInterfaceType {
   optionalProp?: number;
   nestedProp: SimpleInterfaceType;
   unionProp: UnionType;
+  unionComplexProp: UnionComplexType;
   objectProp: ObjectType;
   objectComplexProp: ObjectComplexType;
   listProp: ListType;
