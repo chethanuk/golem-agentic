@@ -344,9 +344,6 @@ function constructTsValueFromValue(value: Value, expectedType: Type): any {
         throw new Error(`Expected object, obtained value ${value}`);
       }
     case TypeKind.Undefined:
-      console.log(
-        `Warning: Undefined type encountered, returning null for value ${value}`,
-      );
       return null;
     case TypeKind.Union:
       if (value.kind === 'variant') {

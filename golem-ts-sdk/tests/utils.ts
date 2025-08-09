@@ -48,10 +48,16 @@ export function getTupleComplexType(): Type {
   return fetchType('TupleComplexType');
 }
 
-export function expectTupleTypeWithNoItems(typ: AnalysedType) {
-  expect(typ.kind).toBe('tuple');
-  const itemsLength = typ?.kind === 'tuple' ? typ.value.items.length : -1;
-  expect(itemsLength).toBe(0);
+export function getBooleanType(): Type {
+  return fetchType('BooleanType');
+}
+
+export function getStringType(): Type {
+  return fetchType('StringType');
+}
+
+export function getNumberType(): Type {
+  return fetchType('NumberType');
 }
 
 export function getRecordFieldsFromAnalysedType(

@@ -59,21 +59,6 @@ export const tupleComplexArb: fc.Arbitrary<TupleComplexType> = fc.tuple(
   }),
 );
 
-export const unionComplexArb: fc.Arbitrary<UnionComplexType> = fc.oneof(
-  fc.integer(),
-  fc.string(),
-  fc.boolean(),
-  fc.oneof(fc.integer(), fc.string(), fc.boolean(), objectArb),
-  // listArb,
-  // listComplexArb,
-  tupleArb,
-  tupleComplexArb,
-  // mapArb,
-  fc.record({
-    n: fc.integer(),
-  }),
-);
-
 export const objectComplexArb: fc.Arbitrary<ObjectComplexType> = fc.record({
   a: fc.string(),
   b: fc.integer(),
@@ -87,6 +72,22 @@ export const objectComplexArb: fc.Arbitrary<ObjectComplexType> = fc.record({
   j: mapArb,
   k: fc.record({ n: fc.integer() }),
 });
+
+export const unionComplexArb: fc.Arbitrary<UnionComplexType> = fc.oneof(
+  fc.integer(),
+  fc.string(),
+  fc.boolean(),
+  fc.oneof(fc.integer(), fc.string(), fc.boolean(), objectArb),
+  // listArb,
+  // listComplexArb,
+  objectComplexArb,
+  tupleArb,
+  tupleComplexArb,
+  // mapArb,
+  fc.record({
+    n: fc.integer(),
+  }),
+);
 
 export const interfaceArb: fc.Arbitrary<TestInterfaceType> = fc.record({
   bigintProp: fc.bigInt(),

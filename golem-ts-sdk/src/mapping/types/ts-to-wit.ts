@@ -8,6 +8,7 @@ import {EnumType, GenericType, Type, TypeAliasType, UnionType} from "rttist";
 import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
 import {analysedType} from "./analysed-type";
 import {WitTypeBuilder} from "./wit-type-builder";
+import {numberToOrdinalKebab} from "./type-index-ordinal";
 
 export function constructWitTypeFromTsType(type: Type) : WitType {
     const analysedType = constructAnalysedTypeFromTsType(type)
@@ -167,13 +168,54 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             return analysedType.record(interfaceFields);
 
         case TypeKind.Union:
+            let fieldIdx = 1;
             const unionType = type as UnionType;
-            const possibleTypes: NameOptionTypePair[] = unionType.types.map((type) =>  {
-               return {
-                   name: type.name.toLowerCase(),
-                   typ: constructAnalysedTypeFromTsType(type)
-               }
-            });
+            // To get over a bug in RTTIST where boolean fields within a union type is considered separately as true and false
+
+            let foundBool = false;
+            let possibleTypes: NameOptionTypePair[] = []
+
+            for (const t of unionType.types) {
+                switch(t.kind) {
+                    case TypeKind.Boolean:
+                        if (!foundBool) {
+                            possibleTypes.push({
+                                name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
+                                typ: constructAnalysedTypeFromTsType(t)
+                            });
+                        }
+
+                        foundBool = true;
+                        continue;
+                    case TypeKind.True:
+                        if (!foundBool) {
+                            possibleTypes.push({
+                                name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
+                                typ: constructAnalysedTypeFromTsType(t)
+                            });
+                        }
+
+                        foundBool = true;
+                        continue;
+                    case TypeKind.False:
+                        if (!foundBool) {
+                            possibleTypes.push({
+                                name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
+                                typ: constructAnalysedTypeFromTsType(t)
+                            });
+                        }
+
+                        foundBool = true;
+                        continue;
+                    default:
+                        possibleTypes.push({
+                            name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
+                            typ: constructAnalysedTypeFromTsType(t)
+                        });
+                }
+
+            }
+
             return analysedType.variant(possibleTypes)
 
         case TypeKind.Alias:
