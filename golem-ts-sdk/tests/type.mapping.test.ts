@@ -15,14 +15,17 @@ import {
   NameTypePair,
 } from '../src/mapping/types/analysed-type';
 import { constructAnalysedTypeFromTsType } from '../src/mapping/types/ts-to-wit';
-import {Either, Option} from "effect";
+import { Either, Option } from 'effect';
 
 // Interface type indirectly tests primitive types, union, list etc
 describe('TypeScript Interface to AnalysedType', () => {
   const interfaceType = getTestInterfaceType();
-  const analysed = Either.getOrElse(constructAnalysedTypeFromTsType(interfaceType), (error)  => {
-    throw new Error(`Failed to construct analysed type: ${error}`);
-  });
+  const analysed = Either.getOrElse(
+    constructAnalysedTypeFromTsType(interfaceType),
+    (error) => {
+      throw new Error(`Failed to construct analysed type: ${error}`);
+    },
+  );
 
   const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
 
@@ -93,9 +96,12 @@ describe('TypeScript primitives to AnalysedType', () => {
 describe('TypeScript Object to AnalysedType', () => {
   it('transforms object with different properties successfully to analysed type', () => {
     const interfaceType = getTestObjectType();
-    const analysed = Either.getOrElse(constructAnalysedTypeFromTsType(interfaceType), (error) => {
+    const analysed = Either.getOrElse(
+      constructAnalysedTypeFromTsType(interfaceType),
+      (error) => {
         throw new Error(`Failed to construct analysed type: ${error}`);
-    });
+      },
+    );
 
     expect(analysed).toBeDefined();
     expect(analysed.kind).toBe('record');
@@ -125,7 +131,12 @@ describe('TypeScript Object to AnalysedType', () => {
 describe('TypeScript Union to AnalysedType.Variant', () => {
   it('Union is converted to Variant with the name of the type as case name', () => {
     const enumType = getUnionType();
-    const analysedType = constructAnalysedTypeFromTsType(enumType);
+    const analysedType = Either.getOrElse(
+      constructAnalysedTypeFromTsType(enumType),
+      (error) => {
+        throw new Error(`Failed to construct analysed type: ${error}`);
+      },
+    );
 
     const expected: AnalysedType = {
       kind: 'variant',
