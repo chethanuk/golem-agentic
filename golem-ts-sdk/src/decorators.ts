@@ -19,6 +19,7 @@ import { agentRegistry } from './agent-registry';
 import { constructWitTypeFromTsType } from './mapping/types/ts-to-wit';
 import { constructTsValueFromWitValue } from './mapping/values/wit-to-ts';
 import { constructWitValueFromTsValue } from './mapping/values/ts-to-wit';
+import { Either } from 'effect';
 
 const methodMetadata = new Map<
   string,
@@ -51,30 +52,45 @@ export function Description(desc: string) {
   };
 }
 
-function buildInputSchema(paramTypes: readonly ParameterInfo[]): DataSchema {
-  return {
-    tag: 'tuple',
-    val: paramTypes.map((parameterInfo) => [
-      parameterInfo.name,
-      mapToParameterType(parameterInfo.type),
-    ]),
-  };
+function buildInputSchema(
+  paramTypes: readonly ParameterInfo[],
+): Either.Either<DataSchema, string> {
+  const result = Either.all(
+    paramTypes.map((parameterInfo) =>
+      Either.map(convertToElementSchema(parameterInfo.type), (result) => {
+        return [parameterInfo.name, result] as [string, ElementSchema];
+      }),
+    ),
+  );
+
+  return Either.map(result, (res) => {
+    return {
+      tag: 'tuple',
+      val: res,
+    };
+  });
 }
 
-function buildOutputSchema(returnType: Type): DataSchema {
-  return {
-    tag: 'tuple',
-    val: [['return-value', mapToParameterType(returnType)]],
-  };
+function buildOutputSchema(
+  returnType: Type,
+): Either.Either<DataSchema, string> {
+  return Either.map(convertToElementSchema(returnType), (result) => {
+    return {
+      tag: 'tuple',
+      val: [['return-value', result]],
+    };
+  });
 }
 
-function mapToParameterType(type: Type): ElementSchema {
-  const witType = constructWitTypeFromTsType(type);
-
-  return {
-    tag: 'component-model',
-    val: witType,
-  };
+function convertToElementSchema(
+  type: Type,
+): Either.Either<ElementSchema, string> {
+  return Either.map(constructWitTypeFromTsType(type), (witType) => {
+    return {
+      tag: 'component-model',
+      val: witType,
+    };
+  });
 }
 
 export function Agent() {
@@ -97,22 +113,38 @@ export function Agent() {
     const constructorParamInfos: readonly ParameterInfo[] =
       constructorSignatureInfo.getParameters();
 
-    const constructorParamTypes = constructorParamInfos.map((paramInfo) =>
-      constructWitTypeFromTsType(paramInfo.type),
+    const constructorParamTypes = Either.all(
+      constructorParamInfos.map((paramInfo) =>
+        constructWitTypeFromTsType(paramInfo.type),
+      ),
+    );
+
+    const constructDataSchemaResult = Either.map(
+      constructorParamTypes,
+      (paramType) => {
+        return paramType.map((paramType, idx) => {
+          const paramName = constructorParamInfos[idx].name;
+          return [
+            paramName,
+            {
+              tag: 'component-model',
+              val: paramType,
+            },
+          ] as [string, ElementSchema];
+        });
+      },
+    );
+
+    const constructorElementSchemas = Either.getOrElse(
+      constructDataSchemaResult,
+      (err) => {
+        throw new Error(`Failed to construct DataSchema: ${err}`);
+      },
     );
 
     const constructorDataSchema: DataSchema = {
       tag: 'tuple',
-      val: constructorParamTypes.map((paramType, idx) => {
-        const paramName = constructorParamInfos[idx].name;
-        return [
-          paramName,
-          {
-            tag: 'component-model',
-            val: paramType,
-          },
-        ];
-      }),
+      val: constructorElementSchemas,
     };
 
     const methods: AgentMethod[] = methodNames.map((methodInfo) => {
@@ -126,9 +158,21 @@ export function Agent() {
 
       const baseMeta = methodMetadata.get(className)?.get(methodName) ?? {};
 
-      const inputSchema = buildInputSchema(parameters);
+      const inputSchemaEither = buildInputSchema(parameters);
 
-      const outputSchema = buildOutputSchema(returnType);
+      const inputSchema = Either.getOrElse(inputSchemaEither, (err) => {
+        throw new Error(
+          `Failed to construct input schema for method ${methodName}: ${err}`,
+        );
+      });
+
+      const outputSchemaEither = buildOutputSchema(returnType);
+
+      const outputSchema = Either.getOrElse(outputSchemaEither, (err) => {
+        throw new Error(
+          `Failed to construct output schema for method ${methodName}: ${err}`,
+        );
+      });
 
       return {
         name: methodName,
@@ -225,14 +269,15 @@ export function Agent() {
                   `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`,
               );
 
-              throw new Error(
-                `Method ${method} not found in agent definition for ${className} ${def} ${def?.methods}. Available: ${entriesAsStrings.join(', ')}`,
-              );
+              return {
+                tag: 'err',
+                val: {
+                  tag: 'invalid-method',
+                  val: `Method ${method} not found in agent definition for ${className}. Available methods: ${entriesAsStrings.join(', ')}`,
+                },
+              };
             }
 
-            // Why is return value a tuple with a single element?
-            // why should it have a name?
-            // FIXME
             return {
               tag: 'ok',
               val: getDataValueFromWitValueReturned(

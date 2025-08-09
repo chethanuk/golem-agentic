@@ -15,11 +15,18 @@ import {
   NameTypePair,
 } from '../src/mapping/types/analysed-type';
 import { constructAnalysedTypeFromTsType } from '../src/mapping/types/ts-to-wit';
+import { Either, Option } from 'effect';
 
 // Interface type indirectly tests primitive types, union, list etc
 describe('TypeScript Interface to AnalysedType', () => {
   const interfaceType = getTestInterfaceType();
-  const analysed = constructAnalysedTypeFromTsType(interfaceType);
+  const analysed = Either.getOrElse(
+    constructAnalysedTypeFromTsType(interfaceType),
+    (error) => {
+      throw new Error(`Failed to construct analysed type: ${error}`);
+    },
+  );
+
   const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
 
   it('Interface should be AnalysedType.Record', () => {
@@ -70,26 +77,31 @@ describe('TypeScript primitives to AnalysedType', () => {
   it('Boolean type is converted to AnalysedType.Bool', () => {
     const booleanType = getBooleanType();
     const result = constructAnalysedTypeFromTsType(booleanType);
-    expect(result).toEqual(analysedType.bool());
+    expect(Either.getRight(result)).toEqual(Option.some(analysedType.bool()));
   });
 
   it('String type is converted to AnalysedType.String', () => {
     const stringType = getStringType();
     const result = constructAnalysedTypeFromTsType(stringType);
-    expect(result).toEqual(analysedType.str());
+    expect(Either.getRight(result)).toEqual(Option.some(analysedType.str()));
   });
 
   it('Number type is converted to AnalysedType.S32', () => {
     const numberType = getNumberType();
     const result = constructAnalysedTypeFromTsType(numberType);
-    expect(result).toEqual(analysedType.s32());
+    expect(Either.getRight(result)).toEqual(Option.some(analysedType.s32()));
   });
 });
 
 describe('TypeScript Object to AnalysedType', () => {
   it('transforms object with different properties successfully to analysed type', () => {
     const interfaceType = getTestObjectType();
-    const analysed = constructAnalysedTypeFromTsType(interfaceType);
+    const analysed = Either.getOrElse(
+      constructAnalysedTypeFromTsType(interfaceType),
+      (error) => {
+        throw new Error(`Failed to construct analysed type: ${error}`);
+      },
+    );
 
     expect(analysed).toBeDefined();
     expect(analysed.kind).toBe('record');
@@ -119,7 +131,12 @@ describe('TypeScript Object to AnalysedType', () => {
 describe('TypeScript Union to AnalysedType.Variant', () => {
   it('Union is converted to Variant with the name of the type as case name', () => {
     const enumType = getUnionType();
-    const analysedType = constructAnalysedTypeFromTsType(enumType);
+    const analysedType = Either.getOrElse(
+      constructAnalysedTypeFromTsType(enumType),
+      (error) => {
+        throw new Error(`Failed to construct analysed type: ${error}`);
+      },
+    );
 
     const expected: AnalysedType = {
       kind: 'variant',

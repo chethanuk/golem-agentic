@@ -1,171 +1,155 @@
 import {
-    AnalysedType, getNameFromAnalysedType,
+    AnalysedType,
     NameOptionTypePair,
-    NameTypePair,
 } from './analysed-type';
-import {WitType} from "golem:agent/common";
-import {EnumType, GenericType, Type, TypeAliasType, UnionType} from "rttist";
+import {GenericType, Type, TypeAliasType, UnionType} from "rttist";
 import {InterfaceType, ObjectType, Type as TsType, TypeKind} from "rttist";
 import {analysedType} from "./analysed-type";
 import {WitTypeBuilder} from "./wit-type-builder";
 import {numberToOrdinalKebab} from "./type-index-ordinal";
+import { Either } from "effect"
+import {WitType} from "golem:agent/common";
 
-export function constructWitTypeFromTsType(type: Type) : WitType {
-    const analysedType = constructAnalysedTypeFromTsType(type)
-    const builder = new WitTypeBuilder();
-    builder.add(analysedType);
-    return builder.build();
+export function constructWitTypeFromTsType(type: Type): Either.Either<WitType, string> {
+    return Either.flatMap(constructAnalysedTypeFromTsType(type), (analysedType) => {
+        const builder = new WitTypeBuilder();
+        builder.add(analysedType);
+        const result = builder.build();
+        return Either.right(result);
+    })
 }
 
-export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
+export function constructAnalysedTypeFromTsType(type: TsType): Either.Either<AnalysedType, string> {
     switch (type.kind) {
         case TypeKind.Boolean:
-            return analysedType.bool();
+            return Either.right(analysedType.bool());
         case TypeKind.False:
-            return analysedType.bool()
+            return Either.right(analysedType.bool());
         case TypeKind.True:
-            return analysedType.bool();
+            return Either.right(analysedType.bool());
         case TypeKind.DataView:
-            return analysedType.list(analysedType.u8());
+            return Either.right(analysedType.list(analysedType.u8()));
         case TypeKind.MapDefinition:
             const mapKeyType = type.getTypeArguments?.()[0];
             const mapValueType = type.getTypeArguments?.()[1];
             const key = constructAnalysedTypeFromTsType(mapKeyType);
             const value = constructAnalysedTypeFromTsType(mapValueType);
-            return analysedType.list(analysedType.tuple([key, value]));
+
+            return Either.zipWith(key, value, (k, v) =>
+                analysedType.list(analysedType.tuple([k, v])));
 
         case TypeKind.WeakMapDefinition:
             const weakMapKeyType = type.getTypeArguments?.()[0];
             const weakMapValueType = type.getTypeArguments?.()[1];
             const weakKey = constructAnalysedTypeFromTsType(weakMapKeyType);
             const weakValue = constructAnalysedTypeFromTsType(weakMapValueType);
-            return analysedType.list(analysedType.tuple([weakKey, weakValue]));
 
-        case TypeKind.SetDefinition:
-            throw new Error("set types are not supported in Golem");
-        case TypeKind.WeakSetDefinition:
-            const setType = type.getTypeArguments?.()[0];
-            if (!setType) {
-                throw new Error("Set must have a type argument");
-            }
-            return analysedType.list(constructAnalysedTypeFromTsType(setType));
-
-        case TypeKind.GeneratorDefinition:
-            const genType = type.getTypeArguments?.()[0];
-            if (!genType) {
-                throw new Error("Generator must have a type argument");
-            }
-            return analysedType.list(constructAnalysedTypeFromTsType(genType));
-        case TypeKind.AsyncGeneratorDefinition:
-            const generatorType = type.getTypeArguments?.()[0];
-            if (!generatorType) {
-                throw new Error("Generator must have a type argument");
-            }
-            return analysedType.list(constructAnalysedTypeFromTsType(generatorType));
+            return Either.zipWith(
+                weakKey,
+                weakValue,
+                (k, v) => analysedType.list(analysedType.tuple([k, v])
+            ));
 
         case TypeKind.IteratorDefinition:
             const iteratorType = type.getTypeArguments?.()[0];
+
             if (!iteratorType) {
-                throw new Error("Iterator must have a type argument");
+               return Either.left("Iterator must have a type argument");
+            } else {
+               return Either.map(constructAnalysedTypeFromTsType(iteratorType), (result) => analysedType.list(result));
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(iteratorType));
+
         case TypeKind.IterableDefinition:
             const iterableType = type.getTypeArguments?.()[0];
             if (!iterableType) {
-                throw new Error("Iterable must have a type argument");
+                return Either.left("Iterable must have a type argument");
+            } else {
+                return Either.map(constructAnalysedTypeFromTsType(iterableType), (result) => analysedType.list(result));
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(iterableType));
+
         case TypeKind.IterableIteratorDefinition:
             const iterableIteratorType = type.getTypeArguments?.()[0];
             if (!iterableIteratorType) {
-                throw new Error("IterableIterator must have a type argument");
+                return Either.left("IterableIterator must have a type argument");
+            } else {
+                return Either.map(constructAnalysedTypeFromTsType(iterableIteratorType), (result) => analysedType.list(result));
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(iterableIteratorType));
-        case TypeKind.AsyncIteratorDefinition:
-            const asyncIteratorType = type.getTypeArguments?.()[0];
-            if (!asyncIteratorType) {
-                throw new Error("AsyncIterator must have a type argument");
-            }
-            return analysedType.list(constructAnalysedTypeFromTsType(asyncIteratorType));
-        case TypeKind.AsyncIterableDefinition:
-            const asyncIterableType = type.getTypeArguments?.()[0];
-            if (!asyncIterableType) {
-                throw new Error("AsyncIterable must have a type argument");
-            }
-            return analysedType.list(constructAnalysedTypeFromTsType(asyncIterableType));
-        case TypeKind.AsyncIterableIteratorDefinition:
-            const asyncIterableIteratorType = type.getTypeArguments?.()[0];
-            if (!asyncIterableIteratorType) {
-                throw new Error("AsyncIterableIterator must have a type argument");
-            }
-            return analysedType.list(constructAnalysedTypeFromTsType(asyncIterableIteratorType));
 
         case TypeKind.Type:
             if (type.isArray()) {
                 const typeArg = type.getTypeArguments?.()[0];
 
                 if (!typeArg) {
-                    throw new Error("Array must have a type argument");
+                    return Either.left("Array must have a type argument");
                 }
 
-                return analysedType.list(constructAnalysedTypeFromTsType(typeArg));
+                return Either.map(constructAnalysedTypeFromTsType(typeArg), (result) =>
+                    analysedType.list(result));
+
             }  else if (type.isTuple()) {
-                const tupleTypes = type.getTypeArguments?.().map(constructAnalysedTypeFromTsType) || [];
-                return analysedType.tuple(tupleTypes);
+                const tupleTypes =
+                    Either.all(type.getTypeArguments?.().map(constructAnalysedTypeFromTsType)) || Either.all([]);
+
+                return Either.map(tupleTypes, (analysedTypes) => analysedType.tuple(analysedTypes))
+
             } else if (type.isGenericType()) {
                 const genericType: GenericType<typeof type> = (type as GenericType<typeof type>);
                 const genericTypeDefinition = genericType.genericTypeDefinition;
                 if (genericTypeDefinition.name == 'Map') {
                     const typeArgs = type.getTypeArguments?.();
                     if (!typeArgs || typeArgs.length !== 2) {
-                        throw new Error("Map must have two type arguments");
+                       return Either.left("Map must have a type argument");
                     }
                     const keyType = constructAnalysedTypeFromTsType(typeArgs[0]);
                     const valueType = constructAnalysedTypeFromTsType(typeArgs[1]);
-                    return analysedType.list(analysedType.tuple([keyType, valueType]));
+
+                    return Either.zipWith(keyType, valueType, (keyType, valueType) =>
+                        analysedType.list(analysedType.tuple([keyType, valueType])))
+
                 } else {
-                    throw new Error("Type must have a type argument");
+                    return Either.left("Type must have a type argument");
                 }
             } else {
                 const typeArg = type.getTypeArguments?.()[0];
 
                 if (!typeArg) {
-                    throw new Error("Array must have a type argument");
+                    return Either.left("Array must have a type argument");
                 }
 
                 return constructAnalysedTypeFromTsType(typeArg);
             }
 
-        // To be handled
-        case TypeKind.Module:
-            throw new Error("module type is not supported in Golem");
-
-        case TypeKind.Namespace:
-            throw new Error("namespace type is not supported in Golem");
-
         case TypeKind.Object:
             const object = type as ObjectType;
             const props = object.getProperties();
             if (props.length === 0) {
-               throw new Error(`Unsupported type for type ${type}`);
+               return Either.left(`Unsupported type for type ${type}`);
             }
-            const objectFields = props.map(prop => {
-                return analysedType.field(prop.name.toString(), constructAnalysedTypeFromTsType(prop.type));
-            });
-            return analysedType.record(objectFields);
+
+            const objectFields = Either.all(props.map(prop =>
+                Either.map(constructAnalysedTypeFromTsType(prop.type), (propType) =>
+                    analysedType.field(prop.name.toString(), propType))
+            ));
+
+            return Either.map(objectFields, (fields) => analysedType.record(fields))
 
         case TypeKind.Interface:
             const objectInterface = type as InterfaceType;
-            const interfaceFields = objectInterface.getProperties().map(prop => {
+            const interfaceFields = Either.all(objectInterface.getProperties().map(prop => {
                 const propertyAnalysedType = constructAnalysedTypeFromTsType(prop.type);
 
                 if (prop.optional) {
-                    return analysedType.field(prop.name.toString(), analysedType.option(propertyAnalysedType));
+                    return Either.map(propertyAnalysedType, (result) =>
+                      analysedType.field(prop.name.toString(), analysedType.option(result))
+                    )
+                } else {
+                    return Either.map(propertyAnalysedType, (result) =>
+                        analysedType.field(prop.name.toString(), result)
+                    )
                 }
+            }));
 
-                return analysedType.field(prop.name.toString(), constructAnalysedTypeFromTsType(prop.type));
-            });
-            return analysedType.record(interfaceFields);
+            return Either.map(interfaceFields, (fields) => analysedType.record(fields));
 
         case TypeKind.Union:
             let fieldIdx = 1;
@@ -179,125 +163,126 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
                 switch(t.kind) {
                     case TypeKind.Boolean:
                         if (!foundBool) {
-                            possibleTypes.push({
-                                name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
-                                typ: constructAnalysedTypeFromTsType(t)
-                            });
+                            Either.map(constructAnalysedTypeFromTsType(t), (result) => {
+                                possibleTypes.push({
+                                    name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
+                                    typ: result
+                                });
+                            })
                         }
 
                         foundBool = true;
                         continue;
                     case TypeKind.True:
                         if (!foundBool) {
-                            possibleTypes.push({
-                                name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
-                                typ: constructAnalysedTypeFromTsType(t)
-                            });
+                            Either.map(constructAnalysedTypeFromTsType(t), (result) => {
+                                possibleTypes.push({
+                                    name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
+                                    typ: result
+                                });
+                            })
                         }
 
                         foundBool = true;
                         continue;
                     case TypeKind.False:
                         if (!foundBool) {
-                            possibleTypes.push({
-                                name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
-                                typ: constructAnalysedTypeFromTsType(t)
-                            });
+                            Either.map(constructAnalysedTypeFromTsType(t), (result) => {
+                                possibleTypes.push({
+                                    name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
+                                    typ: result
+                                });
+                            })
                         }
 
                         foundBool = true;
                         continue;
                     default:
-                        possibleTypes.push({
-                            name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
-                            typ: constructAnalysedTypeFromTsType(t)
-                        });
+                        Either.map(constructAnalysedTypeFromTsType(t), (result) => {
+                            possibleTypes.push({
+                                name: `type-${numberToOrdinalKebab(fieldIdx++)}`,
+                                typ: result
+                            });
+                        })
                 }
 
             }
 
-            return analysedType.variant(possibleTypes)
+            return Either.right(analysedType.variant(possibleTypes))
 
         case TypeKind.Alias:
             const typeAlias = type as TypeAliasType;
             return constructAnalysedTypeFromTsType(typeAlias.target)
 
-        case TypeKind.Enum:
-            const enumType = type as EnumType;
-            const cases = enumType.getEntries().map((entry) => entry[0])
-            return analysedType.enum(cases);
-
         case TypeKind.Null:
-            return analysedType.tuple([])
+            return Either.right(analysedType.tuple([]))
 
         case TypeKind.BigInt:
-            return analysedType.u64();
+            return Either.right(analysedType.u64());
 
         case TypeKind.Float64Array:
-            return analysedType.f64();
+            return Either.right(analysedType.f64());
 
         case TypeKind.Number:
-            return analysedType.s32(); // For the same reason - as an example - Rust defaults to i32
+            return Either.right(analysedType.s32()); // For the same reason - as an example - Rust defaults to i32
 
         case TypeKind.String:
-            return analysedType.str();
+            return Either.right(analysedType.str());
 
         case TypeKind.RegExp:
-            return analysedType.str();
+            return Either.right(analysedType.str());
 
         case TypeKind.Error:
-            return analysedType.resultErr(analysedType.str());
+            return Either.right(analysedType.resultErr(analysedType.str()));
 
         case TypeKind.Int8Array:
-            return analysedType.list(analysedType.s8());
+            return Either.right(analysedType.list(analysedType.s8()));
 
         case TypeKind.Uint8Array:
-            return analysedType.list(analysedType.u8());
+            return Either.right(analysedType.list(analysedType.u8()));
 
         case TypeKind.Uint8ClampedArray:
-            return analysedType.list(analysedType.u8());
+            return Either.right(analysedType.list(analysedType.u8()));
 
         case TypeKind.ArrayBuffer:
-            return analysedType.list(analysedType.u8());
+            return Either.right(analysedType.list(analysedType.u8()));
 
         case TypeKind.SharedArrayBuffer:
-            return analysedType.list(analysedType.u8());
+            return Either.right(analysedType.list(analysedType.u8()));
 
         case TypeKind.Int16Array:
-            return analysedType.list(analysedType.s16());
+            return Either.right(analysedType.list(analysedType.s16()));
 
         case TypeKind.Uint16Array:
-            return analysedType.list(analysedType.u16());
+            return Either.right(analysedType.list(analysedType.u16()));
 
         case TypeKind.Int32Array:
-            return analysedType.list(analysedType.s32());
+            return Either.right(analysedType.list(analysedType.s32()));
 
         case TypeKind.Uint32Array:
-            return analysedType.list(analysedType.u32());
+            return Either.right(analysedType.list(analysedType.u32()));
 
         case TypeKind.Float32Array:
-            return analysedType.list(analysedType.f32());
+            return Either.right(analysedType.list(analysedType.f32()));
 
         case TypeKind.BigInt64Array:
-            return analysedType.list(analysedType.s64());
+            return Either.right(analysedType.list(analysedType.s64()));
 
         case TypeKind.BigUint64Array:
-            return analysedType.list(analysedType.u64());
-
-        case TypeKind.Invalid:
-           throw new Error("invalid type is not supported in Golem");
+            return Either.right(analysedType.list(analysedType.u64()));
 
         case TypeKind.NumberLiteral:
-            return analysedType.f64();
+            return Either.right(analysedType.f64());
         case TypeKind.BigIntLiteral:
-            return analysedType.s64();
+            return Either.right(analysedType.s64());
         case TypeKind.StringLiteral:
-            return analysedType.str();
+            return Either.right(analysedType.str());
 
         case TypeKind.Promise:
             const promiseType = type.getTypeArguments?.()[0];
+
             if (!promiseType) {
-                throw new Error("Promise must have a type argument");
+                return Either.left("Promise must have a type argument");
             }
 
             return constructAnalysedTypeFromTsType(promiseType);
@@ -306,37 +291,42 @@ export function constructAnalysedTypeFromTsType(type: TsType): AnalysedType {
             const promiseDefType = type.getTypeArguments?.()[0];
 
             if (!promiseDefType) {
-                throw new Error("PromiseDefinition must have a type argument");
+                return Either.left("PromiseDefinition must have a type argument");
             }
 
-            return analysedType.option(constructAnalysedTypeFromTsType(promiseDefType));
+            return Either.map(constructAnalysedTypeFromTsType(promiseDefType), analysedType.option);
 
         case TypeKind.ObjectType:
             const obj = type as ObjectType;
-            const fields = obj.getProperties().map(prop => {
-                return analysedType.field(prop.name.toString(), constructAnalysedTypeFromTsType(prop.type));
-            });
-            return analysedType.record(fields);
+            const fields = Either.all(obj.getProperties().map(prop => {
+                return Either.map(constructAnalysedTypeFromTsType(prop.type), (result) => analysedType.field(prop.name.toString(), result));
+            }));
+
+            return Either.map(fields, analysedType.record);
 
         case TypeKind.TupleDefinition:
-            const tupleTypes = type.getTypeArguments?.().map(constructAnalysedTypeFromTsType) || [];
-            return analysedType.tuple(tupleTypes);
+            const tupleTypes =
+                Either.all(type.getTypeArguments?.().map(constructAnalysedTypeFromTsType)) || Either.all([]);
+
+            return Either.map(tupleTypes, analysedType.tuple);
 
         case TypeKind.ArrayDefinition:
             const arrayType = type.getTypeArguments?.()[0];
+
             if (!arrayType) {
-                throw new Error("Array must have a type argument");
+                return Either.left("Array must have a type argument");
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(arrayType));
+            return Either.map(constructAnalysedTypeFromTsType(arrayType), analysedType.list)
 
         case TypeKind.ReadonlyArrayDefinition:
             const elementType = type.getTypeArguments?.()[0];
+
             if (!elementType) {
-                throw new Error("Array must have a type argument");
+                return Either.left("Array must have a type argument");
             }
-            return analysedType.list(constructAnalysedTypeFromTsType(elementType));
+            return Either.map(constructAnalysedTypeFromTsType(elementType), analysedType.list)
 
         default:
-            throw new Error(`The following type is not supported as argument or return type in agentic context ${type.displayName}`);
+            return Either.left(`The following type is not supported as argument or return type in agentic context ${type.displayName}`);
     }
 }
