@@ -407,12 +407,11 @@ function matchesType(value: any, type: Type): boolean {
                 matchesType(key, typeArgs[0]) && matchesType(val, typeArgs[1]),
             )
           );
-        }  else {
+        } else {
           throw new Error(
             `Unsupported generic type: ${genericTypeDefinition.name}`,
           );
         }
-
       } else {
         throw new Error(
           `Unsupported TypeKind.Type with generic type: ${type.displayName}`,
@@ -453,8 +452,8 @@ function matchesType(value: any, type: Type): boolean {
       return handleObjectMatch(value, type);
 
     case TypeKind.Union:
-        const unionType = type as UnionType;
-        return unionType.types.some((t) => matchesType(value, t));
+      const unionType = type as UnionType;
+      return unionType.types.some((t) => matchesType(value, t));
 
     case TypeKind.Any:
       return true;

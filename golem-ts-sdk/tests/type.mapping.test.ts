@@ -173,60 +173,60 @@ function checkUnionComplexFields(fields: NameTypePair[]) {
     f.name.startsWith('unionComplexProp'),
   );
   expect(unionComplexFields.length).toBeGreaterThan(0);
-    unionComplexFields.forEach((field) => {
-        expect(field.typ.kind).toBe('variant');
-        const expectedCases: NameTypePair[] = [
-          { name: 'type-first', typ: { kind: 'string' } },
-          { name: 'type-second', typ: { kind: 's32' } },
-          { name: 'type-third', typ: { kind: 'bool' } },
-          { name: 'type-fourth', typ: { kind: 'bool' } },
-          {
-            name: 'type-fifth',
-            typ: {
-              kind: 'record',
-              value: {
-                fields: [
-                  { name: 'a', typ: { kind: 'string' } },
-                  { name: 'b', typ: { kind: 's32' } },
-                  { name: 'c', typ: { kind: 'bool' } },
-                ],
-                name: undefined,
-              },
-            },
+  unionComplexFields.forEach((field) => {
+    expect(field.typ.kind).toBe('variant');
+    const expectedCases: NameTypePair[] = [
+      { name: 'type-first', typ: { kind: 'string' } },
+      { name: 'type-second', typ: { kind: 's32' } },
+      { name: 'type-third', typ: { kind: 'bool' } },
+      { name: 'type-fourth', typ: { kind: 'bool' } },
+      {
+        name: 'type-fifth',
+        typ: {
+          kind: 'record',
+          value: {
+            fields: [
+              { name: 'a', typ: { kind: 'string' } },
+              { name: 'b', typ: { kind: 's32' } },
+              { name: 'c', typ: { kind: 'bool' } },
+            ],
+            name: undefined,
           },
-          {
-            name: 'type-sixth',
-            typ: { kind: 's32' },
+        },
+      },
+      {
+        name: 'type-sixth',
+        typ: { kind: 's32' },
+      },
+      {
+        name: 'type-seventh',
+        typ: { kind: 'string' },
+      },
+      {
+        name: 'type-eighth',
+        typ: { kind: 'bool' },
+      },
+      {
+        name: 'type-ninth',
+        typ: { kind: 'bool' },
+      },
+      {
+        name: 'type-tenth',
+        typ: {
+          kind: 'record',
+          value: {
+            fields: [
+              { name: 'a', typ: { kind: 'string' } },
+              { name: 'b', typ: { kind: 's32' } },
+              { name: 'c', typ: { kind: 'bool' } },
+            ],
+            name: undefined,
           },
-          {
-            name: 'type-seventh',
-            typ: { kind: 'string' },
-          },
-          {
-            name: 'type-eighth',
-            typ: { kind: 'bool' },
-          },
-          {
-            name: 'type-ninth',
-            typ: { kind: 'bool' },
-          },
-          {
-            name: 'type-tenth',
-            typ: {
-              kind: 'record',
-              value: {
-                fields: [
-                  { name: 'a', typ: { kind: 'string' } },
-                  { name: 'b', typ: { kind: 's32' } },
-                  { name: 'c', typ: { kind: 'bool' } },
-                ],
-                name: undefined,
-              },
-            },
-          },
-        ];
-        expect(field.typ).toEqual(analysedType.variant(expectedCases));
-    });
+        },
+      },
+    ];
+    expect(field.typ).toEqual(analysedType.variant(expectedCases));
+  });
 }
 
 function checkUnionFields(fields: any[]) {

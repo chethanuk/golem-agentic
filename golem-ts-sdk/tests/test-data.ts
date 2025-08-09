@@ -39,11 +39,10 @@ export type UnionComplexType =
   | TupleType
   | TupleComplexType
   | SimpleInterfaceType;
-  // FIXME: RTTIST don't support these types to be part of union yet - fails at type-gen
-  // | MapType
-  // | ListType
-  // | ListComplexType
-
+// FIXME: RTTIST don't support these types to be part of union yet - fails at type-gen
+// | MapType
+// | ListType
+// | ListComplexType
 
 export type ObjectComplexType = {
   a: string;

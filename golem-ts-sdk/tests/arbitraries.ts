@@ -89,7 +89,6 @@ export const unionComplexArb: fc.Arbitrary<UnionComplexType> = fc.oneof(
   }),
 );
 
-
 export const interfaceArb: fc.Arbitrary<TestInterfaceType> = fc.record({
   bigintProp: fc.bigInt(),
   booleanProp: fc.boolean(),
