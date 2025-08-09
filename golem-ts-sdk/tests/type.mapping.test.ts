@@ -33,7 +33,7 @@ describe('TypeScript Interface to AnalysedType', () => {
 
   it('Union types (aliased) within an interface', () => {
     checkUnionFields(recordFields);
-    //checkUnionComplexFields(recordFields);
+    // checkUnionComplexFields(recordFields);
   });
 
   it('Object types within an interface', () => {
@@ -103,10 +103,9 @@ describe('TypeScript Union to AnalysedType.Variant', () => {
         cases: [
           { name: 'type-first', typ: { kind: 'string' } },
           { name: 'type-second', typ: { kind: 's32' } },
-          { name: 'type-third', typ: { kind: 'bool' } }, // RTTIST bug, should be just bool
-          { name: 'type-fourth', typ: { kind: 'bool' } },
+          { name: 'type-third', typ: { kind: 'bool' } },
           {
-            name: 'type-fifth',
+            name: 'type-fourth',
             typ: {
               kind: 'record',
               value: {
@@ -179,9 +178,8 @@ function checkUnionComplexFields(fields: NameTypePair[]) {
       { name: 'type-first', typ: { kind: 'string' } },
       { name: 'type-second', typ: { kind: 's32' } },
       { name: 'type-third', typ: { kind: 'bool' } },
-      { name: 'type-fourth', typ: { kind: 'bool' } },
       {
-        name: 'type-fifth',
+        name: 'type-fourth',
         typ: {
           kind: 'record',
           value: {
@@ -195,23 +193,23 @@ function checkUnionComplexFields(fields: NameTypePair[]) {
         },
       },
       {
-        name: 'type-sixth',
+        name: 'type-fifth',
         typ: { kind: 's32' },
       },
       {
-        name: 'type-seventh',
+        name: 'type-sixth',
         typ: { kind: 'string' },
+      },
+      {
+        name: 'type-seventh',
+        typ: { kind: 'bool' },
       },
       {
         name: 'type-eighth',
         typ: { kind: 'bool' },
       },
       {
-        name: 'type-ninth',
-        typ: { kind: 'bool' },
-      },
-      {
-        name: 'type-tenth',
+        name: 'type-nineth',
         typ: {
           kind: 'record',
           value: {
@@ -237,9 +235,8 @@ function checkUnionFields(fields: any[]) {
     { name: 'type-first', typ: { kind: 'string' } },
     { name: 'type-second', typ: { kind: 's32' } },
     { name: 'type-third', typ: { kind: 'bool' } },
-    { name: 'type-fourth', typ: { kind: 'bool' } },
     {
-      name: 'type-fifth',
+      name: 'type-fourth',
       typ: {
         kind: 'record',
         value: {
@@ -411,9 +408,8 @@ function checkObjectComplexFields(fields: any[]) {
             { name: 'type-first', typ: { kind: 'string' } },
             { name: 'type-second', typ: { kind: 's32' } },
             { name: 'type-third', typ: { kind: 'bool' } },
-            { name: 'type-fourth', typ: { kind: 'bool' } },
             {
-              name: 'type-fifth',
+              name: 'type-fourth',
               typ: {
                 kind: 'record',
                 value: {
