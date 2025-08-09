@@ -1,3 +1,5 @@
+// In practice, 99% use-cases may not have a union type of 100s of possibilities,
+// however we handle it for a 1000.
 export function numberToOrdinalKebab(n: number): string {
     const units: Record<number, string> = {
         0: "",
@@ -46,7 +48,6 @@ export function numberToOrdinalKebab(n: number): string {
         twelve: "twelfth",
     };
 
-    // Convert number to cardinal words
     function toWords(num: number): string {
         if (num < 10) return units[num];
         if (num < 20) return teens[num];
@@ -60,10 +61,9 @@ export function numberToOrdinalKebab(n: number): string {
             const remainder = num % 100;
             return units[hundred] + "-hundred" + (remainder ? "-" + toWords(remainder) : "");
         }
-        return num.toString(); // fallback for larger numbers
+        return num.toString();
     }
 
-    // Convert cardinal to ordinal
     const words = toWords(n);
     const parts = words.split("-");
     const lastWord = parts[parts.length - 1];
