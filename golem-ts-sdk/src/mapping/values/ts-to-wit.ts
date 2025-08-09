@@ -387,6 +387,32 @@ function matchesType(value: any, type: Type): boolean {
           value.length === typeArgs.length &&
           value.every((v, idx) => matchesType(v, typeArgs[idx]))
         );
+      } else if (type.isGenericType()) {
+        const genericType: GenericType<typeof type> = type as GenericType<
+          typeof type
+        >;
+
+        const genericTypeDefinition = genericType.genericTypeDefinition;
+
+        if (genericTypeDefinition.name === 'Map') {
+          const typeArgs = type.getTypeArguments?.();
+          if (!typeArgs || typeArgs.length !== 2) {
+            throw new Error('Map must have two type arguments');
+          }
+
+          return (
+            value instanceof Map &&
+            Array.from(value.entries()).every(
+              ([key, val]) =>
+                matchesType(key, typeArgs[0]) && matchesType(val, typeArgs[1]),
+            )
+          );
+        }  else {
+          throw new Error(
+            `Unsupported generic type: ${genericTypeDefinition.name}`,
+          );
+        }
+
       } else {
         throw new Error(
           `Unsupported TypeKind.Type with generic type: ${type.displayName}`,
@@ -423,8 +449,12 @@ function matchesType(value: any, type: Type): boolean {
     case TypeKind.Object:
       return handleObjectMatch(value, type);
 
+    case TypeKind.NonPrimitiveObject:
+      return handleObjectMatch(value, type);
+
     case TypeKind.Union:
-      throw new Error('union of union not yet supported');
+        const unionType = type as UnionType;
+        return unionType.types.some((t) => matchesType(value, t));
 
     case TypeKind.Any:
       return true;
@@ -436,6 +466,14 @@ function matchesType(value: any, type: Type): boolean {
 
 function handleObjectMatch(value: any, type: Type): boolean {
   if (typeof value !== 'object' || value === null) return false;
+
+  let count = Object.keys(value).length;
+
+  let expectedCount = (type as ObjectType).getProperties()?.length ?? 0;
+
+  if (count !== expectedCount) {
+    return false;
+  }
 
   let allValidProp = true;
 

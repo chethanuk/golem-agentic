@@ -16,22 +16,34 @@ interface SimpleInterfaceType {
   n: number;
 }
 
+export type ObjectType = { a: string; b: number; c: boolean };
+
 export type UnionType = number | string | boolean | ObjectType;
 
-// Deliberately adding duplicate types since TypeScript allows it
+export type ListType = Array<string>;
+
+export type ListComplexType = Array<ObjectType>;
+
+export type TupleType = [string, number, boolean];
+
+export type TupleComplexType = [string, number, ObjectType];
+
+export type MapType = Map<string, number>;
+
 export type UnionComplexType =
   | number
   | string
   | boolean
+  | ObjectComplexType
   | UnionType
-  //  | ListType
-  // | ListComplexType
   | TupleType
   | TupleComplexType
-  // | MapType
   | SimpleInterfaceType;
+  // FIXME: RTTIST don't support these types to be part of union yet - fails at type-gen
+  // | MapType
+  // | ListType
+  // | ListComplexType
 
-export type ObjectType = { a: string; b: number; c: boolean };
 
 export type ObjectComplexType = {
   a: string;
@@ -47,15 +59,6 @@ export type ObjectComplexType = {
   k: SimpleInterfaceType;
 };
 
-export type ListType = Array<string>;
-
-export type ListComplexType = Array<ObjectType>;
-
-export type TupleType = [string, number, boolean];
-
-export type TupleComplexType = [string, number, ObjectType];
-
-export type MapType = Map<string, number>;
 
 export interface TestInterfaceType {
   numberProp: number;
