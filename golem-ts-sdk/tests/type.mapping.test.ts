@@ -33,6 +33,7 @@ describe('TypeScript Interface to AnalysedType', () => {
 
   it('Union types (aliased) within an interface', () => {
     checkUnionFields(recordFields);
+    //checkUnionComplexFields(recordFields);
   });
 
   it('Object types within an interface', () => {
@@ -100,12 +101,12 @@ describe('TypeScript Union to AnalysedType.Variant', () => {
       kind: 'variant',
       value: {
         cases: [
-          { name: 'string', typ: { kind: 'string' } },
-          { name: 'number', typ: { kind: 's32' } },
-          { name: 'false', typ: { kind: 'bool' } }, // RTTIST bug, should be just bool
-          { name: 'true', typ: { kind: 'bool' } },
+          { name: 'type-first', typ: { kind: 'string' } },
+          { name: 'type-second', typ: { kind: 's32' } },
+          { name: 'type-third', typ: { kind: 'bool' } }, // RTTIST bug, should be just bool
+          { name: 'type-fourth', typ: { kind: 'bool' } },
           {
-            name: 'objecttype',
+            name: 'type-fifth',
             typ: {
               kind: 'record',
               value: {
@@ -167,17 +168,78 @@ function checkOptionalFields(fields: NameTypePair[]) {
   });
 }
 
+function checkUnionComplexFields(fields: NameTypePair[]) {
+  const unionComplexFields = fields.filter((f) =>
+    f.name.startsWith('unionComplexProp'),
+  );
+  expect(unionComplexFields.length).toBeGreaterThan(0);
+    unionComplexFields.forEach((field) => {
+        expect(field.typ.kind).toBe('variant');
+        const expectedCases: NameTypePair[] = [
+          { name: 'type-first', typ: { kind: 'string' } },
+          { name: 'type-second', typ: { kind: 's32' } },
+          { name: 'type-third', typ: { kind: 'bool' } },
+          { name: 'type-fourth', typ: { kind: 'bool' } },
+          {
+            name: 'type-fifth',
+            typ: {
+              kind: 'record',
+              value: {
+                fields: [
+                  { name: 'a', typ: { kind: 'string' } },
+                  { name: 'b', typ: { kind: 's32' } },
+                  { name: 'c', typ: { kind: 'bool' } },
+                ],
+                name: undefined,
+              },
+            },
+          },
+          {
+            name: 'type-sixth',
+            typ: { kind: 's32' },
+          },
+          {
+            name: 'type-seventh',
+            typ: { kind: 'string' },
+          },
+          {
+            name: 'type-eighth',
+            typ: { kind: 'bool' },
+          },
+          {
+            name: 'type-ninth',
+            typ: { kind: 'bool' },
+          },
+          {
+            name: 'type-tenth',
+            typ: {
+              kind: 'record',
+              value: {
+                fields: [
+                  { name: 'a', typ: { kind: 'string' } },
+                  { name: 'b', typ: { kind: 's32' } },
+                  { name: 'c', typ: { kind: 'bool' } },
+                ],
+                name: undefined,
+              },
+            },
+          },
+        ];
+        expect(field.typ).toEqual(analysedType.variant(expectedCases));
+    });
+}
+
 function checkUnionFields(fields: any[]) {
   const unionFields = fields.filter((f) => f.name.startsWith('unionProp'));
   expect(unionFields.length).toBeGreaterThan(0);
 
   const expectedCases: NameTypePair[] = [
-    { name: 'string', typ: { kind: 'string' } },
-    { name: 'number', typ: { kind: 's32' } },
-    { name: 'false', typ: { kind: 'bool' } },
-    { name: 'true', typ: { kind: 'bool' } },
+    { name: 'type-first', typ: { kind: 'string' } },
+    { name: 'type-second', typ: { kind: 's32' } },
+    { name: 'type-third', typ: { kind: 'bool' } },
+    { name: 'type-fourth', typ: { kind: 'bool' } },
     {
-      name: 'objecttype',
+      name: 'type-fifth',
       typ: {
         kind: 'record',
         value: {
@@ -346,12 +408,12 @@ function checkObjectComplexFields(fields: any[]) {
         kind: 'variant',
         value: {
           cases: [
-            { name: 'string', typ: { kind: 'string' } },
-            { name: 'number', typ: { kind: 's32' } },
-            { name: 'false', typ: { kind: 'bool' } },
-            { name: 'true', typ: { kind: 'bool' } },
+            { name: 'type-first', typ: { kind: 'string' } },
+            { name: 'type-second', typ: { kind: 's32' } },
+            { name: 'type-third', typ: { kind: 'bool' } },
+            { name: 'type-fourth', typ: { kind: 'bool' } },
             {
-              name: 'objecttype',
+              name: 'type-fifth',
               typ: {
                 kind: 'record',
                 value: {

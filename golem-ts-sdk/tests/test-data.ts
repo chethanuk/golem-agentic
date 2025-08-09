@@ -59,7 +59,6 @@ export type ObjectComplexType = {
   k: SimpleInterfaceType;
 };
 
-
 export interface TestInterfaceType {
   numberProp: number;
   stringProp: string;
