@@ -3,7 +3,7 @@ import {
   getTestInterfaceType,
   getRecordFieldsFromAnalysedType,
   getTestObjectType,
-  getUnionType,
+  getUnionType, getBooleanType, getNumberType, getStringType,
 } from './utils';
 import {
   analysedType,
@@ -61,6 +61,26 @@ describe('TypeScript Interface to AnalysedType', () => {
     checkMapFields(recordFields);
   });
 });
+
+describe('TypeScript primitives to AnalysedType', () => {
+    it('Boolean type is converted to AnalysedType.Bool', () => {
+        const booleanType = getBooleanType();
+        const result = constructAnalysedTypeFromTsType(booleanType);
+        expect(result).toEqual(analysedType.bool());
+    });
+
+    it('String type is converted to AnalysedType.String', () => {
+        const stringType = getStringType();
+        const result = constructAnalysedTypeFromTsType(stringType);
+        expect(result).toEqual(analysedType.str());
+    });
+
+    it('Number type is converted to AnalysedType.S32', () => {
+        const numberType = getNumberType();
+        const result = constructAnalysedTypeFromTsType(numberType);
+        expect(result).toEqual(analysedType.s32());
+    });
+})
 
 describe('TypeScript Object to AnalysedType', () => {
   it('transforms object with different properties successfully to analysed type', () => {

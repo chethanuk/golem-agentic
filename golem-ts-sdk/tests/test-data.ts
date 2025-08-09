@@ -30,6 +30,13 @@ export type TupleComplexType = [string, number, ObjectType];
 
 export type MapType = Map<string, number>;
 
+// Boolean has special behavior with RTTIST, so we test it explicitly
+export type BooleanType = boolean;
+
+export type StringType = string;
+
+export type NumberType = number;
+
 export type UnionComplexType =
   | number
   | string
