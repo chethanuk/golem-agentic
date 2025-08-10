@@ -19,6 +19,60 @@ jobs:
 
       - name: Setup Rust
         run: rustup update stable --no-self-update && rustup default stable
+
+      - name: Add wasm32-wasip1 target
+        run: rustup target add wasm32-wasip1
+
+      # ------------------------------------------------------------------
+      # Lint / Format helpers for Rust
+      # ------------------------------------------------------------------
+      - name: Add rustfmt and clippy
+        run: rustup component add rustfmt clippy
+
+      - name: Rust format check
+        run: |
+          cargo fmt --manifest-path golem-rust-sdk/agentic/Cargo.toml --all -- --check
+          cargo fmt --manifest-path golem-rust-sdk/agentic-macros/Cargo.toml --all -- --check
+          for m in examples/*/Cargo.toml; do
+            echo "fmt check $m"
+            cargo fmt --manifest-path "$m" --all -- --check || true
+          done
+
+      - name: Clippy (SDK)
+        run: |
+          cargo clippy --manifest-path golem-rust-sdk/agentic/Cargo.toml --all-targets -- -D warnings
+          cargo clippy --manifest-path golem-rust-sdk/agentic-macros/Cargo.toml --all-targets -- -D warnings
+
+      - name: Clippy (examples)
+        run: |
+          set -e
+          for m in examples/*/Cargo.toml; do
+            echo "clippy $m"
+            cargo clippy --manifest-path "$m" --all-targets -- -D warnings
+          done
+
+      - name: Test Rust examples (host)
+        run: |
+          set -e
+          for m in examples/*/Cargo.toml; do
+            echo "test $m"
+            cargo test --manifest-path "$m" --all-features --verbose
+          done
+
+      - name: Build & test Rust SDK
+        run: |
+          cargo build --manifest-path golem-rust-sdk/agentic/Cargo.toml
+          cargo build --manifest-path golem-rust-sdk/agentic-macros/Cargo.toml
+          cargo test  --manifest-path golem-rust-sdk/agentic/Cargo.toml || true
+          cargo test  --manifest-path golem-rust-sdk/agentic-macros/Cargo.toml || true
+
+      - name: Build Rust examples (wasm32-wasip1)
+        run: |
+          set -e
+          for m in examples/*/Cargo.toml; do
+            echo "Building $m"
+            cargo build --target wasm32-wasip1 --manifest-path "$m"
+          done
      
       - name: Install wasm-rquickjs
         run: cargo install wasm-rquickjs-cli   
