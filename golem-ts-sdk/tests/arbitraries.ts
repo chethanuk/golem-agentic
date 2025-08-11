@@ -89,7 +89,7 @@ export const unionComplexArb: fc.Arbitrary<UnionComplexType> = fc.oneof(
   }),
 );
 
-export const interfaceArb: fc.Arbitrary<TestInterfaceType> = fc.record({
+export const baseArb = fc.record({
   bigintProp: fc.bigInt(),
   booleanProp: fc.boolean(),
   falseProp: fc.constant(false),
@@ -107,5 +107,20 @@ export const interfaceArb: fc.Arbitrary<TestInterfaceType> = fc.record({
   tupleProp: tupleArb,
   unionProp: unionArb,
   unionComplexProp: unionComplexArb,
-  optionalProp: fc.option(fc.integer(), { nil: undefined }),
 });
+
+const optionalPropArb = fc
+  .option(fc.integer())
+  .map((opt) =>
+    opt === undefined || opt === null ? {} : { optionalProp: opt },
+  );
+
+export const interfaceArb: fc.Arbitrary<TestInterfaceType> = fc
+  .tuple(baseArb, optionalPropArb)
+  .map(
+    ([base, optional]) =>
+      ({
+        ...base,
+        ...optional,
+      }) as TestInterfaceType,
+  );

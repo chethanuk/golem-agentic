@@ -1,9 +1,24 @@
+// Copyright 2024-2025 Golem Cloud
+//
+// Licensed under the Golem Source License v1.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://license.golem.cloud/LICENSE
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import {
   AgentMethod,
   DataSchema,
   AgentType,
   ElementSchema,
   DataValue,
+  AgentError,
 } from 'golem:agent/common';
 import { WitValue } from 'golem:rpc/types@0.2.2';
 import { AgentInternal } from './agent-internal';
@@ -19,7 +34,7 @@ import { agentRegistry } from './agent-registry';
 import { constructWitTypeFromTsType } from './mapping/types/ts-to-wit';
 import { constructTsValueFromWitValue } from './mapping/values/wit-to-ts';
 import { constructWitValueFromTsValue } from './mapping/values/ts-to-wit';
-import { Either } from 'effect';
+import * as Either from 'effect/Either';
 
 const methodMetadata = new Map<
   string,
@@ -269,20 +284,39 @@ export function Agent() {
                   `Key: ${key}, Value: ${JSON.stringify(value, null, 2)}`,
               );
 
+              const error: AgentError = {
+                tag: 'invalid-method',
+                val: `Method ${method} not found in agent type ${className}. Available methods: ${entriesAsStrings.join(
+                  ', ',
+                )}`,
+              };
+
               return {
                 tag: 'err',
-                val: {
-                  tag: 'invalid-method',
-                  val: `Method ${method} not found in agent definition for ${className}. Available methods: ${entriesAsStrings.join(', ')}`,
-                },
+                val: error,
+              };
+            }
+
+            const returnValue = constructWitValueFromTsValue(
+              result,
+              returnType,
+            );
+
+            if (Either.isLeft(returnValue)) {
+              const agentError: AgentError = {
+                tag: 'invalid-method',
+                val: `Invalid return value from ${method}: ${Either.getLeft(returnValue)}`,
+              };
+
+              return {
+                tag: 'err',
+                val: agentError,
               };
             }
 
             return {
               tag: 'ok',
-              val: getDataValueFromWitValueReturned(
-                constructWitValueFromTsValue(result, returnType),
-              ),
+              val: getDataValueFromWitValueReturned(returnValue.right),
             };
           },
         };
