@@ -30,6 +30,7 @@ import {
 } from './arbitraries';
 import * as fc from 'fast-check';
 import { Type } from 'rttist';
+import * as Either from 'effect/Either';
 
 describe('typescript value to wit value round-trip conversions', () => {
   it('should correctly perform round-trip conversion for arbitrary values of interface type', () => {
@@ -231,7 +232,9 @@ describe('typescript value to wit value round-trip conversions', () => {
 });
 
 function runRoundTripTest<T>(data: T, type: Type) {
-  const witValue = constructWitValueFromTsValue(data, type);
+  const witValueEither = constructWitValueFromTsValue(data, type);
+
+  const witValue = Either.getOrThrow(witValueEither);
 
   // Round trip wit-value -> value -> wit-value
   const value = constructValueFromWitValue(witValue);

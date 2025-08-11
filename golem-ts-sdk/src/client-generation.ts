@@ -1,3 +1,17 @@
+// Copyright 2024-2025 Golem Cloud
+//
+// Licensed under the Golem Source License v1.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://license.golem.cloud/LICENSE
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { Metadata } from './type_metadata';
 import { ClassType } from 'rttist';
 import { WasmRpc, WitValue, WorkerId } from 'golem:rpc/types@0.2.2';
@@ -12,6 +26,7 @@ import {
 } from './mapping/values/value';
 import { constructWitValueFromTsValue } from './mapping/values/ts-to-wit';
 import { constructTsValueFromWitValue } from './mapping/values/wit-to-ts';
+import * as Either from 'effect/Either';
 
 export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
   return (...args: any[]) => {
@@ -27,10 +42,25 @@ export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
 
     const parameters = constructor.getParameters();
 
-    const parameterWitValues = args.map((fnArg, index) => {
-      const typ = parameters[index].type;
-      return constructWitValueFromTsValue(fnArg, typ);
-    });
+    const parameterWitValuesResult = Either.all(
+      args.map((fnArg, index) => {
+        const typ = parameters[index].type;
+        return constructWitValueFromTsValue(fnArg, typ);
+      }),
+    );
+
+    // There is no big advantage of returning a Result here,
+    // and gives bad experience to the users:
+    // `MyAgent.createLocal` should just give a normal error.
+    // If they want to handle errors, they can use `Either` or `Result` or try-catch.
+    const parameterWitValues = Either.isLeft(parameterWitValuesResult)
+      ? (() => {
+          throw new Error(
+            'Failed to create a local agent' +
+              JSON.stringify(parameterWitValuesResult.left),
+          );
+        })()
+      : parameterWitValuesResult.right;
 
     // Currently handling only wit value
     const dataValue: DataValue = {
@@ -47,7 +77,6 @@ export function getLocalClient<T extends new (...args: any[]) => any>(ctor: T) {
     const resolvedAgent = agentInitiator.initiate(agentName, dataValue);
 
     if (resolvedAgent.tag === 'err') {
-      // FIXME: LocalClient shouldn't fail
       throw new Error(
         'Failed to create agent: ' + JSON.stringify(resolvedAgent.val),
       );
@@ -134,10 +163,28 @@ export function getRemoteClient<T extends new (...args: any[]) => any>(
 
           return (...fnArgs: any[]) => {
             const functionName = `golem:simulated-agentic-typescript/simulated-agent.{[method]{${ctor.name}.{${prop.toString()}}`;
-            const parameterWitValues = fnArgs.map((fnArg, index) => {
-              const typ = paramInfo[index].type;
-              return constructWitValueFromTsValue(fnArg, typ);
-            });
+
+            const parameterWitValuesResult = Either.all(
+              fnArgs.map((fnArg, index) => {
+                const typ = paramInfo[index].type;
+                return constructWitValueFromTsValue(fnArg, typ);
+              }),
+            );
+
+            // There is no big advantage of returning a Result here,
+            // and gives bad experience to the users:
+            // `MyAgent.createRemote` should just give a normal error.
+            // If they want to handle errors, they can use `Either` or `Result`
+            // or try-catch.
+            const parameterWitValues = Either.isLeft(parameterWitValuesResult)
+              ? (() => {
+                  throw new Error(
+                    'Failed to create remote agent: ' +
+                      JSON.stringify(parameterWitValuesResult.left),
+                  );
+                })()
+              : parameterWitValuesResult.right;
+
             const inputArgs: WitValue[] = [
               resourceWitValue,
               ...parameterWitValues,

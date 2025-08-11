@@ -1,3 +1,17 @@
+// Copyright 2024-2025 Golem Cloud
+//
+// Licensed under the Golem Source License v1.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://license.golem.cloud/LICENSE
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import {
   GenericType,
   ObjectType,
@@ -9,48 +23,55 @@ import {
 } from 'rttist';
 import { WitValue } from 'golem:rpc/types@0.2.2';
 import { constructWitValueFromValue, Value } from './value';
+import * as Either from 'effect/Either';
+import * as Option from 'effect/Option';
 
 export function constructWitValueFromTsValue(
   tsValue: any,
   tsType: Type,
-): WitValue {
-  const value = constructValueFromTsValue(tsValue, tsType);
-  return constructWitValueFromValue(value);
+): Either.Either<WitValue, string> {
+  return Either.map(
+    constructValueFromTsValue(tsValue, tsType),
+    constructWitValueFromValue,
+  );
 }
 
 // Note that we take `type: Type` instead of `type: AnalysedType`(because at this point `AnalysedType` of the `tsValue` is also available)
 // as `Type` holds more information, and can be used to determine the error messages for wrong `tsValue` more accurately.
-function constructValueFromTsValue(tsValue: any, type: Type): Value {
+function constructValueFromTsValue(
+  tsValue: any,
+  type: Type,
+): Either.Either<Value, string> {
   switch (type.kind) {
     case TypeKind.Null:
-      return { kind: 'tuple', value: [] };
+      return Either.right({ kind: 'tuple', value: [] });
 
     case TypeKind.Boolean:
       if (typeof tsValue === 'boolean') {
-        return { kind: 'bool', value: tsValue };
+        return Either.right({ kind: 'bool', value: tsValue });
       } else {
-        throw new Error(`Expected boolean, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'boolean'));
       }
     case TypeKind.False:
       if (typeof tsValue === 'boolean') {
-        return { kind: 'bool', value: tsValue };
+        return Either.right({ kind: 'bool', value: tsValue });
       } else {
-        throw new Error(`Expected boolean, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'boolean'));
       }
     case TypeKind.True:
       if (typeof tsValue === 'boolean') {
-        return { kind: 'bool', value: tsValue };
+        return Either.right({ kind: 'bool', value: tsValue });
       } else {
-        throw new Error(`Expected boolean, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'boolean'));
       }
     case TypeKind.Number:
-      return { kind: 's32', value: tsValue };
+      return Either.right({ kind: 's32', value: tsValue });
 
     case TypeKind.BigInt:
-      return { kind: 'u64', value: tsValue };
+      return Either.right({ kind: 'u64', value: tsValue });
 
     case TypeKind.String:
-      return { kind: 'string', value: tsValue };
+      return Either.right({ kind: 'string', value: tsValue });
 
     case TypeKind.PromiseDefinition:
       const promiseDefType = type as PromiseType;
@@ -77,7 +98,6 @@ function constructValueFromTsValue(tsValue: any, type: Type): Value {
     case TypeKind.Type:
       return handleGeneralType(tsValue, type);
 
-    // Difference between Object and ObjectType to be determine
     case TypeKind.ObjectType:
       return handleObject(tsValue, type);
 
@@ -86,250 +106,306 @@ function constructValueFromTsValue(tsValue: any, type: Type): Value {
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'number')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 'u8', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected Uint8Array, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'Uint8Array'));
       }
     case TypeKind.Uint8ClampedArray:
       if (
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'number')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 'u8', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected Uint8ClampedArray, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'Uint8ClampedArray'));
       }
     case TypeKind.Int16Array:
       if (
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'number')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 's16', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected Int16Array, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'Int16Array'));
       }
     case TypeKind.Uint16Array:
       if (
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'number')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 'u16', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected Uint16Array, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'Uint16Array'));
       }
     case TypeKind.Int32Array:
       if (
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'number')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 's32', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected Int32Array, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'Int32Array'));
       }
     case TypeKind.Uint32Array:
       if (
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'number')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 'u32', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected Uint32Array, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'Uint32Array'));
       }
     case TypeKind.Float32Array:
       if (
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'number')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 'f32', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected Float32Array, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'Float32Array'));
       }
     case TypeKind.Float64Array:
       if (
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'number')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 'f64', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected Float64Array, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'Float64Array'));
       }
     case TypeKind.BigInt64Array:
       if (
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'bigint')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 's64', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected BigInt64Array, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'BigInt64Array'));
       }
     case TypeKind.BigUint64Array:
       if (
         Array.isArray(tsValue) &&
         tsValue.every((item) => typeof item === 'bigint')
       ) {
-        return {
+        return Either.right({
           kind: 'list',
           value: tsValue.map((item) => ({ kind: 'u64', value: item })),
-        };
+        });
       } else {
-        throw new Error(`Expected BigUint64Array, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'BigUint64Array'));
       }
     case TypeKind.Object:
       return handleObject(tsValue, type);
 
     case TypeKind.StringLiteral:
       if (typeof tsValue === 'string') {
-        return { kind: 'string', value: tsValue };
+        return Either.right({ kind: 'string', value: tsValue });
       } else {
-        throw new Error(`Expected string literal, got ${typeof tsValue}`);
+        return Either.left(invalidTypeError(tsValue, 'string literal'));
       }
     default:
-      throw new Error(
-        `The following type is not supported in Golem in the context of agents: ${type.displayName}`,
-      );
+      return Either.left(unexpectedTypeError(tsValue, Option.none()));
   }
 }
 
-function handleUnion(tsValue: any, type: Type): Value {
-  // When it comes to TS, a value for a union type is simply a non complex value.
-  // function processUnion(x: string | number | boolean) { }
-  // and x can be 1 or "1" or true.
-  // to convert it to wit-value, the only choice is to match against all possible types
+function handleGeneralType(
+  tsValue: any,
+  type: Type,
+): Either.Either<Value, string> {
+  if (type.isArray()) return handleArrayType(tsValue, type);
+  if (type.isTuple()) return handleTupleType(tsValue, type);
+  if (type.isGenericType()) return handleMapType(tsValue, type);
+
+  return Either.left(
+    unexpectedTypeError(
+      tsValue,
+      Option.some(`Unsupported TypeKind.Type: ${type.displayName}`),
+    ),
+  );
+}
+
+function handleArrayType(
+  tsValue: any,
+  type: Type,
+): Either.Either<Value, string> {
+  const typeArg = type.getTypeArguments?.()[0];
+  if (!typeArg) {
+    return Either.left(
+      unexpectedTypeError(
+        tsValue,
+        Option.some('unable to infer the type of Array'),
+      ),
+    );
+  }
+  if (!Array.isArray(tsValue)) {
+    return Either.left(invalidTypeError(tsValue, 'array'));
+  }
+
+  return Either.map(
+    Either.all(tsValue.map((item) => constructValueFromTsValue(item, typeArg))),
+    (values) => ({ kind: 'list', value: values }),
+  );
+}
+
+function handleTupleType(
+  tsValue: any,
+  type: Type,
+): Either.Either<Value, string> {
+  const typeArgs = type.getTypeArguments?.();
+  if (!Array.isArray(tsValue)) {
+    return Either.left(invalidTypeError(tsValue, 'tuple'));
+  }
+
+  return Either.map(
+    Either.all(
+      tsValue.map((item, idx) =>
+        constructValueFromTsValue(item, typeArgs[idx]),
+      ),
+    ),
+    (values) => ({ kind: 'tuple', value: values }),
+  );
+}
+
+function handleMapType(tsValue: any, type: Type): Either.Either<Value, string> {
+  const genericType = type as GenericType<typeof type>;
+  const name = genericType.genericTypeDefinition.name;
+
+  if (name === 'Map') return handleKeyValuePairs(tsValue, type);
+
+  return Either.left(
+    unexpectedTypeError(
+      tsValue,
+      Option.some(`Unsupported generic type: ${name}`),
+    ),
+  );
+}
+
+function handleKeyValuePairs(
+  tsValue: any,
+  type: Type,
+): Either.Either<Value, string> {
+  const typeArgs = type.getTypeArguments?.();
+  if (!typeArgs || typeArgs.length !== 2) {
+    return Either.left(
+      unexpectedTypeError(
+        tsValue,
+        Option.some('Map must have two type arguments'),
+      ),
+    );
+  }
+  if (!(tsValue instanceof Map)) {
+    return Either.left(invalidTypeError(tsValue, 'Map'));
+  }
+
+  const [keyType, valueType] = typeArgs;
+  if (!keyType || !valueType) {
+    return Either.left(
+      unexpectedTypeError(
+        tsValue,
+        Option.some('unable to infer key or value type'),
+      ),
+    );
+  }
+
+  const values = Either.all(
+    Array.from(tsValue.entries()).map(([key, value]) =>
+      Either.zipWith(
+        constructValueFromTsValue(key, keyType),
+        constructValueFromTsValue(value, valueType),
+        (k, v) => ({ kind: 'tuple', value: [k, v] }) as Value,
+      ),
+    ),
+  );
+
+  return Either.map(values, (value) => ({ kind: 'list', value }));
+}
+
+function handleObject(tsValue: any, type: Type): Either.Either<Value, string> {
+  if (typeof tsValue !== 'object' || tsValue === null) {
+    return Either.left(invalidTypeError('object', tsValue));
+  }
+
+  const innerType = type as ObjectType;
+  const innerProperties = innerType.getProperties();
+  const values: Value[] = [];
+
+  for (const prop of innerProperties) {
+    const key = prop.name.toString();
+
+    if (!Object.prototype.hasOwnProperty.call(tsValue, key)) {
+      if (prop.optional) {
+        values.push({ kind: 'option' });
+      } else if (prop.type.isString() && tsValue === '') {
+        values.push({ kind: 'string', value: '' });
+      } else if (prop.type.isNumber() && tsValue === 0) {
+        values.push({ kind: 's32', value: 0 });
+      } else if (prop.type.isBoolean() && tsValue === false) {
+        values.push({ kind: 'bool', value: false });
+      } else {
+        return Either.left(missingValueForKey(key, tsValue));
+      }
+      continue;
+    }
+
+    const fieldVal = constructValueFromTsValue(tsValue[key], prop.type);
+
+    if (Either.isLeft(fieldVal)) {
+      return Either.left(fieldVal.left);
+    }
+
+    values.push(fieldVal.right);
+  }
+
+  return Either.right({ kind: 'record', value: values });
+}
+
+function handleUnion(tsValue: any, type: Type): Either.Either<Value, string> {
   const unionType = type as UnionType;
   const possibleTypes = unionType.types;
   const typeWithIndex = findTypeOfAny(tsValue, possibleTypes);
 
   if (!typeWithIndex) {
-    throw new Error(
-      `No matching type found for the value '${tsValue}' in union type. Type structure: ${unionType.displayName}`,
-    );
+    return Either.left(unionTypeMatchError(tsValue, possibleTypes));
   } else {
     const innerType = typeWithIndex[0];
-    const result = constructValueFromTsValue(tsValue, innerType);
-    return { kind: 'variant', caseIdx: typeWithIndex![1], caseValue: result };
-  }
-}
 
-function handleGeneralType(tsValue: any, type: Type): Value {
-  if (type.isArray()) {
-    const typeArg = type.getTypeArguments?.()[0];
-    return {
-      kind: 'list',
-      value: tsValue.map((item: any) =>
-        constructValueFromTsValue(item, typeArg),
-      ),
-    };
-  } else if (type.isTuple()) {
-    const typeArg = type.getTypeArguments?.();
-    return {
-      kind: 'tuple',
-      value: tsValue.map((item: any, idx: number) =>
-        constructValueFromTsValue(item, typeArg[idx]),
-      ),
-    };
-  } else if (type.isGenericType()) {
-    const genericType: GenericType<typeof type> = type as GenericType<
-      typeof type
-    >;
-    const genericTypeDefinition = genericType.genericTypeDefinition;
-    if (genericTypeDefinition.name == 'Map') {
-      const typeArgs = type.getTypeArguments?.();
-
-      if (!typeArgs || typeArgs.length !== 2) {
-        throw new Error('Map must have two type arguments');
-      }
-
-      const result: Value[] = Array.from(tsValue.entries()).map(
-        (keyValue: any) => {
-          return {
-            kind: 'tuple',
-            value: [
-              constructValueFromTsValue(keyValue[0], typeArgs[0]),
-              constructValueFromTsValue(keyValue[1], typeArgs[1]),
-            ],
-          };
-        },
-      );
-
-      return { kind: 'list', value: result };
-    } else {
-      throw new Error('Type must have a type argument');
-    }
-  } else {
-    const typeArg = type.getTypeArguments()[0];
-    return constructValueFromTsValue(tsValue, typeArg);
-  }
-}
-
-function handleObject(tsValue: any, type: Type): Value {
-  if (typeof tsValue === 'object' && tsValue !== null) {
-    const innerType = type as ObjectType;
-    const innerProperties = innerType.getProperties();
-    const values: Value[] = [];
-    for (const prop of innerProperties) {
-      const key = prop.name.toString();
-      if (!Object.prototype.hasOwnProperty.call(tsValue, key)) {
-        if (prop.optional) {
-          values.push({ kind: 'option' });
-        } else if (prop.type.isString()) {
-          if (tsValue == '') {
-            values.push({ kind: 'string', value: '' });
-          } else {
-            throw new Error(`Missing property '${key}' in value`);
-          }
-        } else if (prop.type.isNumber()) {
-          if (tsValue == 0) {
-            values.push({ kind: 's32', value: 0 });
-          } else {
-            throw new Error(`Missing property '${key}' in value`);
-          }
-        } else if (prop.type.isBoolean()) {
-          if (tsValue == false) {
-            values.push({ kind: 'bool', value: false });
-          } else {
-            throw new Error(`Missing property '${key}' in value`);
-          }
-        } else if (prop.optional) {
-          values.push({ kind: 'option' });
-        } else {
-          throw new Error(`Missing property '${key}' in value`);
-        }
-      } else {
-        const fieldVal = constructValueFromTsValue(tsValue[key], prop.type);
-        values.push(fieldVal);
-      }
-    }
-
-    return { kind: 'record', value: values };
-  } else {
-    throw new Error(`Expected object, got ${typeof tsValue}`);
+    return Either.map(
+      constructValueFromTsValue(tsValue, innerType),
+      (result) => {
+        return {
+          kind: 'variant',
+          caseIdx: typeWithIndex[1],
+          caseValue: result,
+        };
+      },
+    );
   }
 }
 
@@ -337,15 +413,12 @@ function findTypeOfAny(
   value: any,
   typeList: readonly Type[],
 ): [Type, number] | undefined {
-  let idx = 0;
-  for (const type of typeList) {
+  for (let idx = 0; idx < typeList.length; idx++) {
+    const type = typeList[idx];
     if (matchesType(value, type)) {
       return [type, idx];
     }
-
-    idx++;
   }
-
   return undefined;
 }
 
@@ -358,11 +431,7 @@ function matchesType(value: any, type: Type): boolean {
       return typeof value === 'string';
 
     case TypeKind.Boolean:
-      return typeof value === 'boolean';
-
     case TypeKind.True:
-      return typeof value === 'boolean';
-
     case TypeKind.False:
       return typeof value === 'boolean';
 
@@ -372,124 +441,125 @@ function matchesType(value: any, type: Type): boolean {
     case TypeKind.Undefined:
       return value === undefined;
 
+    case TypeKind.Any:
+      return true;
+
     case TypeKind.Type:
-      // TypeKind.Type is a generic type, we need to check if the value matches the type
-      if (type.isArray()) {
-        const typeArg = type.getTypeArguments?.()[0];
-        return (
-          Array.isArray(value) &&
-          value.every((item) => matchesType(item, typeArg))
-        );
-      } else if (type.isTuple()) {
-        const typeArgs = type.getTypeArguments?.();
-        return (
-          Array.isArray(value) &&
-          value.length === typeArgs.length &&
-          value.every((v, idx) => matchesType(v, typeArgs[idx]))
-        );
-      } else if (type.isGenericType()) {
-        const genericType: GenericType<typeof type> = type as GenericType<
-          typeof type
-        >;
-
-        const genericTypeDefinition = genericType.genericTypeDefinition;
-
-        if (genericTypeDefinition.name === 'Map') {
-          const typeArgs = type.getTypeArguments?.();
-          if (!typeArgs || typeArgs.length !== 2) {
-            throw new Error('Map must have two type arguments');
-          }
-
-          return (
-            value instanceof Map &&
-            Array.from(value.entries()).every(
-              ([key, val]) =>
-                matchesType(key, typeArgs[0]) && matchesType(val, typeArgs[1]),
-            )
-          );
-        } else {
-          throw new Error(
-            `Unsupported generic type: ${genericTypeDefinition.name}`,
-          );
-        }
-      } else {
-        throw new Error(
-          `Unsupported TypeKind.Type with generic type: ${type.displayName}`,
-        );
-      }
+      return matchesComplexType(value, type);
 
     case TypeKind.ArrayBuffer:
-      const elementType = type.getTypeArguments?.()[0];
-      return (
-        Array.isArray(value) &&
-        value.every((item) => matchesType(item, elementType))
-      );
+      return matchesArray(value, type.getTypeArguments?.()[0]);
 
     case TypeKind.TupleDefinition:
-      const tupleTypes = type.getTypeArguments();
-
-      return (
-        Array.isArray(value) &&
-        value.length === tupleTypes.length &&
-        value.every((v, idx) => matchesType(v, tupleTypes[idx]))
-      );
+      return matchesTuple(value, type.getTypeArguments());
 
     case TypeKind.ObjectType:
-      return handleObjectMatch(value, type);
-
     case TypeKind.Interface:
-      return handleObjectMatch(value, type);
-
-    case TypeKind.Alias:
-      const aliasType = type as TypeAliasType;
-      const targetType = aliasType.target;
-      return matchesType(value, targetType);
-
     case TypeKind.Object:
-      return handleObjectMatch(value, type);
-
     case TypeKind.NonPrimitiveObject:
       return handleObjectMatch(value, type);
 
-    case TypeKind.Union:
-      const unionType = type as UnionType;
-      return unionType.types.some((t) => matchesType(value, t));
+    case TypeKind.Alias:
+      return matchesType(value, (type as TypeAliasType).target);
 
-    case TypeKind.Any:
-      return true;
+    case TypeKind.Union:
+      return (type as UnionType).types.some((t) => matchesType(value, t));
 
     default:
       return false;
   }
 }
 
-function handleObjectMatch(value: any, type: Type): boolean {
-  if (typeof value !== 'object' || value === null) return false;
+function matchesComplexType(value: any, type: Type): boolean {
+  if (type.isArray()) {
+    const elemType = type.getTypeArguments?.()[0];
+    return matchesArray(value, elemType);
+  }
 
-  let count = Object.keys(value).length;
+  if (type.isTuple()) {
+    return matchesTuple(value, type.getTypeArguments?.());
+  }
 
-  let expectedCount = (type as ObjectType).getProperties()?.length ?? 0;
+  if (type.isGenericType()) {
+    const genericType = type as GenericType<typeof type>;
+    const genericName = genericType.genericTypeDefinition.name;
 
-  if (count !== expectedCount) {
+    if (genericName === 'Map') {
+      const [keyType, valType] = type.getTypeArguments?.() ?? [];
+      if (!keyType || !valType) {
+        return false;
+      }
+      if (!(value instanceof Map)) return false;
+
+      return Array.from(value.entries()).every(
+        ([k, v]) => matchesType(k, keyType) && matchesType(v, valType),
+      );
+    }
+
     return false;
   }
 
-  let allValidProp = true;
+  return false;
+}
 
-  for (const prop of (type as ObjectType).getProperties() ?? []) {
-    const propExists = prop.name.toString() in value;
-    if (!propExists) {
-      if (!prop.optional) {
-        allValidProp = false;
-        break;
-      }
+function matchesTuple(
+  value: any,
+  tupleTypes: readonly Type[] | undefined,
+): boolean {
+  if (!Array.isArray(value)) return false;
+  if (!tupleTypes) return false;
+  if (value.length !== tupleTypes.length) return false;
+
+  return value.every((v, idx) => matchesType(v, tupleTypes[idx]));
+}
+
+function matchesArray(value: any, elementType: Type | undefined): boolean {
+  if (!Array.isArray(value)) return false;
+  if (!elementType) return true;
+  return value.every((item) => matchesType(item, elementType));
+}
+
+function handleObjectMatch(value: any, type: Type): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+
+  const objectType = type as ObjectType;
+  const props = objectType.getProperties() ?? [];
+
+  // Allow extra keys? If no, strict check:
+  const valueKeys = Object.keys(value);
+  if (valueKeys.length !== props.length) return false;
+
+  for (const prop of props) {
+    const key = prop.name.toString();
+    const hasKey = key in value;
+
+    if (!hasKey) {
+      if (!prop.optional) return false;
+      // Optional property missing: OK
     } else {
-      if (!matchesType(value[prop.name.toString()], prop.type)) {
-        allValidProp = false;
-        break;
-      }
+      if (!matchesType(value[key], prop.type)) return false;
     }
   }
 
-  return allValidProp;
+  return true;
+}
+
+function invalidTypeError(tsValue: any, expectedType: string): string {
+  return `Expected ${expectedType}, but got ${tsValue} which is of type ${typeof tsValue}`;
+}
+
+function missingValueForKey(key: string, tsValue: any): string {
+  return `Missing property '${key}' in ${tsValue}`;
+}
+
+function unionTypeMatchError(unionTypes: Type[], tsValue: any): string {
+  return `Value '${tsValue}' does not match any of the union types: ${unionTypes.map((t) => t.name).join(', ')}`;
+}
+
+function unexpectedTypeError(
+  tsValue: any,
+  message: Option.Option<string>,
+): string {
+  const error = `${tsValue} has a type that is currently not supported as agent argument or result type. `;
+  return error + (Option.isSome(message) ? ` Reason: ${message.value}` : '');
 }

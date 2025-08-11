@@ -15,16 +15,14 @@ import {
   NameTypePair,
 } from '../src/mapping/types/analysed-type';
 import { constructAnalysedTypeFromTsType } from '../src/mapping/types/ts-to-wit';
-import { Either, Option } from 'effect';
+import * as Either from 'effect/Either';
+import * as Option from 'effect/Option';
 
 // Interface type indirectly tests primitive types, union, list etc
 describe('TypeScript Interface to AnalysedType', () => {
   const interfaceType = getTestInterfaceType();
-  const analysed = Either.getOrElse(
+  const analysed = Either.getOrThrow(
     constructAnalysedTypeFromTsType(interfaceType),
-    (error) => {
-      throw new Error(`Failed to construct analysed type: ${error}`);
-    },
   );
 
   const recordFields = getRecordFieldsFromAnalysedType(analysed)!;
@@ -96,11 +94,8 @@ describe('TypeScript primitives to AnalysedType', () => {
 describe('TypeScript Object to AnalysedType', () => {
   it('transforms object with different properties successfully to analysed type', () => {
     const interfaceType = getTestObjectType();
-    const analysed = Either.getOrElse(
+    const analysed = Either.getOrThrow(
       constructAnalysedTypeFromTsType(interfaceType),
-      (error) => {
-        throw new Error(`Failed to construct analysed type: ${error}`);
-      },
     );
 
     expect(analysed).toBeDefined();
