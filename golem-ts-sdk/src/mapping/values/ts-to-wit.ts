@@ -47,31 +47,34 @@ function constructValueFromTsValue(
       return Either.right({ kind: 'tuple', value: [] });
 
     case TypeKind.Boolean:
-      if (typeof tsValue === 'boolean') {
-        return Either.right({ kind: 'bool', value: tsValue });
-      } else {
-        return Either.left(invalidTypeError(tsValue, 'boolean'));
-      }
+      return handleBooleanType(tsValue);
+
     case TypeKind.False:
-      if (typeof tsValue === 'boolean') {
-        return Either.right({ kind: 'bool', value: tsValue });
-      } else {
-        return Either.left(invalidTypeError(tsValue, 'boolean'));
-      }
+      return handleBooleanType(tsValue);
+
     case TypeKind.True:
-      if (typeof tsValue === 'boolean') {
-        return Either.right({ kind: 'bool', value: tsValue });
-      } else {
-        return Either.left(invalidTypeError(tsValue, 'boolean'));
-      }
+      return handleBooleanType(tsValue);
+
     case TypeKind.Number:
-      return Either.right({ kind: 's32', value: tsValue });
+      if (typeof tsValue === 'number') {
+        return Either.right({ kind: 's32', value: tsValue });
+      } else {
+        return Either.left(invalidTypeError(tsValue, 'number'));
+      }
 
     case TypeKind.BigInt:
-      return Either.right({ kind: 'u64', value: tsValue });
+      if (typeof tsValue === 'bigint' || typeof tsValue === 'number') {
+        return Either.right({ kind: 'u64', value: tsValue as any });
+      } else {
+        return Either.left(invalidTypeError(tsValue, 'bigint'));
+      }
 
     case TypeKind.String:
-      return Either.right({ kind: 'string', value: tsValue });
+      if (typeof tsValue === 'string') {
+        return Either.right({ kind: 'string', value: tsValue });
+      } else {
+        return Either.left(invalidTypeError(tsValue, 'string'));
+      }
 
     case TypeKind.PromiseDefinition:
       const promiseDefType = type as PromiseType;
@@ -232,6 +235,14 @@ function constructValueFromTsValue(
       }
     default:
       return Either.left(unexpectedTypeError(tsValue, Option.none()));
+  }
+}
+
+function handleBooleanType(tsValue: any): Either.Either<Value, string> {
+  if (typeof tsValue === 'boolean') {
+    return Either.right({ kind: 'bool', value: tsValue });
+  } else {
+    return Either.left(invalidTypeError(tsValue, 'boolean'));
   }
 }
 
